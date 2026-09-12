@@ -1,0 +1,132 @@
+{
+  "chats": [
+    {
+      "channel": "we_chat",
+      "created_at": "2026-04-23T12:45:55.235606Z",
+      "id": "a0ae61af-7c29-409d-b86d-e386f45db471",
+      "meta": {},
+      "name": "帮我算一下两套8×8",
+      "session_id": "we_chat:user:anonymous",
+      "status": "idle",
+      "updated_at": "2026-04-23T13:08:55.254079Z",
+      "user_id": "anonymous"
+    },
+    {
+      "channel": "console",
+      "created_at": "2026-04-23T12:51:14.375202Z",
+      "id": "a1bd19ed-0785-4ba3-a62c-c62f44f9425d",
+      "meta": {},
+      "name": "我桌面有个命名为“报",
+      "session_id": "console:user:default:1776948605095",
+      "status": "idle",
+      "updated_at": "2026-04-23T13:00:39.477328Z",
+      "user_id": "default"
+    },
+    {
+      "channel": "console",
+      "created_at": "2026-04-25T01:52:08.914949Z",
+      "id": "3e3fe193-44fd-4c89-8655-50986cbb0d5f",
+      "meta": {},
+      "name": "客户名称：sewon",
+      "session_id": "console:user:default:1777005411907",
+      "status": "idle",
+      "updated_at": "2026-04-25T01:57:55.195163Z",
+      "user_id": "default"
+    },
+    {
+      "channel": "console",
+      "created_at": "2026-04-26T15:09:54.724648Z",
+      "id": "c8d25570-c722-40a3-8432-5cf16c6cd0ee",
+      "meta": {},
+      "name": "产品册设计需求：\n每",
+      "session_id": "console:user:default:1777215799355",
+      "status": "idle",
+      "updated_at": "2026-04-26T15:13:33.078610Z",
+      "user_id": "default"
+    },
+    {
+      "channel": "console",
+      "created_at": "2026-04-27T15:04:12.235269Z",
+      "id": "0bb1d7db-cd47-420a-9b06-e3ced78cf034",
+      "meta": {},
+      "name": "公司是从事展会帐篷，",
+      "session_id": "console:user:default:1777268127300",
+      "status": "idle",
+      "updated_at": "2026-04-27T15:11:39.743334Z",
+      "user_id": "default"
+    },
+    {
+      "channel": "console",
+      "created_at": "2026-05-01T14:09:38.731660Z",
+      "id": "06a697ee-aa85-4075-8fb9-c88d1def2d0c",
+      "meta": {},
+      "name": "我桌面有一张命名为1",
+      "session_id": "console:user:default:1777619651361",
+      "status": "idle",
+      "updated_at": "2026-05-02T02:50:45.171213Z",
+      "user_id": "default"
+    },
+    {
+      "channel": "console",
+      "created_at": "2026-05-17T12:32:10.433436Z",
+      "id": "b848747c-40e1-46dd-882f-c8a2b67d5813",
+      "meta": {
+        "_sort_created_at": "2026-05-17T12:29:44.761443Z",
+        "_sort_updated_at": "2026-05-17T12:32:10.260800Z"
+      },
+      "name": "将桌面上命名为1-0",
+      "session_id": "console:user:default:1778763601303",
+      "status": "idle",
+      "updated_at": "2026-05-17T12:32:10.433436Z",
+      "user_id": "default"
+    },
+    {
+      "channel": "console",
+      "created_at": "2026-05-24T05:29:44.668429Z",
+      "id": "9bc73632-00e3-4deb-9559-60c412160834",
+      "meta": {
+        "_sort_created_at": "2026-05-24T05:26:46.488145Z",
+        "_sort_updated_at": "2026-05-24T05:29:43.934965Z"
+      },
+      "name": "对比下桌面上fold",
+      "session_id": "console:user:default:1779544511408",
+      "status": "idle",
+      "updated_at": "2026-05-24T05:29:44.669448Z",
+      "user_id": "default"
+    },
+    {
+      "channel": "console",
+      "created_at": "2026-07-14T03:06:11.020350Z",
+      "id": "4ba5a000-efbc-4929-99a6-4e4b6e4b441b",
+      "meta": {},
+      "name": "https://ww",
+      "session_id": "console:user:default:1783998311349",
+      "status": "idle",
+      "updated_at": "2026-07-14T03:11:13.572370Z",
+      "user_id": "default"
+    },
+    {
+      "channel": "console",
+      "created_at": "2026-09-09T15:27:41.662984Z",
+      "id": "fbe2328e-769a-4ae1-87ff-218cf50f9d02",
+      "meta": {},
+      "name": "项目源代码在E:\\e",
+      "session_id": "console:user:default:1788967536316",
+      "status": "idle",
+      "updated_at": "2026-09-09T15:27:41.662984Z",
+      "user_id": "default"
+    },
+    {
+      "channel": "console",
+      "created_at": "2026-09-12T14:47:23.581121Z",
+      "id": "010f5b62-50f2-453a-b1c0-05b2e1881b55",
+      "meta": {},
+      "name": "将E:\\easysh",
+      "session_id": "console:user:default:1789213628467",
+      "status": "idle",
+      "updated_at": "2026-09-12T15:03:49.562596Z",
+      "user_id": "default"
+    }
+  ],
+  "version": 1
+}

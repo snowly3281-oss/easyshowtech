@@ -1,0 +1,33 @@
+# tool_name: execute_shell_command
+# created_at: 2026-09-12T23:03:16.290437
+# ---
+Usage: molili.exe [OPTIONS] COMMAND [ARGS]...
+
+  CoPaw CLI.
+
+Options:
+  --version       Show the version and exit.
+  --host TEXT     API Host
+  --port INTEGER  API Port
+  -h, --help      Show this message and exit.
+
+Commands:
+  agent      Manage agents and inter-agent communication.
+  agents     Manage agents and inter-agent communication.
+  app
+  auth       Manage web authentication.
+  channel    Manage channel configuration...
+  channels   Manage channel configuration...
+  chat       Manage chat sessions via the HTTP API (/chats).
+  chats      Manage chat sessions via the HTTP API (/chats).
+  clean      Clear CoPaw WORKING_DIR.
+  cron       Manage scheduled cron jobs via the HTTP API (/cron).
+  daemon     Daemon commands: status, restart, reload-config, version, logs.
+  desktop    Run CoPaw app on an auto-selected free port in a webview...
+  env        Manage environment variables.
+  init       Create working dir with config.json and HEARTBEAT.md...
+  models     Manage LLM models and provider configuration.
+  shutdown   Force stop the running CoPaw app processes.
+  skills     Manage skills (list / configure).
+  uninstall  Remove CoPaw environment, CLI wrapper, and shell PATH entries.
+  update     Upgrade CoPaw in the current Python environment.
