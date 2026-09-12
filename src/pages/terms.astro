@@ -1,0 +1,16 @@
+---
+import LegalFallbackContent from "../components/legal/LegalFallbackContent.astro";
+import legalFallbacks from "../i18n/legal-fallbacks.json";
+import LegalLayout from "../layouts/LegalLayout.astro";
+---
+
+<LegalLayout
+  title="Terms of Service"
+  pageKey="terms"
+  description="Terms governing use of the Coral Pilates B2B equipment website, quotation requests, uploaded materials and product information."
+  effectiveDate="July 26, 2026"
+>
+  <Fragment slot="fallback">
+    <LegalFallbackContent content={legalFallbacks.terms} />
+  </Fragment>
+</LegalLayout>

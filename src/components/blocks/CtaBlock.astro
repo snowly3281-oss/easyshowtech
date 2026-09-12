@@ -1,0 +1,48 @@
+---
+import type { CtaBlockData } from '../../sanity/content'
+import { resolveHref } from '../../sanity/links'
+
+interface Props {
+  block: CtaBlockData
+}
+
+const { block } = Astro.props
+const href = block.cta ? resolveHref(block.cta.internal, block.cta.external) : null
+---
+
+<section class="band cta">
+  <div class="container cta__inner">
+    {block.heading && <h2 class="cta__heading">{block.heading}</h2>}
+    {block.body && <p class="body-l cta__body">{block.body}</p>}
+    {
+      href && block.cta?.label && (
+        <a class="btn btn-coral cta__btn" href={href}>
+          {block.cta.label}
+        </a>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .cta {
+    padding-block: var(--space-9);
+    background: var(--color-navy, #1a2332);
+    color: #fff;
+  }
+  .cta__inner {
+    text-align: center;
+  }
+  .cta__heading {
+    margin: 0 auto;
+    max-width: 24ch;
+  }
+  .cta__body {
+    margin: var(--space-4) auto 0;
+    max-width: 56ch;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .cta__btn {
+    margin: var(--space-6) 0 0;
+  }
+</style>

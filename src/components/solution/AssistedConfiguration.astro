@@ -1,0 +1,413 @@
+---
+import {
+  TURNSTILE_ACTION,
+  TURNSTILE_SITE_KEY,
+} from '../../lib/turnstileConfig'
+import Icon from '../Icon.astro'
+import type {Locale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  solutionTitle: string
+  solutionSlug: string
+  heading?: string | null
+  body?: string | null
+  locale?: Locale
+}
+
+const { solutionTitle, solutionSlug, heading, body, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const formLabels = {
+  sending: t('Sending…'),
+  send: t('Send inquiry'),
+  fileHint: t('PDF · DWG · DXF · JPG · PNG · max 20 MB'),
+}
+---
+
+<section class="section assisted" id="floor-plan">
+  <div class="container assisted__inner">
+    <div class="assisted__copy">
+      <p class="eyebrow">{t('One-click configuration')}</p>
+      <h2>{heading ?? t('Just send your floor plan. We will do the rest.')}</h2>
+      <p class="body-l">
+        {body ??
+          t('Upload the room and tell us how the studio will operate. Coral will review circulation, class capacity and equipment mix, then return a tailored recommendation.')}
+      </p>
+      <ul>
+        <li><Icon name="check" size={16} />{t('Full bill of materials')}</li>
+        <li><Icon name="check" size={16} />{t('Linked product specifications')}</li>
+        <li><Icon name="check" size={16} />{t('Practical room layout')}</li>
+        <li><Icon name="check" size={16} />{t('Factory-direct RFQ')}</li>
+      </ul>
+      <p class="assisted__promise">
+        {t('Free first review · a real person replies within 24 hours')}
+      </p>
+    </div>
+
+    <div class="assisted__panel">
+      <form
+        class="assisted__form"
+        data-floorplan-form
+        data-sending-label={formLabels.sending}
+        data-send-label={formLabels.send}
+        data-file-hint={formLabels.fileHint}
+        novalidate
+      >
+        <p class="assisted__required">{t('* Required')}</p>
+        <div class="assisted__grid">
+          <label>
+            <span>{t('Full name')}</span>
+            <input type="text" name="name" autocomplete="name" placeholder={t('Your name')} />
+          </label>
+          <label>
+            <span>{t('Work email')} <em>*</em></span>
+            <input
+              type="email"
+              name="email"
+              required
+              autocomplete="email"
+              placeholder="you@company.com"
+              data-floorplan-primary-field
+            />
+          </label>
+          <label>
+            <span>{t('Company / studio')}</span>
+            <input type="text" name="company" autocomplete="organization" placeholder={t('Studio name')} />
+          </label>
+          <label>
+            <span>{t('WhatsApp / phone')}</span>
+            <input type="tel" name="phone" autocomplete="tel" placeholder="+1 312 847 1928" />
+          </label>
+        </div>
+
+        <label class="assisted__file">
+          <span>{t('Customer floor plan (optional)')}</span>
+          <span class="assisted__drop">
+            <Icon name="download" size={22} />
+            <strong>{t('Drag & drop a customer floor plan, or browse')}</strong>
+            <small data-floorplan-file>
+              {formLabels.fileHint}
+            </small>
+          </span>
+          <input
+            type="file"
+            name="file"
+            accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+          />
+        </label>
+
+        <label class="assisted__message">
+          <span>{t('How will the room operate?')} <em>*</em></span>
+          <textarea
+            name="message"
+            rows="3"
+            required
+            placeholder={t('Class size, one-to-one training, preferred series, target opening date…')}
+          ></textarea>
+        </label>
+
+        <input type="hidden" name="subject" value={`Floor-plan configuration request — ${solutionTitle}`} />
+        <input type="hidden" name="inquiry_kind" value="floorplan" />
+        <input type="hidden" name="source_url" value="" data-floorplan-source />
+        <input type="hidden" name="product" value={`Solution: ${solutionTitle} (${solutionSlug})`} />
+        <input
+          type="checkbox"
+          name="botcheck"
+          class="assisted__hp"
+          tabindex="-1"
+          autocomplete="off"
+          aria-hidden="true"
+        />
+
+        {
+          TURNSTILE_SITE_KEY && (
+            <div
+              class="cf-turnstile assisted__turnstile"
+              data-sitekey={TURNSTILE_SITE_KEY}
+              data-action={TURNSTILE_ACTION}
+              data-refresh-expired="auto"
+            />
+          )
+        }
+
+        <p class="assisted__status" data-floorplan-status role="alert" aria-live="assertive"></p>
+        <button type="submit" class="btn btn-coral" data-floorplan-submit>
+          {formLabels.send}
+        </button>
+        <p class="assisted__privacy">
+          {t('No mailing list. Your details and any drawing are used only for this project.')}
+        </p>
+
+        <div class="assisted__done" data-floorplan-done hidden>
+          <span><Icon name="check" size={24} /></span>
+          <h3>{t('Request received.')}</h3>
+          <p>{t('Coral will review it and reply within one business day.')}</p>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { submitQuoteForm, thankYouUrl } from '../../lib/quoteForm'
+  import {
+    markTurnstileSpent,
+    prepareTurnstile,
+    resetTurnstile,
+  } from '../../lib/turnstileClient'
+
+  function initFloorPlanForms() {
+    document.querySelectorAll<HTMLFormElement>('[data-floorplan-form]').forEach((form) => {
+      if (form.dataset.initialized === 'true') return
+      form.dataset.initialized = 'true'
+      prepareTurnstile('.assisted__turnstile')
+
+      const fileInput = form.querySelector<HTMLInputElement>('input[type="file"]')
+      const fileLabel = form.querySelector<HTMLElement>('[data-floorplan-file]')
+      const sourceInput = form.querySelector<HTMLInputElement>('[data-floorplan-source]')
+      const status = form.querySelector<HTMLElement>('[data-floorplan-status]')
+      const submit = form.querySelector<HTMLButtonElement>('[data-floorplan-submit]')
+      const done = form.querySelector<HTMLElement>('[data-floorplan-done]')
+      const labels = {
+        sending: form.dataset.sendingLabel || 'Sending…',
+        send: form.dataset.sendLabel || 'Send floor plan',
+        fileHint: form.dataset.fileHint || 'PDF · DWG · DXF · JPG · PNG · max 20 MB',
+      }
+
+      if (sourceInput) sourceInput.value = location.href
+
+      fileInput?.addEventListener('change', () => {
+        const file = fileInput.files?.[0]
+        if (!fileLabel) return
+        fileLabel.textContent = file
+          ? `${file.name} · ${(file.size / (1024 * 1024)).toFixed(1)} MB`
+          : labels.fileHint
+      })
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault()
+        if (!form.reportValidity() || !submit || !status || !done) return
+
+        submit.disabled = true
+        submit.textContent = labels.sending
+        status.textContent = ''
+        status.dataset.state = ''
+
+        markTurnstileSpent('.assisted__turnstile')
+        const result = await submitQuoteForm(form)
+        submit.disabled = false
+        submit.textContent = labels.send
+
+        if (result.status === 'ok') {
+          const destination = thankYouUrl(result.inquiryId)
+          if (destination) {
+            window.location.assign(destination)
+            return
+          }
+          Array.from(form.children).forEach((child) => {
+            if (child !== done) (child as HTMLElement).hidden = true
+          })
+          done.hidden = false
+          return
+        }
+
+        resetTurnstile('.assisted__turnstile')
+        status.dataset.state = 'error'
+        status.textContent = result.message
+      })
+    })
+  }
+
+  initFloorPlanForms()
+  document.addEventListener('astro:page-load', initFloorPlanForms)
+</script>
+
+<style>
+  .assisted {
+    background: var(--color-navy);
+    color: var(--color-white);
+    scroll-margin-top: calc(76px + var(--space-5));
+  }
+  .assisted__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(480px, 1.05fr);
+    gap: var(--space-8);
+    align-items: center;
+  }
+  .assisted .eyebrow {
+    color: var(--color-coral-border);
+  }
+  .assisted h2 {
+    max-width: 15ch;
+    margin: var(--space-2) 0 0;
+  }
+  .assisted__copy > p:not(.eyebrow):not(.assisted__promise) {
+    max-width: 54ch;
+    margin: var(--space-4) 0 0;
+    color: rgba(255, 255, 255, 0.72);
+  }
+  .assisted__copy ul {
+    list-style: none;
+    margin: var(--space-6) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+  .assisted__copy li {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: var(--text-body-s);
+  }
+  .assisted__copy li svg {
+    color: var(--color-coral-border);
+  }
+  .assisted__promise {
+    margin: var(--space-6) 0 0;
+    color: rgba(255, 255, 255, 0.52);
+    font-size: var(--text-caption);
+  }
+  .assisted__panel {
+    padding: var(--space-3);
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .assisted__form {
+    position: relative;
+    padding: var(--space-5);
+    background: var(--color-white);
+    color: var(--color-ink-900);
+  }
+  .assisted__required {
+    margin: 0 0 var(--space-3);
+    color: var(--color-coral);
+    font-size: var(--text-caption);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .assisted__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+  }
+  .assisted__form label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    color: var(--color-ink-700);
+    font-size: var(--text-body-s);
+    font-weight: 500;
+  }
+  .assisted__form label em {
+    color: var(--color-coral);
+    font-style: normal;
+  }
+  .assisted__form input:not([type='file']):not([type='checkbox']),
+  .assisted__form textarea {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-sm);
+    background: var(--color-white);
+    color: var(--color-ink-900);
+    font: inherit;
+    font-weight: 400;
+  }
+  .assisted__form textarea {
+    resize: vertical;
+  }
+  .assisted__file,
+  .assisted__message {
+    margin: var(--space-3) 0 0;
+  }
+  .assisted__drop {
+    min-height: 112px;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: var(--space-1);
+    padding: var(--space-3);
+    border: 1px dashed var(--color-ink-300);
+    background: var(--color-ink-050);
+    color: var(--color-ink-500);
+    cursor: pointer;
+    text-align: center;
+  }
+  .assisted__drop strong {
+    color: var(--color-ink-800);
+    font-size: var(--text-body-s);
+  }
+  .assisted__drop small {
+    font-size: var(--text-caption);
+  }
+  .assisted__file input[type='file'] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+  .assisted__turnstile {
+    margin: var(--space-3) 0 0;
+  }
+  .assisted__status {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-body-s);
+  }
+  .assisted__status[data-state='error'] {
+    color: var(--color-error);
+  }
+  .assisted__form > .btn {
+    width: 100%;
+    margin: var(--space-3) 0 0;
+  }
+  .assisted__privacy {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+    text-align: center;
+  }
+  .assisted__done {
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+  }
+  .assisted__done > span {
+    width: 52px;
+    height: 52px;
+    margin: 0 auto;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--color-success) 12%, transparent);
+    color: var(--color-success);
+  }
+  .assisted__done h3 {
+    margin: var(--space-4) 0 0;
+  }
+  .assisted__done p {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600);
+  }
+  .assisted__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  @media (max-width: 1023px) {
+    .assisted__inner {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 767px) {
+    .assisted__copy ul,
+    .assisted__grid {
+      grid-template-columns: 1fr;
+    }
+    .assisted__form {
+      padding: var(--space-4);
+    }
+  }
+</style>

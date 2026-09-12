@@ -1,0 +1,308 @@
+---
+/**
+ * BaseLayout.astro — the shared page shell for every Coral Pilates page.
+ *
+ * Responsibilities:
+ *  - import the design system (global.css) once, site-wide
+ *  - set <html lang>, charset, viewport, favicon, and per-page <title>/meta
+ *  - render the (future) Header above and Footer below the page content
+ *  - the <slot /> is where each page drops its full-bleed <section>s
+ *
+ * IMPORTANT: this shell is full-width. Do NOT put .container here — the
+ * dark bands and footer need to run edge-to-edge. Each <section> inside a
+ * page wraps its own content in <div class="container"> to cap it at 1440.
+ *
+ * Usage in a page (src/pages/index.astro):
+ *   ---
+ *   import BaseLayout from "../layouts/BaseLayout.astro";
+ *   ---
+ *   <BaseLayout title="Coral Pilates — Pilates equipment manufacturer">
+ *     <section class="section">
+ *       <div class="container"> ...page content... </div>
+ *     </section>
+ *   </BaseLayout>
+ */
+
+import "../styles/global.css";
+import { ClientRouter } from "astro:transitions";
+
+import Header from "../components/layout/Header.astro";
+import Footer from "../components/layout/Footer.astro";
+import RfqWidget from "../components/rfq/RfqWidget.astro";
+import SanityVisualEditing from "../components/SanityVisualEditing";
+import { getSiteSettings } from "../sanity/settings";
+import {
+  PUBLIC_SITE_INDEXING_ENABLED,
+} from "astro:env/client";
+import {
+  localizedPath,
+  resolveLocale,
+  SUPPORTED_LOCALES,
+  type Locale,
+} from "../i18n/config";
+import {staticUi} from "../i18n/static";
+
+interface Props {
+  /** Per-page <title>. Falls back to the site default. */
+  title?: string;
+  /** Meta description for SEO / social. */
+  description?: string;
+  /** Absolute URL of the social share image (og:image). Optional. */
+  ogImage?: string;
+  /** Prevent private/temporary pages from entering search indexes. */
+  noIndex?: boolean;
+  /** Override the browser referrer policy for token-bearing private pages. */
+  referrerPolicy?: string;
+  /** Explicit language when this page is rendered through the locale route. */
+  locale?: Locale;
+  /** Above-the-fold image to discover before component markup is parsed. */
+  preloadImage?: string;
+}
+
+const {
+  title: explicitTitle,
+  description: explicitDescription,
+  ogImage,
+  noIndex = false,
+  referrerPolicy,
+  locale: explicitLocale,
+  preloadImage,
+} = Astro.props;
+
+const documentLocale = resolveLocale(
+  explicitLocale,
+  Astro.originPathname || Astro.url.pathname,
+);
+const t = (english: string) => staticUi(documentLocale, english);
+const title =
+  explicitTitle ||
+  t("Coral Pilates — Pilates equipment manufacturer");
+const description =
+  explicitDescription ||
+  t(
+    "Factory-direct Pilates equipment and OEM, built in our own Suzhou factory for studios, clinics and hospitality worldwide.",
+  );
+// Canonical URL (uses `site` from astro.config when set).
+const canonical = Astro.url?.pathname
+  ? new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString()
+  : undefined;
+const globalSettings = await getSiteSettings();
+const shouldNoIndex = noIndex || !PUBLIC_SITE_INDEXING_ENABLED;
+const alternateLinks = SUPPORTED_LOCALES.map((locale) => ({
+  locale,
+  href: new URL(
+    localizedPath(Astro.originPathname || Astro.url.pathname, locale),
+    Astro.site ?? Astro.url,
+  ).toString(),
+}));
+---
+
+<!doctype html>
+<html lang={documentLocale}>
+  <head>
+    <ClientRouter />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    {preloadImage && (
+      <link
+        rel="preload"
+        as="image"
+        href={preloadImage}
+        fetchpriority="high"
+      />
+    )}
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {shouldNoIndex && (
+      <meta
+        name="robots"
+        content="noindex, nofollow, noarchive, nosnippet, noimageindex"
+      />
+    )}
+    {referrerPolicy && <meta name="referrer" content={referrerPolicy} />}
+    {canonical && <link rel="canonical" href={canonical} />}
+    {
+      alternateLinks.map(({locale, href}) => (
+        <link rel="alternate" hreflang={locale} href={href} />
+      ))
+    }
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href={alternateLinks.find(({locale}) => locale === "en")?.href}
+    />
+
+    <!-- Open Graph / social -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta
+      name="twitter:card"
+      content={ogImage ? "summary_large_image" : "summary"}
+    />
+  </head>
+
+  <body>
+    <div id="route-progress" aria-hidden="true" transition:persist>
+      <span id="route-progress__bar"></span>
+    </div>
+    <Header locale={documentLocale} />
+
+    <main>
+      <slot />
+    </main>
+
+    <Footer locale={documentLocale} />
+    <RfqWidget whatsapp={globalSettings.whatsapp} locale={documentLocale} />
+    {import.meta.env.DEV && <SanityVisualEditing client:only="react" />}
+    <script is:inline>
+      const coralLocales = new Set(["en", "es", "fr", "de", "it"]);
+
+      function localizeInternalLinks() {
+        const documentLocale = document.documentElement.lang;
+        if (!coralLocales.has(documentLocale) || documentLocale === "en") return;
+
+        for (const link of document.querySelectorAll('a[href^="/"]')) {
+          const href = link.getAttribute("href");
+          if (
+            !href ||
+            link.hasAttribute("data-no-localize") ||
+            link.hasAttribute("data-language-option") ||
+            href.startsWith("//") ||
+            href.startsWith("/configurations/") ||
+            /^\/(?:en|es|fr|de|it)(?:\/|$)/.test(href)
+          ) continue;
+          link.setAttribute(
+            "href",
+            `/${documentLocale}${href === "/" ? "" : href}`,
+          );
+        }
+      }
+
+      localizeInternalLinks();
+      document.addEventListener("astro:page-load", localizeInternalLinks);
+    </script>
+    <script is:inline>
+      (() => {
+        const feedbackKey = "__coralRouteFeedbackBound";
+        if (window[feedbackKey]) return;
+        window[feedbackKey] = true;
+
+        let activeLink = null;
+        let advanceTimer = 0;
+        let resetTimer = 0;
+        let failsafeTimer = 0;
+
+        const setProgress = (value) => {
+          document.documentElement.style.setProperty("--route-progress", value);
+        };
+
+        const clearTimers = () => {
+          window.clearTimeout(advanceTimer);
+          window.clearTimeout(resetTimer);
+          window.clearTimeout(failsafeTimer);
+        };
+
+        const clearActiveLink = () => {
+          if (activeLink) {
+            delete activeLink.dataset.routeLoading;
+            activeLink = null;
+          }
+        };
+
+        const finishRouteFeedback = () => {
+          if (document.documentElement.dataset.routeLoading !== "true") return;
+
+          clearTimers();
+          setProgress("1");
+          resetTimer = window.setTimeout(() => {
+            document.documentElement.removeAttribute("data-route-loading");
+            document.documentElement.style.removeProperty("--route-progress");
+            clearActiveLink();
+          }, 180);
+        };
+
+        const beginRouteFeedback = (link) => {
+          if (document.documentElement.dataset.routeLoading === "true") return;
+
+          document.documentElement.dataset.routeLoading = "true";
+          activeLink = link ?? null;
+          if (activeLink) activeLink.dataset.routeLoading = "true";
+
+          setProgress("0.16");
+          window.requestAnimationFrame(() => setProgress("0.72"));
+          advanceTimer = window.setTimeout(() => setProgress("0.9"), 700);
+          // A failed navigation should never leave the interface looking busy.
+          failsafeTimer = window.setTimeout(finishRouteFeedback, 12000);
+        };
+
+        const internalNavigationLink = (event) => {
+          if (
+            event.defaultPrevented ||
+            event.button !== 0 ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey ||
+            !(event.target instanceof Element)
+          ) return null;
+
+          const link = event.target.closest("a[href]");
+          if (
+            !link ||
+            link.hasAttribute("download") ||
+            link.hasAttribute("data-astro-reload") ||
+            link.hasAttribute("data-quote-cta") ||
+            link.hasAttribute("data-no-route-feedback") ||
+            (link.target && link.target !== "_self")
+          ) return null;
+
+          const destination = new URL(link.href, window.location.href);
+          const current = new URL(window.location.href);
+          const onlyHashChanged =
+            destination.pathname === current.pathname &&
+            destination.search === current.search &&
+            destination.hash !== current.hash;
+          const sameDocument = destination.href === current.href;
+
+          if (destination.origin !== current.origin || onlyHashChanged || sameDocument) return null;
+          return link;
+        };
+
+        document.addEventListener(
+          "click",
+          (event) => {
+            const link = internalNavigationLink(event);
+            if (!link) return;
+
+            if (document.documentElement.dataset.routeLoading === "true") {
+              event.preventDefault();
+              return;
+            }
+
+            beginRouteFeedback(link);
+          },
+          true,
+        );
+
+        // Astro emits this event immediately after a navigation has started,
+        // before the incoming document is requested. It also covers links
+        // navigated programmatically rather than by a direct click.
+        document.addEventListener("astro:before-preparation", () => {
+          beginRouteFeedback();
+        });
+        document.addEventListener("astro:after-swap", finishRouteFeedback);
+        document.addEventListener("astro:page-load", finishRouteFeedback);
+        window.addEventListener("pageshow", finishRouteFeedback);
+      })();
+    </script>
+  </body>
+</html>

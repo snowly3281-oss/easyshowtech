@@ -1,0 +1,427 @@
+---
+import {
+  TURNSTILE_ACTION,
+  TURNSTILE_SITE_KEY,
+} from '../../lib/turnstileConfig'
+import type { Locale } from '../../i18n/config'
+import { staticUi } from '../../i18n/static'
+
+interface Props {
+  solutionId: string
+  labels: {
+    package: string
+    sending: string
+    send: string
+    invalid: string
+    failed: string
+  }
+  locale?: Locale
+}
+
+const { solutionId, labels, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+---
+
+<dialog
+  class="config-modal"
+  data-config-modal
+  data-package-label={labels.package}
+  data-sending-label={labels.sending}
+  data-send-label={labels.send}
+  data-invalid-label={labels.invalid}
+  data-failed-label={labels.failed}
+  aria-labelledby="config-modal-title"
+>
+  <button
+    type="button"
+    class="config-modal__close"
+    data-config-close
+    aria-label={t('Close')}
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6 6l12 12M18 6 6 18"></path>
+    </svg>
+  </button>
+  <form class="config-modal__form" data-config-form novalidate>
+    <p class="eyebrow">{t('Verified delivery')}</p>
+    <h2 id="config-modal-title">{t('Email this configuration.')}</h2>
+    <p class="config-modal__package" data-config-package></p>
+    <p class="config-modal__intro">
+      {t('We will email a private 14-day link with the current configuration file, product detail links, plan-specific adjustments and the complete-package RFQ action.')}
+    </p>
+
+    <input type="hidden" name="solution_id" value={solutionId} />
+    <input type="hidden" name="package_key" value="" data-config-package-key />
+    <input type="hidden" name="series_key" value="" data-config-series-key />
+    <input type="hidden" name="source_url" value="" data-config-source />
+    <input
+      type="checkbox"
+      name="botcheck"
+      class="config-modal__hp"
+      tabindex="-1"
+      autocomplete="off"
+      aria-hidden="true"
+    />
+
+    <div class="config-modal__grid">
+      <label>
+        <span>{t('Full name')}</span>
+        <input
+          type="text"
+          name="name"
+          autocomplete="name"
+          placeholder={t('Your full name')}
+        />
+      </label>
+      <label>
+        <span>{t('Email')} <em>*</em></span>
+        <input
+          type="email"
+          name="email"
+          required
+          autocomplete="email"
+          placeholder="you@company.com"
+        />
+      </label>
+      <label>
+        <span>{t('Company')}</span>
+        <input
+          type="text"
+          name="company"
+          autocomplete="organization"
+          placeholder={t('Studio / business name')}
+        />
+      </label>
+      <label>
+        <span>{t('WhatsApp / phone')}</span>
+        <input
+          type="tel"
+          name="phone"
+          autocomplete="tel"
+          placeholder="+1 312 847 1928"
+        />
+      </label>
+    </div>
+    <label class="config-modal__message">
+      <span>{t('Anything to adjust?')} <em>*</em></span>
+      <textarea
+        name="message"
+        rows="3"
+        required
+        placeholder={t('Room dimensions, class size, budget, or preferred series…')}
+      ></textarea>
+    </label>
+
+    {TURNSTILE_SITE_KEY && (
+      <div
+        class="cf-turnstile config-modal__turnstile"
+        id="config-turnstile"
+        data-sitekey={TURNSTILE_SITE_KEY}
+        data-action={TURNSTILE_ACTION}
+        data-refresh-expired="auto"
+      ></div>
+    )}
+
+    <p
+      class="config-modal__status"
+      data-config-status
+      role="alert"
+      aria-live="assertive"
+    ></p>
+    <button
+      type="submit"
+      class="btn btn-coral config-modal__submit"
+      data-config-submit
+    >
+      {labels.send}
+    </button>
+    <p class="config-modal__privacy">
+      {t('No mailing list. We use these details only to answer this project.')}
+    </p>
+  </form>
+
+  <div class="config-modal__done" data-config-done hidden>
+    <span aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"></path></svg>
+    </span>
+    <h2>{t('Check your email.')}</h2>
+    <p>
+      {t('Your verified configuration link is on its way. Reference:')}
+      <strong class="nums" data-config-reference></strong>
+    </p>
+    <button type="button" class="btn btn-outline" data-config-close>
+      {t('Close')}
+    </button>
+  </div>
+</dialog>
+
+<script>
+  import { actions } from 'astro:actions'
+  import { actionErrorMessage } from '../../lib/actionError'
+  import { thankYouUrl } from '../../lib/quoteForm'
+  import {
+    markTurnstileSpent,
+    prepareTurnstile,
+    resetTurnstile,
+  } from '../../lib/turnstileClient'
+
+  function initConfigurationRequestModal() {
+    const dialog = document.querySelector<HTMLDialogElement>(
+      '[data-config-modal]',
+    )
+    if (!dialog || dialog.dataset.initialized === 'true') return
+    dialog.dataset.initialized = 'true'
+    const form = dialog.querySelector<HTMLFormElement>('[data-config-form]')
+    const done = dialog.querySelector<HTMLElement>('[data-config-done]')
+    const title = dialog.querySelector<HTMLElement>('[data-config-package]')
+    const keyInput = dialog.querySelector<HTMLInputElement>(
+      '[data-config-package-key]',
+    )
+    const seriesKeyInput = dialog.querySelector<HTMLInputElement>(
+      '[data-config-series-key]',
+    )
+    const sourceInput =
+      dialog.querySelector<HTMLInputElement>('[data-config-source]')
+    const status = dialog.querySelector<HTMLElement>('[data-config-status]')
+    const submit =
+      dialog.querySelector<HTMLButtonElement>('[data-config-submit]')
+    const labels = {
+      package: dialog.dataset.packageLabel || 'Configuration package',
+      sending: dialog.dataset.sendingLabel || 'Sending…',
+      send: dialog.dataset.sendLabel || 'Send private link',
+      invalid:
+        dialog.dataset.invalidLabel || 'Please check the form and try again.',
+      failed:
+        dialog.dataset.failedLabel ||
+        'Something went wrong. Please try again.',
+    }
+
+    if (form && done && title && keyInput && sourceInput && status && submit) {
+      document.querySelectorAll('[data-config-request]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const element = button as HTMLElement
+          keyInput.value = element.dataset.packageKey ?? ''
+          if (seriesKeyInput) {
+            seriesKeyInput.value = element.dataset.packageSeriesKey ?? ''
+          }
+          title.textContent = element.dataset.packageTitle ?? labels.package
+          sourceInput.value = location.href
+          form.hidden = false
+          done.hidden = true
+          status.textContent = ''
+          status.dataset.state = ''
+          if (!dialog.open) dialog.showModal()
+          prepareTurnstile('#config-turnstile')
+          form
+            .querySelector<HTMLInputElement>('input[name="name"]')
+            ?.focus()
+        })
+      })
+
+      dialog.querySelectorAll('[data-config-close]').forEach((button) => {
+        button.addEventListener('click', () => dialog.close())
+      })
+      dialog.addEventListener('click', (event) => {
+        if (event.target === dialog) dialog.close()
+      })
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault()
+        if (!form.reportValidity()) return
+        submit.disabled = true
+        submit.textContent = labels.sending
+        status.textContent = ''
+        status.dataset.state = ''
+        const data = new FormData(form)
+        markTurnstileSpent('#config-turnstile')
+        const { data: result, error } =
+          await actions.requestConfiguration(data)
+        submit.disabled = false
+        submit.textContent = labels.send
+
+        if (result?.ok) {
+          const destination = thankYouUrl(result.inquiryId)
+          if (destination) {
+            window.location.assign(destination)
+            return
+          }
+          form.hidden = true
+          done.hidden = false
+          const reference = done.querySelector<HTMLElement>(
+            '[data-config-reference]',
+          )
+          if (reference && result.inquiryId)
+            reference.textContent = result.inquiryId
+          return
+        }
+
+        resetTurnstile('#config-turnstile')
+        status.dataset.state = 'error'
+        status.textContent = actionErrorMessage(
+          error,
+          labels.failed,
+          labels.invalid,
+        )
+      })
+    }
+  }
+
+  initConfigurationRequestModal()
+  document.addEventListener('astro:page-load', initConfigurationRequestModal)
+</script>
+
+<style>
+  .config-modal {
+    margin: auto;
+    width: min(620px, calc(100vw - 2 * var(--space-4)));
+    max-width: 620px;
+    padding: 0;
+    border: 1px solid var(--color-ink-200);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    color: var(--color-ink-900);
+    box-shadow: 0 28px 70px -24px rgba(14, 16, 19, 0.38);
+  }
+  .config-modal::backdrop {
+    background: rgba(14, 16, 19, 0.56);
+  }
+  .config-modal__form,
+  .config-modal__done {
+    padding: var(--space-6);
+  }
+  .config-modal__form h2 {
+    margin: var(--space-2) 0 0;
+    padding-right: var(--space-7);
+  }
+  .config-modal__package {
+    margin: var(--space-3) 0 0;
+    color: var(--color-coral);
+    font-weight: 600;
+  }
+  .config-modal__intro {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600);
+  }
+  .config-modal__close {
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--color-ink-200);
+    border-radius: 50%;
+    background: var(--color-white);
+    cursor: pointer;
+  }
+  .config-modal__close svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+  }
+  .config-modal__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin: var(--space-5) 0 0;
+  }
+  .config-modal__grid label,
+  .config-modal__message {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    color: var(--color-ink-700);
+    font-size: var(--text-body-s);
+    font-weight: 500;
+  }
+  .config-modal__message {
+    margin: var(--space-4) 0 0;
+  }
+  .config-modal label em {
+    color: var(--color-coral);
+    font-style: normal;
+  }
+  .config-modal input,
+  .config-modal textarea {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-sm);
+    background: var(--color-white);
+    color: var(--color-ink-900);
+    font: inherit;
+    font-weight: 400;
+  }
+  .config-modal textarea {
+    resize: vertical;
+  }
+  .config-modal__turnstile {
+    margin: var(--space-4) 0 0;
+  }
+  .config-modal__status {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-body-s);
+  }
+  .config-modal__status[data-state='error'] {
+    color: var(--color-error);
+  }
+  .config-modal__submit {
+    width: 100%;
+    margin: var(--space-4) 0 0;
+  }
+  .config-modal__privacy {
+    margin: var(--space-3) 0 0;
+    text-align: center;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .config-modal__done {
+    text-align: center;
+  }
+  .config-modal__done > span {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--color-success) 12%, transparent);
+    color: var(--color-success);
+  }
+  .config-modal__done svg {
+    width: 30px;
+    height: 30px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .config-modal__done h2 {
+    margin: var(--space-4) 0 0;
+  }
+  .config-modal__done p {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600);
+  }
+  .config-modal__done .btn {
+    margin: var(--space-5) 0 0;
+  }
+  .config-modal__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  @media (max-width: 767px) {
+    .config-modal__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

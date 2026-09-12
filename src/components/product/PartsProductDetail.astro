@@ -1,0 +1,601 @@
+---
+import type {ProductData} from '../../sanity/content'
+import {urlFor} from '../../sanity/image'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  product: ProductData
+  locale?: Locale
+}
+
+const {product, locale = 'en'} = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const productTitle = product.title ?? t('Coral Pilates part')
+
+const categoryLabels: Record<string, string> = {
+  springs: t('Springs'),
+  upholstery: t('Upholstery'),
+  cables_ropes: t('Cables & ropes'),
+  footbars_hardware: t('Footbars & hardware'),
+  training_accessories: t('Boxes & mats'),
+  other: t('Other parts'),
+}
+const categoryLabel = product.partsCategory
+  ? (categoryLabels[product.partsCategory] ?? t('Parts & accessories'))
+  : t('Parts & accessories')
+
+const mainAsset = product.mainImage?.asset
+const mainImage = mainAsset
+  ? urlFor(mainAsset).width(1280).height(1280).fit('max').auto('format').url()
+  : null
+const mainAlt = product.mainImage?.alt ?? productTitle
+const compatibleProducts = product.compatibleProducts ?? []
+const keySpecs = (product.keySpecs ?? []).slice(0, 4)
+const specificationRows = [
+  ...(product.specDimensions ?? []),
+  ...(product.specWeight ?? []),
+  ...(product.specMechanism ?? []),
+  ...(product.specMaterials ?? []),
+].filter((row) => row?.label && row?.value)
+const relatedProducts = product.related ?? []
+const contactHref = `${localizedPath('/contact', locale)}?product=${encodeURIComponent(product.sku ?? productTitle)}`
+---
+
+<section class="section part-detail" data-parts-product-detail>
+  <div class="container">
+    <nav class="part__crumbs" aria-label={t('Breadcrumb')}>
+      <a href={localizedPath('/products', locale)}>{t('Products')}</a>
+      <span aria-hidden="true">/</span>
+      <a href={`${localizedPath('/products', locale)}?parts=all`}>{t('Parts & accessories')}</a>
+      <span aria-hidden="true">/</span>
+      <span>{categoryLabel}</span>
+    </nav>
+
+    <div class="part__grid">
+      <figure class="part__media">
+        {
+          mainImage ? (
+            <img src={mainImage} alt={mainAlt} width="1280" height="1280" fetchpriority="high" />
+          ) : (
+            <div class="part__media-empty" aria-label={t('Product image coming soon')} role="img">
+              {t('Product image coming soon')}
+            </div>
+          )
+        }
+      </figure>
+
+      <div class="part__content">
+        <p class="eyebrow">{categoryLabel}</p>
+        <h1>{productTitle}</h1>
+        {product.sku && <p class="part__sku nums">{t('Part no.')}: {product.sku}</p>}
+        {product.summary && <p class="part__summary">{product.summary}</p>}
+
+        <section class="part__compatibility" aria-labelledby="compatibility-title">
+          <p class="part__section-label">{t('Compatibility first')}</p>
+          <h2 id="compatibility-title">{t('Confirm fit before ordering.')}</h2>
+          {
+            compatibleProducts.length > 0 ? (
+              <ul class="part__compatible-list">
+                {compatibleProducts.map((compatible) => (
+                  <li>
+                    <a href={localizedPath(`/products/${compatible.slug ?? ''}`, locale)}>
+                      <span>
+                        <strong>{compatible.title}</strong>
+                        {compatible.sku && <small class="nums">{compatible.sku}</small>}
+                      </span>
+                      <span aria-hidden="true">→</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p class="part__compatibility-empty">
+                {t('Send us your equipment model and SKU. We will confirm fit before quotation.')}
+              </p>
+            )
+          }
+          {product.compatibilityNotes && <p class="part__compatibility-note">{product.compatibilityNotes}</p>}
+        </section>
+
+        {
+          keySpecs.length > 0 && (
+            <dl class="part__facts">
+              {keySpecs.map((spec) => (
+                <div>
+                  <dt>{spec.label}</dt>
+                  <dd class="nums">{spec.value}{spec.unit ? ` ${spec.unit}` : ''}</dd>
+                  {spec.note && <p>{spec.note}</p>}
+                </div>
+              ))}
+            </dl>
+          )
+        }
+
+        <div class="part__actions">
+          <label class="part__quantity">
+            <span>{t('Quantity')}</span>
+            <input data-parts-quantity type="number" min="1" step="1" value="1" inputmode="numeric" />
+          </label>
+          <button
+            type="button"
+            class="btn btn-coral"
+            data-rfq-add
+            data-parts-rfq
+            data-rfq-product-id={product._id}
+            data-rfq-slug={product.slug ?? ''}
+            data-rfq-title={productTitle}
+            data-rfq-sku={product.sku ?? ''}
+            data-rfq-quantity="1"
+          >
+            {t('Add to RFQ')}
+          </button>
+          <a class="btn btn-outline" href={contactHref}>{t('Check compatibility')}</a>
+        </div>
+        <p class="part__confirmation">{t('Coral confirms final compatibility before quotation.')}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{
+  (specificationRows.length > 0 || product.installationNotes || product.careNotes || product.replacementGuidance) && (
+    <section class="section part-information">
+      <div class="container">
+        <div class="part__information-grid">
+          {
+            specificationRows.length > 0 && (
+              <section class="part__information-block" aria-labelledby="part-specifications-title">
+                <p class="eyebrow">{t('Product details')}</p>
+                <h2 id="part-specifications-title">{t('Specifications')}</h2>
+                <dl class="part__specifications">
+                  {specificationRows.map((row) => (
+                    <div>
+                      <dt>{row.label}</dt>
+                      <dd>{row.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </section>
+            )
+          }
+          {
+            product.installationNotes && (
+              <section class="part__information-block" aria-labelledby="part-installation-title">
+                <p class="eyebrow">{t('Installation')}</p>
+                <h2 id="part-installation-title">{t('Installation & replacement')}</h2>
+                <p>{product.installationNotes}</p>
+              </section>
+            )
+          }
+          {
+            (product.careNotes || product.replacementGuidance) && (
+              <section class="part__information-block" aria-labelledby="part-care-title">
+                <p class="eyebrow">{t('Care')}</p>
+                <h2 id="part-care-title">{t('Care & service')}</h2>
+                {product.careNotes && <p>{product.careNotes}</p>}
+                {product.replacementGuidance && (
+                  <p class="part__service-note">
+                    <strong>{t('Service guidance')}:</strong> {product.replacementGuidance}
+                  </p>
+                )}
+              </section>
+            )
+          }
+        </div>
+      </div>
+    </section>
+  )
+}
+
+{
+  relatedProducts.length > 0 && (
+    <section class="section part-related">
+      <div class="container">
+        <div class="part__related-head">
+          <div>
+            <p class="eyebrow">{categoryLabel}</p>
+            <h2>{t('Related parts & accessories')}</h2>
+          </div>
+          <a class="btn btn-link" href={`${localizedPath('/products', locale)}?parts=all`}>{t('View all parts')} <span aria-hidden="true">→</span></a>
+        </div>
+        <ul class="part__related-grid">
+          {relatedProducts.map((related) => {
+            const image = related.mainImage?.asset
+              ? urlFor(related.mainImage.asset).width(640).height(640).fit('crop').auto('format').url()
+              : null
+            return (
+              <li>
+                <a class="part__related-card" href={localizedPath(`/products/${related.slug ?? ''}`, locale)}>
+                  <div class="part__related-image">
+                    {image ? <img src={image} alt={related.mainImage?.alt ?? related.title ?? ''} loading="lazy" width="640" height="640" /> : <span>{t('Product image coming soon')}</span>}
+                  </div>
+                  <div class="part__related-body">
+                    {related.sku && <p class="part__related-sku nums">{related.sku}</p>}
+                    <p>{related.title}</p>
+                    <span>{t('View details')} <span aria-hidden="true">→</span></span>
+                  </div>
+                </a>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<section class="band part-cta">
+  <div class="container part-cta__inner">
+    <div>
+      <p class="eyebrow">{t('Need a hand?')}</p>
+      <h2>{t('Not sure which part fits your equipment?')}</h2>
+      <p>{t('Send your equipment model, SKU or a photo. Our team will help identify the right part before you order.')}</p>
+    </div>
+    <a class="btn btn-coral" href={contactHref}>{t('Ask our parts team')}</a>
+  </div>
+</section>
+
+<script>
+  function initializePartsProductDetail() {
+    document.querySelectorAll<HTMLElement>('[data-parts-product-detail]').forEach((root) => {
+      if (root.dataset.initialized === 'true') return
+      root.dataset.initialized = 'true'
+      const quantityInput = root.querySelector<HTMLInputElement>('[data-parts-quantity]')
+      const rfqButton = root.querySelector<HTMLElement>('[data-parts-rfq]')
+      if (!quantityInput || !rfqButton) return
+
+      const syncQuantity = () => {
+        const quantity = Math.max(1, Math.floor(Number(quantityInput.value) || 1))
+        quantityInput.value = String(quantity)
+        rfqButton.dataset.rfqQuantity = String(quantity)
+      }
+
+      quantityInput.addEventListener('change', syncQuantity)
+      quantityInput.addEventListener('blur', syncQuantity)
+    })
+  }
+
+  initializePartsProductDetail()
+  document.addEventListener('astro:page-load', initializePartsProductDetail)
+</script>
+
+<style>
+  .part-detail {
+    background: var(--color-paper-2, #ece7dd);
+  }
+  .part__crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: 0 0 var(--space-6);
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+  .part__crumbs a:hover {
+    color: var(--color-coral);
+  }
+  .part__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+    gap: var(--space-8);
+    align-items: start;
+  }
+  .part__media {
+    aspect-ratio: 1;
+    margin: 0;
+    overflow: hidden;
+    background: var(--color-white);
+    border: 1px solid var(--color-ink-200);
+  }
+  .part__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .part__media-empty {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+    padding: var(--space-5);
+    color: var(--color-ink-500);
+    text-align: center;
+  }
+  .part__content h1 {
+    max-width: 14ch;
+    margin: var(--space-3) 0 0;
+  }
+  .part__sku {
+    margin: var(--space-3) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+  .part__summary {
+    max-width: 54ch;
+    margin: var(--space-4) 0 0;
+    color: var(--color-ink-600);
+  }
+  .part__compatibility {
+    margin-top: var(--space-6);
+    padding: var(--space-5);
+    border-left: 3px solid var(--color-coral);
+    background: var(--color-white);
+  }
+  .part__section-label {
+    margin: 0;
+    color: var(--color-coral);
+    font-size: var(--text-micro);
+    font-weight: 700;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+  .part__compatibility h2 {
+    margin: var(--space-2) 0 0;
+    font-size: var(--text-h3);
+  }
+  .part__compatible-list {
+    display: grid;
+    gap: var(--space-2);
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .part__compatible-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-block: var(--space-2);
+    border-bottom: 1px solid var(--color-ink-200);
+  }
+  .part__compatible-list a:hover {
+    color: var(--color-coral);
+  }
+  .part__compatible-list strong,
+  .part__compatible-list small {
+    display: block;
+  }
+  .part__compatible-list small {
+    margin-top: var(--space-1);
+    color: var(--color-ink-500);
+  }
+  .part__compatibility-empty,
+  .part__compatibility-note {
+    margin: var(--space-4) 0 0;
+    color: var(--color-ink-600);
+  }
+  .part__compatibility-note {
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-ink-200);
+  }
+  .part__facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin: var(--space-6) 0 0;
+    background: var(--color-ink-200);
+    border: 1px solid var(--color-ink-200);
+  }
+  .part__facts > div {
+    min-height: 6.5rem;
+    padding: var(--space-3);
+    background: var(--color-paper-2, #ece7dd);
+  }
+  .part__facts dt {
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+  .part__facts dd {
+    margin: var(--space-1) 0 0;
+    color: var(--color-ink-900);
+    font-weight: 700;
+  }
+  .part__facts p {
+    margin: var(--space-1) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .part__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+  }
+  .part__quantity {
+    display: grid;
+    gap: var(--space-1);
+    color: var(--color-ink-600);
+    font-size: var(--text-body-s);
+  }
+  .part__quantity input {
+    width: 5.5rem;
+    height: 48px;
+    padding-inline: var(--space-3);
+    border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-sm);
+    background: var(--color-white);
+    color: var(--color-ink-900);
+    font: inherit;
+  }
+  .part__confirmation {
+    margin: var(--space-3) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+  .part-information {
+    background: var(--color-white);
+  }
+  .part__information-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    border-top: 1px solid var(--color-ink-200);
+  }
+  .part__information-block {
+    min-width: 0;
+    padding: var(--space-6);
+    border-bottom: 1px solid var(--color-ink-200);
+  }
+  .part__information-block + .part__information-block {
+    border-left: 1px solid var(--color-ink-200);
+  }
+  .part__information-block h2 {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-h3);
+  }
+  .part__information-block > p:not(.eyebrow) {
+    margin: var(--space-3) 0 0;
+    color: var(--color-ink-600);
+    white-space: pre-line;
+  }
+  .part__service-note {
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-ink-200);
+  }
+  .part__specifications {
+    margin: var(--space-4) 0 0;
+  }
+  .part__specifications > div {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: var(--space-3);
+    padding-block: var(--space-2);
+    border-top: 1px solid var(--color-ink-200);
+  }
+  .part__specifications dt {
+    color: var(--color-ink-500);
+  }
+  .part__specifications dd {
+    margin: 0;
+    color: var(--color-ink-800);
+  }
+  .part-related {
+    background: var(--color-paper-2, #ece7dd);
+  }
+  .part__related-head {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .part__related-head h2 {
+    margin: var(--space-3) 0 0;
+  }
+  .part__related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .part__related-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid var(--color-ink-200);
+    background: var(--color-white);
+    transition: border-color var(--dur-fast) var(--ease-standard);
+  }
+  .part__related-card:hover {
+    border-color: var(--color-coral);
+  }
+  .part__related-image {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: var(--color-white);
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+    text-align: center;
+  }
+  .part__related-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .part__related-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: var(--space-4);
+  }
+  .part__related-sku {
+    margin: 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-micro);
+  }
+  .part__related-body > p:not(.part__related-sku) {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-900);
+    font-weight: 600;
+  }
+  .part__related-body > span {
+    margin-top: auto;
+    padding-top: var(--space-4);
+    color: var(--color-coral);
+    font-size: var(--text-body-s);
+  }
+  .part-cta {
+    background: var(--color-navy, #172235);
+    color: var(--color-white);
+  }
+  .part-cta__inner {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-6);
+    padding-block: var(--space-8);
+  }
+  .part-cta .eyebrow {
+    color: var(--color-coral-200, #ffaca5);
+  }
+  .part-cta h2,
+  .part-cta p {
+    margin: 0;
+  }
+  .part-cta h2 {
+    margin-top: var(--space-3);
+    max-width: 24ch;
+  }
+  .part-cta p:not(.eyebrow) {
+    max-width: 58ch;
+    margin-top: var(--space-3);
+    color: var(--color-ink-200);
+  }
+  @media (max-width: 900px) {
+    .part__grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-6);
+    }
+    .part__media {
+      max-width: 44rem;
+    }
+    .part__information-grid {
+      grid-template-columns: 1fr;
+    }
+    .part__information-block + .part__information-block {
+      border-left: 0;
+    }
+  }
+  @media (max-width: 640px) {
+    .part__facts,
+    .part__related-grid {
+      grid-template-columns: 1fr;
+    }
+    .part__actions {
+      align-items: stretch;
+    }
+    .part__actions .btn {
+      flex: 1 1 13rem;
+    }
+    .part__related-head,
+    .part-cta__inner {
+      align-items: start;
+      flex-direction: column;
+    }
+  }
+</style>

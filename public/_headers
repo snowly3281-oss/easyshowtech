@@ -1,0 +1,4 @@
+# Soft launch only. Remove this rule when PUBLIC_SITE_INDEXING_ENABLED is set
+# to true for the public indexing launch.
+/*
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex

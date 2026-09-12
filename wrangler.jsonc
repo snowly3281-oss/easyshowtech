@@ -1,0 +1,26 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "coral-site",
+	"compatibility_date": "2026-07-07",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"routes": [
+		{
+			"pattern": "coralpilates.com",
+			"custom_domain": true
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "INQUIRIES_DB",
+			"database_name": "coral-inquiries",
+			"migrations_dir": "./migrations",
+			"database_id": "7faaaae1-371d-4382-bfa8-8ccec4e97c24"
+		}
+	],
+	"observability": {
+		"enabled": true
+	}
+}

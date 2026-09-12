@@ -1,0 +1,16 @@
+---
+import LegalLayout from "../layouts/LegalLayout.astro";
+
+const sections = [
+  "Return eligibility",
+  "How to start a return",
+  "Refunds and restocking",
+  "Non-returnable items",
+];
+---
+<LegalLayout
+  title="Returns"
+  pageKey="returns"
+  sections={sections}
+  noIndex={true}
+/>

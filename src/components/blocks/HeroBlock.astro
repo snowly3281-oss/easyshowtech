@@ -1,0 +1,62 @@
+---
+import type { HeroBlockData } from '../../sanity/content'
+import { urlFor } from '../../sanity/image'
+import { resolveHref } from '../../sanity/links'
+
+interface Props {
+  block: HeroBlockData
+}
+
+const { block } = Astro.props
+
+const asset = block.backgroundImage?.asset
+const bgUrl = asset ? urlFor(asset).width(2000).auto('format').url() : null
+
+const ctaHref = block.cta ? resolveHref(block.cta.internal, block.cta.external) : null
+---
+
+<section
+  class:list={['band', 'hero', { 'hero--image': bgUrl }]}
+  style={bgUrl ? `--hero-bg: url('${bgUrl}')` : undefined}
+>
+  <div class="container hero__inner">
+    {block.eyebrow && <p class="eyebrow">{block.eyebrow}</p>}
+    {block.heading && <h1 class="hero__heading">{block.heading}</h1>}
+    {block.subheading && <p class="body-l hero__sub">{block.subheading}</p>}
+    {
+      ctaHref && block.cta?.label && (
+        <a class="btn btn-coral hero__cta" href={ctaHref}>
+          {block.cta.label}
+        </a>
+      )
+    }
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding-block: var(--space-10);
+    background: var(--color-paper-2, #ece7dd);
+  }
+  .hero--image {
+    background-image: linear-gradient(rgba(14, 16, 19, 0.55), rgba(14, 16, 19, 0.55)),
+      var(--hero-bg);
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+  }
+  .hero--image .eyebrow {
+    color: #fff;
+  }
+  .hero__heading {
+    margin: var(--space-3) 0 0;
+    max-width: 16ch;
+  }
+  .hero__sub {
+    margin: var(--space-4) 0 0;
+    max-width: 52ch;
+  }
+  .hero__cta {
+    margin: var(--space-6) 0 0;
+  }
+</style>

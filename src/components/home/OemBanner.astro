@@ -1,0 +1,56 @@
+---
+import type { HomeData } from '../../sanity/content'
+import {localizedPath, resolveLocale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  data?: HomeData['oemBanner']
+}
+
+const { data } = Astro.props
+const locale = resolveLocale(undefined, Astro.url.pathname)
+const t = (english: string) => staticUi(locale, english)
+---
+
+{
+  data && (
+    <section class="band oemb">
+      <div class="container oemb__inner">
+        <div class="oemb__text">
+          {data.heading && <h2 class="oemb__title">{data.heading}</h2>}
+          {data.body && <p class="oemb__body">{data.body}</p>}
+        </div>
+        <a class="btn btn-coral oemb__cta" href={localizedPath('/oem-services', locale)}>{t('Explore OEM services')}</a>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .oemb {
+    background: var(--color-navy, #1a2332);
+    color: #fff;
+    padding-block: var(--space-9);
+  }
+  .oemb__inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+    align-items: center;
+    justify-content: space-between;
+  }
+  .oemb__text {
+    max-width: 56ch;
+  }
+  .oemb__title {
+    margin: 0;
+    max-width: 20ch;
+  }
+  .oemb__body {
+    margin: var(--space-3) 0 0;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .oemb__cta {
+    flex: none;
+  }
+</style>

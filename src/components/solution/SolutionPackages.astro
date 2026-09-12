@@ -1,0 +1,982 @@
+---
+import type { SolutionData, SolutionPackage } from '../../sanity/content'
+import { formatPrice, getPricePresentation } from '../../lib/price'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {localizeCountDuration, staticUi} from '../../i18n/static'
+import PackageLayoutPreview from './PackageLayoutPreview.astro'
+import ConfigurationRequestModal from './ConfigurationRequestModal.astro'
+import PackageProductList from './PackageProductList.astro'
+
+interface Props {
+  solution: SolutionData
+  whatsapp: string
+  showPrices: boolean
+  locale?: Locale
+}
+
+const { solution, whatsapp, showPrices, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const packageTierOrder = ['compact', 'recommended', 'expanded']
+const packages = (solution.packages ?? [])
+  .filter((pkg) => pkg?._key && pkg?.title)
+  .sort((a, b) => {
+    const aIndex = packageTierOrder.indexOf(a.tier ?? '')
+    const bIndex = packageTierOrder.indexOf(b.tier ?? '')
+    return (aIndex === -1 ? packageTierOrder.length : aIndex) -
+      (bIndex === -1 ? packageTierOrder.length : bIndex)
+  })
+const defaultPackageKey =
+  packages.find((pkg) => pkg.isRecommended || pkg.tier === 'recommended')?._key ??
+  packages[0]?._key
+const whatsappDigits = whatsapp.replace(/\D/g, '').replace(/^00/, '')
+
+const tierLabel: Record<string, string> = {
+  compact: t('Compact'),
+  recommended: t('Recommended'),
+  expanded: t('Expanded'),
+}
+const modalLabels = {
+  package: t('Configuration package'),
+  sending: t('Sending…'),
+  send: t('Send private link'),
+  invalid: t('Please check the form and try again.'),
+  failed: t('Something went wrong. Please try again.'),
+}
+
+type PackageSeriesVariant = NonNullable<
+  NonNullable<SolutionPackage['seriesVariants']>[number]
+>
+
+function range(
+  min: number | null | undefined,
+  max: number | null | undefined,
+  unit: string,
+): string | null {
+  if (min == null && max == null) return null
+  if (min != null && min === max) return `${min} ${unit}`
+  return `${min ?? '—'}–${max ?? '—'} ${unit}`
+}
+
+function packageVariants(pkg: SolutionPackage): PackageSeriesVariant[] {
+  return (pkg.seriesVariants ?? []).filter(
+    (variant) =>
+      variant?._key &&
+      variant?.series?.slug &&
+      (variant.items ?? []).some(
+        (item) => item?.product?.title || item?.customName,
+      ),
+  )
+}
+
+const seriesOptions = Array.from(
+  new Map(
+    packages.flatMap((pkg) =>
+      packageVariants(pkg).map((variant) => [
+        variant.series.slug,
+        {
+          slug: variant.series.slug,
+          title: variant.series.title,
+          isRecommended: variant.isRecommended === true,
+        },
+      ]),
+    ),
+  ).values(),
+)
+const defaultSeriesSlug =
+  seriesOptions.find((series) => series.isRecommended)?.slug ?? seriesOptions[0]?.slug
+---
+
+{
+  packages.length > 0 && (
+    <section class="section packages" id="packages">
+      <div class="container">
+        <div class="packages__intro">
+          <div>
+            <p class="eyebrow">{t('Recommended configurations')}</p>
+            <h2>{t('Start with the approved package. Adapt it to your floor.')}</h2>
+          </div>
+          <p>
+            {solution.configurationIntro ??
+              t('Review the approved equipment mix, area range and indicative pricing. Final room-specific quantities, layout dimensions and freight are confirmed after plan review.')}
+          </p>
+        </div>
+
+        {
+          packages.length > 0 && (
+            <div class="package-controls">
+              {
+                packages.length > 1 && (
+              <div
+                class="package-tabs"
+                data-package-tabs
+                role="tablist"
+                aria-label={t('Configuration routes')}
+              >
+                {packages.map((pkg) => {
+                  const active = pkg._key === defaultPackageKey
+                  const areaMetric = range(pkg.areaMinSqm, pkg.areaMaxSqm, '㎡')
+                  return (
+                    <button
+                      type="button"
+                      class:list={['package-tab', { 'package-tab--active': active }]}
+                      data-package-tab={pkg._key}
+                      id={`package-tab-${pkg._key}`}
+                      role="tab"
+                      aria-controls={`package-panel-${pkg._key}`}
+                      aria-selected={active ? 'true' : 'false'}
+                      tabindex={active ? 0 : -1}
+                    >
+                      <small>
+                        {pkg.isRecommended || pkg.tier === 'recommended'
+                          ? t('Client approved')
+                          : t('Area-specific')}
+                      </small>
+                      <span>{pkg.title}</span>
+                      {areaMetric && <em class="nums">{areaMetric}</em>}
+                    </button>
+                  )
+                })}
+              </div>
+                )
+              }
+              <div class="package-controls__lower">
+                {
+                  seriesOptions.length > 1 && (
+                    <div
+                      class="package-series-tabs"
+                      data-package-series-tabs
+                      role="group"
+                      aria-label={t('Equipment series')}
+                    >
+                      {seriesOptions.map((series) => {
+                        const active = series.slug === defaultSeriesSlug
+                        return (
+                          <button
+                            type="button"
+                            class:list={[
+                              'package-series-tab',
+                              { 'package-series-tab--active': active },
+                            ]}
+                            data-package-series-tab={series.slug}
+                            aria-pressed={active ? 'true' : 'false'}
+                          >
+                            <span class="package-series-tab__dot" aria-hidden="true"></span>
+                            <span>{series.title}</span>
+                            {series.isRecommended && (
+                              <small>{t('Recommended')}</small>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )
+                }
+              <div class="package-controls__custom">
+                <a href="#floor-plan" data-floor-plan-cta>
+                  {t('Or skip the configurator — let us spec it for you')}
+                  <span aria-hidden="true">→</span>
+                </a>
+              </div>
+              </div>
+            </div>
+          )
+        }
+
+        <div class="packages__list">
+          {packages.map((pkg, index) => {
+            const areaMetric = range(pkg.areaMinSqm, pkg.areaMaxSqm, '㎡')
+            const areaImperial = range(pkg.areaMinSqFt, pkg.areaMaxSqFt, 'sq ft')
+            const equipment = range(
+              pkg.equipmentTotalMin,
+              pkg.equipmentTotalMax,
+              t('units'),
+            )
+            const variants = packageVariants(pkg)
+            const defaultVariant =
+              variants.find((variant) => variant.series?.slug === defaultSeriesSlug) ??
+              variants.find((variant) => variant.isRecommended) ??
+              variants[0]
+            const packagePrice = getPricePresentation({ showPrices }, pkg)
+            const packagePriceText = formatPrice(packagePrice)
+            const showPackagePrice =
+              showPrices &&
+              ['show', 'range', 'quote'].includes(pkg.priceDisplay ?? '')
+            const whatsappText = [
+              t('Hello Coral Pilates, I would like to request a configuration.'),
+              `${t('Solution')}: ${solution.title ?? t('Solution')}`,
+              `${t('Package')}: ${pkg.title ?? tierLabel[pkg.tier ?? ''] ?? t('Package')}`,
+              `${t('Page')}: https://coralpilates.com${localizedPath(`/solutions/${solution.slug ?? ''}`, locale)}`,
+              '',
+              t('Please send the current equipment schedule and help me confirm whether it fits my space.'),
+            ].join('\n')
+            return (
+              <article
+                class:list={[
+                  'package',
+                  {
+                    'package--recommended':
+                      pkg.isRecommended || pkg.tier === 'recommended',
+                  },
+                ]}
+                data-package-panel={pkg._key}
+                data-default-series={defaultVariant?.series?.slug ?? ''}
+                id={`package-panel-${pkg._key}`}
+                role={packages.length > 1 ? 'tabpanel' : undefined}
+                aria-labelledby={
+                  packages.length > 1 ? `package-tab-${pkg._key}` : undefined
+                }
+                hidden={pkg._key !== defaultPackageKey}
+                style={`--package-index:${index}`}
+              >
+                <div class="package__main">
+                  <div class="package__schedule">
+                    <div class="package__top">
+                      <div>
+                        <p class="package__tier">
+                          {tierLabel[pkg.tier ?? ''] ?? `${t('Option')} ${index + 1}`} {t('package')}
+                        </p>
+                        <h3>{pkg.title}</h3>
+                      </div>
+                      {(pkg.isRecommended || pkg.tier === 'recommended') && (
+                        <span class="package__badge">{t('Approved baseline')}</span>
+                      )}
+                    </div>
+
+                    {pkg.summary && <p class="package__summary">{pkg.summary}</p>}
+
+                    <dl class="package__facts">
+                      {(areaMetric || areaImperial) && (
+                        <div>
+                          <dt>{t('Suitable area')}</dt>
+                          <dd class="nums">
+                            {[areaMetric, areaImperial].filter(Boolean).join(' / ')}
+                          </dd>
+                        </div>
+                      )}
+                      {equipment && (
+                        <div>
+                          <dt>{t('Equipment range')}</dt>
+                          <dd class="nums">{equipment}</dd>
+                        </div>
+                      )}
+                      {pkg.leadTime && (
+                        <div>
+                          <dt>{t('Production')}</dt>
+                          <dd>{localizeCountDuration(locale, pkg.leadTime)}</dd>
+                        </div>
+                      )}
+                    </dl>
+
+                    {
+                      variants.length > 0 ? (
+                        <div class="package__series-panels">
+                          {variants.map((variant) => (
+                            <div
+                              data-package-series-panel={pkg._key}
+                              data-series-slug={variant.series?.slug}
+                              data-series-key={variant._key}
+                              data-series-title={variant.series?.title}
+                              hidden={variant._key !== defaultVariant?._key}
+                            >
+                              <PackageProductList
+                                items={variant.items ?? []}
+                                showItemQuantities={pkg.showItemQuantities === true}
+                                locale={locale}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <PackageProductList
+                          items={pkg.items ?? []}
+                          showItemQuantities={pkg.showItemQuantities === true}
+                          locale={locale}
+                        />
+                      )
+                    }
+
+                    <div
+                      class:list={[
+                        'package__totals',
+                        { 'package__totals--priced': showPackagePrice },
+                      ]}
+                    >
+                      {showPackagePrice && (
+                        <div class="package__total-price">
+                          <span>{t('Estimated equipment price')}</span>
+                          <strong class="nums">
+                            {packagePriceText || t('Price on request')}
+                          </strong>
+                          {packagePrice && (pkg.priceUnit || pkg.priceNote) && (
+                            <small>
+                              {[pkg.priceUnit, pkg.priceNote].filter(Boolean).join(' · ')}
+                            </small>
+                          )}
+                        </div>
+                      )}
+                      <div>
+                        <span>{t('Approved area range')}</span>
+                        <strong class="nums">{areaMetric || t('Tailored to plan')}</strong>
+                      </div>
+                      <div>
+                        <span>{t('Private deliverable')}</span>
+                        <strong>{t('Full BOM + linked RFQ')}</strong>
+                      </div>
+                    </div>
+
+                    <div class="package__actions">
+                      <button
+                        type="button"
+                        class="btn btn-coral"
+                        data-config-request
+                        data-solution-id={solution._id}
+                        data-package-key={pkg._key}
+                        data-package-base-title={pkg.title ?? modalLabels.package}
+                        data-package-title={[
+                          pkg.title ?? modalLabels.package,
+                          defaultVariant?.series?.title,
+                        ]
+                          .filter(Boolean)
+                          .join(' — ')}
+                        data-package-series-key={defaultVariant?._key ?? ''}
+                      >
+                        {t('Email me this configuration')}
+                      </button>
+                      {whatsappDigits && (
+                        <a
+                          class="btn btn-outline"
+                          href={`https://wa.me/${whatsappDigits}?text=${encodeURIComponent(whatsappText)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {t('Request via WhatsApp')}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {
+                    variants.length > 0 ? (
+                      <div class="package__layout-stack">
+                        {variants.map((variant) => (
+                          <div
+                            data-package-layout-panel={pkg._key}
+                            data-series-slug={variant.series?.slug}
+                            hidden={variant._key !== defaultVariant?._key}
+                          >
+                            <PackageLayoutPreview
+                              areaMetric={areaMetric}
+                              locale={locale}
+                              seriesTitle={variant.series?.title}
+                              items={variant.items ?? []}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <PackageLayoutPreview
+                        areaMetric={areaMetric}
+                        locale={locale}
+                        items={pkg.items ?? []}
+                      />
+                    )
+                  }
+                </div>
+              </article>
+            )
+          })}
+        </div>
+
+        <p class="packages__gate">
+          {t('The published schedule is an approved planning baseline. Contact verification unlocks the current configuration file, room-specific adjustments, linked RFQ and a private 14-day project link.')}
+        </p>
+      </div>
+
+      <ConfigurationRequestModal
+        solutionId={solution._id}
+        labels={modalLabels}
+        locale={locale}
+      />
+    </section>
+  )
+}
+
+<script>
+  function initSolutionPackageControls() {
+    for (const section of document.querySelectorAll<HTMLElement>('.packages')) {
+      if (section.dataset.controlsInitialized === 'true') continue
+      section.dataset.controlsInitialized = 'true'
+
+      const packageTabs = Array.from(
+        section.querySelectorAll<HTMLButtonElement>('[data-package-tab]'),
+      )
+      const packagePanels = Array.from(
+        section.querySelectorAll<HTMLElement>('[data-package-panel]'),
+      )
+      const seriesTabs = Array.from(
+        section.querySelectorAll<HTMLButtonElement>('[data-package-series-tab]'),
+      )
+      const seriesPanels = Array.from(
+        section.querySelectorAll<HTMLElement>('[data-package-series-panel]'),
+      )
+      const layoutPanels = Array.from(
+        section.querySelectorAll<HTMLElement>('[data-package-layout-panel]'),
+      )
+      const seriesTabsContainer = section.querySelector<HTMLElement>(
+        '[data-package-series-tabs]',
+      )
+      let activeSeries =
+        seriesTabs.find((tab) => tab.getAttribute('aria-pressed') === 'true')
+          ?.dataset.packageSeriesTab ?? ''
+
+      const activePackageKey = () =>
+        packagePanels.find((panel) => !panel.hidden)?.dataset.packagePanel ?? ''
+
+      const availableSeriesForPackage = (packageKey: string) =>
+        new Set(
+          seriesPanels
+            .filter(
+              (panel) => panel.dataset.packageSeriesPanel === packageKey && panel.dataset.seriesSlug,
+            )
+            .map((panel) => panel.dataset.seriesSlug as string),
+        )
+
+      const updateSeriesTabs = (packageKey: string) => {
+        const available = availableSeriesForPackage(packageKey)
+        if (seriesTabsContainer) seriesTabsContainer.hidden = available.size < 2
+        for (const tab of seriesTabs) {
+          const isAvailable = available.has(tab.dataset.packageSeriesTab ?? '')
+          tab.hidden = !isAvailable
+          tab.disabled = !isAvailable
+        }
+        return available
+      }
+
+      const selectSeries = (slug: string, focus = false) => {
+        const packageKey = activePackageKey()
+        const available = updateSeriesTabs(packageKey)
+        if (!available.size) {
+          activeSeries = ''
+          for (const panel of seriesPanels) panel.hidden = true
+          for (const layout of layoutPanels) {
+            if (layout.dataset.packageLayoutPanel === packageKey) layout.hidden = true
+          }
+          const requestButton = packagePanels
+            .find((panel) => panel.dataset.packagePanel === packageKey)
+            ?.querySelector<HTMLElement>('[data-config-request]')
+          if (requestButton) {
+            requestButton.dataset.packageSeriesKey = ''
+            requestButton.dataset.packageTitle = requestButton.dataset.packageBaseTitle ?? ''
+          }
+          return
+        }
+        if (!available.has(slug)) {
+          slug = packagePanels.find((panel) => panel.dataset.packagePanel === packageKey)
+            ?.dataset.defaultSeries || [...available][0]
+        }
+        activeSeries = slug
+        for (const tab of seriesTabs) {
+          const active = tab.dataset.packageSeriesTab === slug
+          tab.classList.toggle('package-series-tab--active', active)
+          tab.setAttribute('aria-pressed', String(active))
+          if (active && focus) tab.focus()
+        }
+
+        for (const panel of seriesPanels) {
+          const active =
+            panel.dataset.packageSeriesPanel === packageKey &&
+            panel.dataset.seriesSlug === slug
+          panel.hidden = !active
+          if (!active) continue
+
+          const packagePanel = panel.closest<HTMLElement>('[data-package-panel]')
+          const requestButton = packagePanel?.querySelector<HTMLElement>(
+            '[data-config-request]',
+          )
+          if (!requestButton) continue
+          requestButton.dataset.packageSeriesKey = panel.dataset.seriesKey ?? ''
+          const baseTitle = requestButton.dataset.packageBaseTitle ?? ''
+          const seriesTitle = panel.dataset.seriesTitle ?? ''
+          requestButton.dataset.packageTitle = [baseTitle, seriesTitle]
+            .filter(Boolean)
+            .join(' — ')
+        }
+
+        for (const layout of layoutPanels) {
+          layout.hidden = !(
+            layout.dataset.packageLayoutPanel === packageKey &&
+            layout.dataset.seriesSlug === slug
+          )
+        }
+      }
+
+      const selectPackage = (key: string, focus = false) => {
+        for (const tab of packageTabs) {
+          const active = tab.dataset.packageTab === key
+          tab.classList.toggle('package-tab--active', active)
+          tab.setAttribute('aria-selected', String(active))
+          tab.tabIndex = active ? 0 : -1
+          if (active && focus) tab.focus()
+        }
+
+        for (const panel of packagePanels) {
+          const active = panel.dataset.packagePanel === key
+          panel.hidden = !active
+          panel.classList.toggle('package--active', active)
+        }
+        const activePanel = packagePanels.find((panel) => panel.dataset.packagePanel === key)
+        const available = updateSeriesTabs(key)
+        const nextSeries = available.has(activeSeries)
+          ? activeSeries
+          : activePanel?.dataset.defaultSeries || [...available][0] || ''
+        selectSeries(nextSeries)
+      }
+
+      packageTabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => selectPackage(tab.dataset.packageTab || ''))
+        tab.addEventListener('keydown', (event) => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+          event.preventDefault()
+          const nextIndex =
+            event.key === 'Home'
+              ? 0
+              : event.key === 'End'
+                ? packageTabs.length - 1
+                : (index + (event.key === 'ArrowRight' ? 1 : -1) + packageTabs.length) % packageTabs.length
+          const next = packageTabs[nextIndex]
+          if (next) selectPackage(next.dataset.packageTab || '', true)
+        })
+      })
+
+      seriesTabs.forEach((tab) => {
+        tab.addEventListener('click', () => selectSeries(tab.dataset.packageSeriesTab || ''))
+        tab.addEventListener('keydown', (event) => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+          event.preventDefault()
+          const visibleTabs = seriesTabs.filter((candidate) => !candidate.hidden && !candidate.disabled)
+          const currentIndex = visibleTabs.indexOf(tab)
+          if (currentIndex === -1) return
+          const nextIndex =
+            event.key === 'Home'
+              ? 0
+              : event.key === 'End'
+                ? visibleTabs.length - 1
+                : (currentIndex + (event.key === 'ArrowRight' ? 1 : -1) + visibleTabs.length) % visibleTabs.length
+          const next = visibleTabs[nextIndex]
+          if (next) selectSeries(next.dataset.packageSeriesTab || '', true)
+        })
+      })
+
+      if (activeSeries) selectSeries(activeSeries)
+    }
+  }
+
+  function initFloorPlanCtas() {
+    for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-floor-plan-cta]')) {
+      if (link.dataset.initialized === 'true') continue
+      link.dataset.initialized = 'true'
+
+      link.addEventListener('click', (event) => {
+        const target = document.getElementById('floor-plan')
+        if (!target) return
+
+        event.preventDefault()
+        history.replaceState(null, '', '#floor-plan')
+        target.scrollIntoView({
+          behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            ? 'auto'
+            : 'smooth',
+          block: 'start',
+        })
+
+        window.setTimeout(() => {
+          target
+            .querySelector<HTMLInputElement>('[data-floorplan-primary-field]')
+            ?.focus({ preventScroll: true })
+        }, 550)
+      })
+    }
+  }
+
+  initSolutionPackageControls()
+  initFloorPlanCtas()
+  document.addEventListener('astro:page-load', () => {
+    initSolutionPackageControls()
+    initFloorPlanCtas()
+  })
+</script>
+
+<style>
+  .packages {
+    background: var(--color-canvas);
+    border-top: 1px solid var(--color-ink-200);
+  }
+  .packages__intro {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: var(--space-8);
+    align-items: end;
+  }
+  .packages__intro h2 {
+    max-width: 18ch;
+    margin: var(--space-2) 0 0;
+  }
+  .packages__intro > p {
+    max-width: 58ch;
+    margin: 0;
+    color: var(--color-ink-600);
+  }
+  .package-controls {
+    margin: var(--space-7) 0 0;
+  }
+  .package-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: 1px solid var(--color-ink-200);
+    background: var(--color-white);
+  }
+  .package-controls__lower {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    min-height: 64px;
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--color-ink-200);
+  }
+  .package-series-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .package-series-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 34px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-pill);
+    background: var(--color-white);
+    color: var(--color-ink-600);
+    font: inherit;
+    font-size: var(--text-caption);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .package-series-tab__dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--color-ink-300);
+  }
+  .package-series-tab small {
+    color: var(--color-ink-500);
+    font-size: var(--text-micro);
+    font-weight: 500;
+  }
+  .package-series-tab--active {
+    border-color: var(--color-coral);
+    color: var(--color-ink-900);
+  }
+  .package-series-tab--active .package-series-tab__dot {
+    background: var(--color-coral);
+  }
+  .package-series-tab--active small {
+    color: var(--color-coral);
+  }
+  .package-series-tab:hover {
+    border-color: var(--color-coral);
+    color: var(--color-ink-900);
+  }
+  .package-series-tab:focus-visible {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 2px;
+  }
+  .package-tab {
+    min-height: 64px;
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border: 1px solid transparent;
+    appearance: none;
+    width: 100%;
+    color: var(--color-ink-700);
+    background: transparent;
+    text-align: left;
+    font: inherit;
+    font-weight: 650;
+    cursor: pointer;
+  }
+  .package-tab small {
+    margin: 0 0 var(--space-1);
+    color: var(--color-ink-500);
+    font-size: var(--text-micro);
+    font-weight: 500;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+  .package-tab--active {
+    border-color: var(--color-coral);
+    background: var(--color-coral-tint);
+    color: var(--color-coral);
+  }
+  .package-tab:hover {
+    border-color: var(--color-ink-300);
+    color: var(--color-coral);
+  }
+  .package-tab:focus-visible {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 2px;
+  }
+  .package-tab em {
+    margin: var(--space-1) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+    font-style: normal;
+    font-weight: 500;
+  }
+  .package-controls__custom {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0;
+    margin-left: auto;
+  }
+  .package-controls__custom a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-coral);
+    font-size: var(--text-body-s);
+    font-weight: 650;
+  }
+  .package-controls__custom a:hover {
+    color: var(--color-ink-900);
+  }
+  .package-controls__custom a:focus-visible {
+    outline: 2px solid var(--color-coral);
+    outline-offset: var(--space-1);
+  }
+  .packages__list {
+    margin: var(--space-4) 0 0;
+  }
+  .package {
+    min-width: 0;
+    border: 1px solid var(--color-ink-200);
+    background: var(--color-white);
+    animation: package-in var(--dur-slow) var(--ease-standard) both;
+    animation-delay: calc(var(--package-index) * 70ms);
+  }
+  .package--recommended {
+    box-shadow: inset 0 3px 0 var(--color-coral);
+  }
+  @keyframes package-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .package__main {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+  }
+  .package__schedule {
+    min-width: 0;
+    padding: var(--space-6);
+    border-right: 1px solid var(--color-ink-200);
+  }
+  .package__layout-stack {
+    min-width: 0;
+  }
+  .package__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+  .package__tier {
+    margin: 0;
+    color: var(--color-coral);
+    font-size: var(--text-micro);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wider);
+    text-transform: uppercase;
+  }
+  .package h3 {
+    margin: var(--space-2) 0 0;
+    font-size: clamp(24px, 2.3vw, 34px);
+  }
+  .package__badge {
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-pill);
+    background: var(--color-coral);
+    color: var(--color-white);
+    font-size: var(--text-micro);
+    font-weight: 600;
+  }
+  .package__summary {
+    margin: var(--space-4) 0 0;
+    color: var(--color-ink-600);
+  }
+  .package__facts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+    margin: var(--space-6) 0 0;
+    border-top: 1px solid var(--color-ink-300);
+    border-bottom: 1px solid var(--color-ink-300);
+  }
+  .package__facts div {
+    min-width: 0;
+    padding: var(--space-3);
+    border-right: 1px solid var(--color-ink-200);
+  }
+  .package__facts div:first-child {
+    padding-left: 0;
+  }
+  .package__facts div:last-child {
+    padding-right: 0;
+    border-right: 0;
+  }
+  .package__facts dt {
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .package__facts dd {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-body-s);
+    font-weight: 600;
+  }
+  .package__totals {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin: var(--space-5) 0 0;
+    padding: var(--space-4);
+    background: var(--color-ink-100);
+  }
+  .package__totals--priced {
+    grid-template-columns: minmax(0, 1.3fr) 1fr 1fr;
+  }
+  .package__totals span,
+  .package__totals strong {
+    display: block;
+  }
+  .package__totals span {
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .package__totals strong {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-body-s);
+  }
+  .package__total-price {
+    padding-right: var(--space-4);
+    border-right: 1px solid var(--color-ink-200);
+  }
+  .package__total-price strong {
+    color: var(--color-coral);
+    font-size: var(--text-h4);
+    line-height: 1.1;
+  }
+  .package__total-price small {
+    display: block;
+    max-width: 42ch;
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-micro);
+    line-height: 1.45;
+  }
+  .package__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: var(--space-5) 0 0;
+  }
+  .package__actions .btn {
+    padding-inline: var(--space-3);
+    font-size: var(--text-body-s);
+  }
+  .packages__gate {
+    max-width: 72ch;
+    margin: var(--space-5) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+  @media (max-width: 1023px) {
+    .package__main {
+      grid-template-columns: 1fr;
+    }
+    .package__schedule {
+      border-right: 0;
+      border-bottom: 1px solid var(--color-ink-200);
+    }
+  }
+  @media (max-width: 767px) {
+    .packages__intro {
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
+    .package-tabs {
+      grid-template-columns: 1fr;
+    }
+    .package-controls__lower {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+    .package-series-tabs {
+      width: 100%;
+    }
+    .package-controls__custom {
+      justify-content: flex-start;
+      margin-left: 0;
+    }
+    .package__schedule {
+      padding: var(--space-4);
+    }
+    .package__top {
+      flex-direction: column;
+    }
+    .package__facts {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
+    .package__facts div,
+    .package__facts div:first-child,
+    .package__facts div:last-child {
+      padding: var(--space-3) 0;
+      border-right: 0;
+      border-bottom: 1px solid var(--color-ink-200);
+    }
+    .package__facts div:last-child {
+      border-bottom: 0;
+    }
+    .package__totals {
+      grid-template-columns: 1fr;
+    }
+    .package__total-price {
+      padding: 0 0 var(--space-3);
+      border-right: 0;
+      border-bottom: 1px solid var(--color-ink-200);
+    }
+    .package__actions {
+      display: grid;
+    }
+    .package__actions .btn {
+      width: 100%;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .package {
+      animation: none;
+    }
+  }
+</style>

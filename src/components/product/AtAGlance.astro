@@ -1,0 +1,105 @@
+---
+import type { ProductData } from '../../sanity/content'
+import type {Locale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  product: ProductData
+  locale?: Locale
+}
+
+const { product, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const specs = product.keySpecs ?? []
+const defaultVariant = (product.variants ?? []).find((v) => v.isDefault)?.name
+const ref = [product.sku, defaultVariant].filter(Boolean).join(' · ')
+---
+
+{
+  specs.length > 0 && (
+    <section class="band glance">
+      <div class="container">
+        <div class="glance__head">
+          <p class="eyebrow glance__eyebrow">{t('At a glance')}</p>
+          {ref && <p class="glance__ref nums">{ref}</p>}
+        </div>
+        <dl class="glance__grid">
+          {specs.map((s) => (
+            <div class="glance__item">
+              <dt class="glance__num nums">
+                {s.value}
+                {s.unit && <span class="glance__unit">{s.unit}</span>}
+              </dt>
+              <dd class="glance__label">
+                {s.label}
+                {s.note && <span class="glance__note">{s.note}</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .glance {
+    background: var(--color-navy, #1a2332);
+    color: #fff;
+    padding-block: var(--space-8);
+  }
+  .glance__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-4);
+  }
+  .glance__eyebrow {
+    color: var(--color-coral);
+  }
+  .glance__ref {
+    font-size: var(--text-body-s);
+    color: rgba(255, 255, 255, 0.6);
+  }
+  .glance__grid {
+    margin: var(--space-6) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-5);
+  }
+  .glance__item {
+    border-left: 2px solid var(--color-coral);
+    padding-left: var(--space-3);
+  }
+  .glance__num {
+    font-size: var(--text-h1);
+    font-weight: 600;
+    line-height: 1;
+  }
+  .glance__unit {
+    font-size: var(--text-h4);
+    font-weight: 500;
+    margin-left: 4px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .glance__label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-body-s);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+  }
+  .glance__note {
+    text-transform: none;
+    letter-spacing: 0;
+    color: rgba(255, 255, 255, 0.55);
+  }
+  @media (max-width: 767px) {
+    .glance__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>

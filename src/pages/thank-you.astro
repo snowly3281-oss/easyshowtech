@@ -1,0 +1,267 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Icon from "../components/Icon.astro";
+import { getSiteSettings } from "../sanity/settings";
+import {localizedPath, resolveLocale} from "../i18n/config";
+import {staticUi} from "../i18n/static";
+const siteSettings = await getSiteSettings();
+const locale = resolveLocale(Astro.props.locale, Astro.url.pathname);
+const t = (english: string) => staticUi(locale, english);
+
+
+// "Three steps, no chasing." — reproduced from
+// Inquiry confirmation page.
+const steps = [
+  { n: "01", title: t("A real person reviews it"), body: t("Your inquiry goes straight to the team — the same people who build and ship the equipment. No call-centre, no ticket queue.") },
+  { n: "02", title: t("We prepare your quote"), body: t("Unit pricing, lead time and freight to your door — based on the models, quantities and market you told us about. OEM inquiries start with a mutual NDA before any design files move.") },
+  { n: "03", title: t("You hear back, fast"), body: t("A tailored reply within one business day — by email, or on WhatsApp if you'd rather. Real answers, from real people on the floor.") },
+];
+
+// "Worth a look in the meantime." cards
+const cards = [
+  { icon: "grid", title: t("Browse the range"), body: t("Reformers, Cadillacs, chairs and barrels by series."), href: "/products", cta: t("View products") },
+  { icon: "shield", title: t("Explore OEM"), body: t("Build your own line — protected, in writing."), href: "/oem-services", cta: t("See OEM services") },
+  { icon: "book", title: t("Read the guides"), body: t("Practical buying and studio-setup guides."), href: "/resources", cta: t("Open resources") },
+];
+
+const waNumber = siteSettings.whatsapp.replace(/[^0-9]/g, "");
+const telNumber = siteSettings.phone.replace(/\s+/g, "");
+---
+<BaseLayout locale={locale} title={t("Thank you — Coral Pilates")} noIndex={true}>
+  <!-- Hero -->
+  <section class="section hero">
+    <div class="container hero-inner">
+      <span class="check"><Icon name="check" size={40} /></span>
+      <span class="eyebrow mt-4">{t("Inquiry received")}</span>
+      <h1 class="mt-3">{t("Thank you — your inquiry is in.")}</h1>
+      <p class="body-l text-ink-600 mt-4 hero-copy">
+        {t("A real person at the factory will read your details and reply with a tailored quote and lead time — usually within one business day. No autoresponder, no sales bot.")}
+      </p>
+      <p class="ref-line caption mt-4" data-thanks-reference>
+        {t("A real person will reply within 24 hours.")}
+      </p>
+    </div>
+  </section>
+
+  <!-- Three steps -->
+  <section class="section ground-2">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">{t("What happens next")}</span>
+        <h2 class="mt-2">{t("Three steps, no chasing.")}</h2>
+      </div>
+      <ol class="steps">
+        {steps.map((s) => (
+          <li class="step">
+            <span class="step-n nums">{s.n}</span>
+            <h3 class="mt-3">{s.title}</h3>
+            <p class="body-s text-ink-600 mt-2">{s.body}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- While you wait -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">{t("While you wait")}</span>
+        <h2 class="mt-2">{t("Worth a look in the meantime.")}</h2>
+      </div>
+      <ul class="card-grid">
+        {cards.map((c) => (
+          <li class="link-card">
+            <span class="link-card-icon"><Icon name={c.icon} size={22} /></span>
+            <h3 class="mt-4">{c.title}</h3>
+            <p class="body-s text-ink-600 mt-2">{c.body}</p>
+            <a href={localizedPath(c.href, locale)} class="btn-link card-link">{c.cta} <Icon name="arrow" size={16} /></a>
+          </li>
+        ))}
+      </ul>
+
+      <!-- Prefer to talk now -->
+      <div class="talk mt-7">
+        <div class="talk-left">
+          <span class="talk-icon"><Icon name="user" size={20} /></span>
+          <div>
+            <p class="talk-title">{t("Prefer to talk now? Chris picks up.")}</p>
+            <p class="caption">{t("Your contact at")} {siteSettings.brand} · {siteSettings.location} · UTC+8</p>
+          </div>
+        </div>
+        <div class="talk-right">
+          <a href={`https://wa.me/${waNumber}`} class="talk-contact">
+            <Icon name="chat" size={18} /> WhatsApp
+          </a>
+          <a href={`tel:${telNumber}`} class="talk-contact nums">
+            <Icon name="phone" size={18} /> {siteSettings.phone}
+          </a>
+        </div>
+      </div>
+      <p class="privacy-note caption mt-4">
+        {t("We use your details only to respond to this inquiry and do not add you to marketing lists without your opt-in.")}
+      </p>
+    </div>
+  </section>
+
+  <script is:inline define:vars={{referenceLabel: t("Your reference")}}>
+    const reference = window.sessionStorage.getItem("coral-last-inquiry-reference");
+    const isReference = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(
+      reference || "",
+    );
+    const referenceNode = document.querySelector("[data-thanks-reference]");
+    if (isReference && referenceNode) {
+      referenceNode.textContent = `${referenceLabel} ${reference}`;
+    }
+  </script>
+</BaseLayout>
+
+<style>
+  /* Layout only — colours/type/spacing come from global.css tokens. */
+
+  /* Alternate warm ground. NB: the `bg-paper-2` utility does not generate in
+     this Tailwind v4 setup, so we apply the design token directly. The token's
+     value is given as a fallback because the var is tree-shaken when no
+     generated utility references it. */
+  .ground-2 {
+    background: var(--color-paper-2, #ece7dd);
+  }
+  .hero-inner,
+  .section-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .section-head {
+    max-width: 640px;
+    margin-inline: auto;
+  }
+  .check {
+    display: inline-flex;
+    color: var(--color-coral);
+  }
+  .hero-copy {
+    max-width: 600px;
+  }
+  .ref-line {
+    color: var(--color-ink-500);
+  }
+
+  /* Three steps */
+  .steps {
+    list-style: none;
+    /* top gap below the section header — set here, not via `mt-*`, because this
+       scoped rule out-specifies utilities and would otherwise reset it. */
+    margin: var(--space-7) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-7);
+  }
+  .step-n {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--color-coral);
+  }
+  .step h3 {
+    color: var(--color-ink-900);
+  }
+
+  /* Card grid (shared shape with the 404 page) */
+  .card-grid {
+    list-style: none;
+    /* top gap below the section header — set here, not via `mt-*`, because this
+       scoped rule out-specifies utilities and would otherwise reset it. */
+    margin: var(--space-7) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-5);
+  }
+  .link-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-6);
+    background: var(--color-white);
+    border: 1px solid var(--color-ink-200);
+    border-radius: var(--radius-md);
+  }
+  .link-card-icon {
+    display: inline-flex;
+    color: var(--color-ink-700);
+  }
+  .link-card h3 {
+    color: var(--color-ink-900);
+  }
+  .card-link {
+    margin-top: auto;
+    padding-top: var(--space-4);
+  }
+
+  /* Talk-now bar */
+  .talk {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    background: var(--color-ink-100);
+    border: 1px solid var(--color-ink-200);
+    border-radius: var(--radius-md);
+  }
+  .talk-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  .talk-icon {
+    display: inline-flex;
+    color: var(--color-ink-600);
+  }
+  .talk-title {
+    font-weight: 600;
+    color: var(--color-ink-900);
+  }
+  .talk-right {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+  }
+  .talk-contact {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: 500;
+    color: var(--color-coral);
+  }
+  .talk-contact:hover {
+    color: var(--color-coral-hover);
+  }
+  .privacy-note {
+    text-align: center;
+    color: var(--color-ink-400);
+  }
+
+  @media (max-width: 1023px) {
+    .card-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .steps {
+      grid-template-columns: 1fr;
+      gap: var(--space-6);
+    }
+  }
+  @media (max-width: 559px) {
+    .card-grid {
+      grid-template-columns: 1fr;
+    }
+    .talk {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

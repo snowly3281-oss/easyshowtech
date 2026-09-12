@@ -1,0 +1,85 @@
+---
+/**
+ * Locale-prefixed runtime router.
+ *
+ * English remains prerendered at root URLs. The approved translated locales
+ * render on demand so newly published Sanity translations are visible without
+ * rebuilding every product and article five times.
+ */
+export const prerender = false;
+
+import HomePage from "../index.astro";
+import AboutPage from "../about.astro";
+import FactoryPage from "../factory.astro";
+import ContactPage from "../contact.astro";
+import OemPage from "../oem-services.astro";
+import ProductsPage from "../products/index.astro";
+import ProductPage from "../products/[slug].astro";
+import SolutionsPage from "../solutions/index.astro";
+import SolutionPage from "../solutions/[slug].astro";
+import ResourcesPage from "../resources/index.astro";
+import ResourcePage from "../resources/[slug].astro";
+import PrivacyPage from "../privacy.astro";
+import TermsPage from "../terms.astro";
+import WarrantyPage from "../warranty.astro";
+import ReturnsPage from "../returns.astro";
+import ShippingPage from "../shipping.astro";
+import ThankYouPage from "../thank-you.astro";
+import ConfigurationPage from "../configurations/[id].astro";
+import NotFoundPage from "../404.astro";
+import {isLocale, type Locale} from "../../i18n/config";
+
+const rawLocale = Astro.params.locale;
+const locale: Locale = isLocale(rawLocale) && rawLocale !== "en"
+  ? rawLocale
+  : "en";
+const route = (Astro.params.path ?? "").replace(/^\/|\/$/g, "");
+const segments = route.split("/").filter(Boolean);
+
+let Page: typeof HomePage | typeof ProductPage = NotFoundPage;
+let pageProps: Record<string, unknown> = {locale};
+let found = locale !== "en";
+
+if (found) {
+  if (route === "") Page = HomePage;
+  else if (route === "about") Page = AboutPage;
+  else if (route === "factory") Page = FactoryPage;
+  else if (route === "contact") Page = ContactPage;
+  else if (route === "oem-services") Page = OemPage;
+  else if (route === "products") Page = ProductsPage;
+  else if (route === "products/parts")
+    return Astro.redirect(`/${locale}/products?parts=all`, 301);
+  else if (segments[0] === "products" && segments.length === 2) {
+    Page = ProductPage;
+    pageProps = {locale, slug: segments[1]};
+  } else if (route === "solutions") Page = SolutionsPage;
+  else if (segments[0] === "solutions" && segments.length === 2) {
+    Page = SolutionPage;
+    pageProps = {locale, slug: segments[1]};
+  } else if (route === "resources") Page = ResourcesPage;
+  else if (segments[0] === "resources" && segments.length === 2) {
+    Page = ResourcePage;
+    pageProps = {locale, slug: segments[1]};
+  } else if (route === "privacy") Page = PrivacyPage;
+  else if (route === "terms") Page = TermsPage;
+  else if (route === "warranty") Page = WarrantyPage;
+  else if (route === "returns") Page = ReturnsPage;
+  else if (route === "shipping") Page = ShippingPage;
+  else if (route === "thank-you") Page = ThankYouPage;
+  else if (segments[0] === "configurations" && segments.length === 2) {
+    Page = ConfigurationPage;
+    pageProps = {locale, id: segments[1]};
+  }
+  else found = false;
+}
+
+if (!found) Astro.response.status = 404;
+const RoutedPage = Page as any;
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, max-age=0, s-maxage=300, stale-while-revalidate=86400",
+);
+Astro.response.headers.set("Content-Language", locale);
+---
+
+<RoutedPage {...pageProps} />

@@ -1,0 +1,224 @@
+---
+import type { ProductCardData, SiteSettingsData } from '../../sanity/content'
+import { localizedPath, type Locale } from '../../i18n/config'
+import { ui, uiFormat } from '../../i18n/ui'
+import { formatPrice, getPricePresentation } from '../../lib/price'
+import MediaBox from './MediaBox.astro'
+
+interface Props {
+  product: ProductCardData
+  settings?: SiteSettingsData | null
+  locale?: Locale
+}
+
+const { product, settings, locale = 'en' } = Astro.props
+const price = getPricePresentation(settings, product)
+const priceText = formatPrice(price)
+const productTitle = product.title ?? 'Product'
+const addLabel = uiFormat(locale, 'addProductToRfq', { product: productTitle })
+const addedLabel = uiFormat(locale, 'addedProductToRfq', {
+  product: productTitle,
+})
+---
+
+<li
+  class="card"
+  data-series={product.seriesSlug ?? ''}
+  data-equipment={(product.equipmentSlugs ?? []).filter(Boolean).join(',')}
+  data-catalog-type={product.catalogType ?? 'equipment'}
+  data-parts-category={product.partsCategory ?? ''}
+  data-price-min={price?.min ?? ''}
+  data-price-max={price?.max ?? ''}
+  data-name={(product.title ?? '').toLowerCase()}
+>
+  <a
+    class="card__link"
+    href={localizedPath(`/products/${product.slug ?? ''}`, locale)}
+  >
+    <MediaBox source={product.mainImage} alt={product.title} ratio="1 / 1" width={560} />
+    <div class="card__body">
+      {product.sku && <p class="card__sku nums">{product.sku}</p>}
+      <p class="card__name">{product.title}</p>
+      {
+        product.seriesTitle && (
+          <span class="card__tag">
+            {uiFormat(locale, 'seriesLabel', {series: product.seriesTitle})}
+          </span>
+        )
+      }
+      <div class="card__foot">
+        {priceText ? (
+          <span class="card__price nums">{priceText}</span>
+        ) : (
+          <span class="card__quote">{ui(locale, 'priceOnRequest')}</span>
+        )}
+        <span class="card__cta">
+          {ui(locale, 'viewDetails')}{' '}
+          <span class="card__arrow" aria-hidden="true">→</span>
+        </span>
+      </div>
+    </div>
+  </a>
+  <button
+    type="button"
+    class="card__rfq"
+    data-rfq-add
+    data-rfq-compact
+    data-rfq-product-id={product._id}
+    data-rfq-slug={product.slug ?? ''}
+    data-rfq-title={product.title}
+    data-rfq-sku={product.sku ?? ''}
+    data-rfq-quantity="1"
+    data-rfq-added-label={addedLabel}
+    aria-label={addLabel}
+    title={ui(locale, 'addToRfq')}
+  >
+    <span aria-hidden="true">+</span>
+  </button>
+</li>
+
+<style>
+  .card {
+    list-style: none;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .card__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+  }
+  .card:hover .card__link,
+  .card__link:focus-visible {
+    border-color: var(--color-coral);
+  }
+  .card__body {
+    padding: var(--space-3) var(--space-4) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .card__sku {
+    margin: 0;
+    font-size: var(--text-micro);
+    letter-spacing: var(--tracking-wide, 0.04em);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .card__name {
+    margin: var(--space-1) 0 0;
+    font-weight: 600;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .card__tag {
+    align-self: flex-start;
+    margin: var(--space-2) 0 0;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--color-coral-50, #fdeceb);
+    color: var(--color-coral);
+    font-size: var(--text-micro);
+    line-height: 1.4;
+  }
+  .card__foot {
+    margin-top: auto;
+    padding-top: var(--space-3);
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+  .card__price {
+    font-weight: 600;
+  }
+  /* Informational only — plain muted copy; not a link, not coral, no arrow. */
+  .card__quote {
+    font-size: var(--text-body-s);
+    color: var(--color-ink-400, #9a948a);
+  }
+  /* The action label — coral, matches the whole-card link to the PDP. */
+  .card__cta {
+    font-size: var(--text-body-s);
+    color: var(--color-coral);
+    white-space: nowrap;
+  }
+  .card__arrow {
+    display: inline-block;
+    transition: transform 0.15s ease;
+  }
+  .card__link:hover .card__arrow {
+    transform: translateX(2px);
+  }
+  .card__rfq {
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+    z-index: var(--z-raised, 2);
+    width: calc(var(--space-6) + var(--space-2));
+    height: calc(var(--space-6) + var(--space-2));
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--color-ink-300);
+    border-radius: 50%;
+    background: var(--color-white);
+    color: var(--color-ink-800);
+    font: inherit;
+    font-size: var(--text-h3);
+    font-weight: 400;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      opacity var(--dur-fast) var(--ease-standard),
+      border-color var(--dur-fast) var(--ease-standard),
+      background var(--dur-fast) var(--ease-standard),
+      color var(--dur-fast) var(--ease-standard),
+      transform var(--dur-fast) var(--ease-standard);
+  }
+  .card__rfq:hover {
+    border-color: var(--color-coral);
+    background: var(--color-coral);
+    color: var(--color-white);
+    transform: scale(1.04);
+  }
+  .card__rfq:focus-visible {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 3px;
+  }
+  .card__rfq:active {
+    transform: scale(0.96);
+  }
+  .card__rfq[data-added='true'] {
+    border-color: var(--color-success);
+    background: var(--color-success);
+    color: var(--color-white);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .card__rfq {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px) scale(0.94);
+    }
+    .card:hover .card__rfq,
+    .card:focus-within .card__rfq,
+    .card__rfq:focus-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+    .card__rfq:hover {
+      transform: translateY(0) scale(1.04);
+    }
+    .card__rfq:active {
+      transform: translateY(0) scale(0.96);
+    }
+  }
+</style>

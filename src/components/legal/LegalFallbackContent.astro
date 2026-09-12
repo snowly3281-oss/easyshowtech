@@ -1,0 +1,59 @@
+---
+import {resolveLocale, type Locale} from "../../i18n/config";
+import {staticUi} from "../../i18n/static";
+
+interface LegalBlock {
+  type: string;
+  content?: string;
+  items?: string[];
+}
+
+interface LegalSection {
+  heading: string;
+  blocks: LegalBlock[];
+}
+
+interface Props {
+  content: {
+    intro: string;
+    sections: LegalSection[];
+  };
+  locale?: Locale;
+}
+
+const {
+  content,
+  locale = resolveLocale(
+    undefined,
+    Astro.originPathname || Astro.url.pathname,
+  ),
+} = Astro.props;
+const t = (english: string) => staticUi(locale, english);
+const html = (english: string) => {
+  const translated = t(english);
+  if (locale === "en") return translated;
+  return translated.replace(
+    /href="\/(?!\/|[a-z]{2}\/)/g,
+    `href="/${locale}/`,
+  );
+};
+---
+
+<p class="legal-intro" set:html={html(content.intro)}></p>
+
+{
+  content.sections.map((section) => (
+    <section class="legal-block">
+      <h2>{t(section.heading)}</h2>
+      {section.blocks.map((block) =>
+        block.type === "list" ? (
+          <ul>
+            {(block.items || []).map((item) => <li set:html={html(item)}></li>)}
+          </ul>
+        ) : (
+          <p set:html={html(block.content || "")}></p>
+        ),
+      )}
+    </section>
+  ))
+}

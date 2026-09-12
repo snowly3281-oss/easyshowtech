@@ -1,0 +1,282 @@
+---
+/**
+ * Footer.astro — site-wide footer band for every Coral Pilates page.
+ *
+ * Near-black band, full-width; inner content capped by .container. Brand block
+ * + three link columns + a legal bar with an auto year.
+ *
+ * Scaffold note: the Products/Solutions columns are static here but intended to
+ * become data-driven from Sanity later; the sales email binds to site-settings.
+ * Styling uses global.css tokens via var(--…); no new style scales introduced.
+ */
+import {
+  footerProducts,
+  footerSolutions,
+  footerCompany,
+  legalLinks,
+} from "../../config/site";
+import { getSiteSettings } from "../../sanity/settings";
+import LanguageSwitcher from "./LanguageSwitcher.astro";
+import SocialIcon from "./SocialIcon.astro";
+import {localizedPath, type Locale} from "../../i18n/config";
+import {ui} from "../../i18n/ui";
+import {staticUi} from "../../i18n/static";
+
+const year = new Date().getFullYear();
+const siteSettings = await getSiteSettings();
+interface Props {
+  locale?: Locale;
+}
+const {locale = "en"} = Astro.props;
+const t = (english: string) => staticUi(locale, english);
+const localizeHref = (href: string) => {
+  const url = new URL(href, "https://coralpilates.com");
+  return `${localizedPath(url.pathname, locale)}${url.search}${url.hash}`;
+};
+const companyLabel = (href: string, fallback: string) => {
+  if (href === "/about") return ui(locale, "about");
+  if (href === "/factory") return ui(locale, "factory");
+  if (href === "/oem-services") return ui(locale, "oemServices");
+  if (href === "/contact") return ui(locale, "contact");
+  return fallback;
+};
+const socialLinks = siteSettings.socialLinks;
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <!-- Brand block -->
+    <div class="footer-brand">
+      <a href={localizeHref("/")} class="logo" aria-label={`Coral Pilates — ${t("home")}`}>
+        <img
+          class="logo-img"
+          src="/logo.png"
+          alt="Coral Pilates"
+          width="200"
+          height="30"
+        />
+      </a>
+      <p class="footer-tagline">
+        {ui(locale, "footerTagline")}
+      </p>
+      {
+        socialLinks.length > 0 && (
+          <nav class="footer-social" aria-label="Coral Pilates social links">
+            {socialLinks.map((link) => (
+              <a
+                class="footer-social__link"
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${link.label || link.platform} — Coral Pilates`}
+                title={link.label || link.platform}
+              >
+                <SocialIcon platform={link.platform} />
+              </a>
+            ))}
+          </nav>
+        )
+      }
+    </div>
+
+    <!-- Link columns -->
+    <nav class="footer-cols" aria-label={t("Footer navigation")}>
+      <div class="footer-col">
+        <p class="footer-head">{ui(locale, "products")}</p>
+        {footerProducts.map((l) => <a href={localizeHref(l.href)} class="footer-link">{t(l.label)}</a>)}
+      </div>
+      <div class="footer-col">
+        <p class="footer-head">{ui(locale, "solutions")}</p>
+        {footerSolutions.map((l) => <a href={localizeHref(l.href)} class="footer-link">{t(l.label)}</a>)}
+      </div>
+      <div class="footer-col">
+        <p class="footer-head">{ui(locale, "company")}</p>
+        {footerCompany.map((l) => <a href={localizeHref(l.href)} class="footer-link">{companyLabel(l.href, l.label)}</a>)}
+      </div>
+    </nav>
+  </div>
+
+  <!-- Legal bar -->
+  <div class="footer-legal">
+    <div class="container legal-inner">
+      <p class="legal-copy">
+        © {year} {siteSettings.brand} · {siteSettings.location}
+      </p>
+      <nav class="legal-links" aria-label={t("Legal")}>
+        {legalLinks.map((l) => <a href={localizeHref(l.href)} class="legal-link">{l.href === "/privacy" ? ui(locale, "privacy") : ui(locale, "terms")}</a>)}
+      </nav>
+      <LanguageSwitcher locale={locale} />
+    </div>
+  </div>
+</footer>
+
+<script>
+  declare global {
+    interface Window {
+      coralFooterObserver?: IntersectionObserver;
+    }
+  }
+
+  function initFooterVisibility() {
+    const legalBar = document.querySelector<HTMLElement>(".footer-legal");
+    if (!legalBar) return;
+
+    window.coralFooterObserver?.disconnect();
+
+    const observer = new IntersectionObserver(([entry]) => {
+      document.documentElement.classList.toggle(
+        "footer-legal-visible",
+        entry.isIntersecting,
+      );
+    });
+    observer.observe(legalBar);
+    window.coralFooterObserver = observer;
+  }
+
+  initFooterVisibility();
+  document.addEventListener("astro:page-load", initFooterVisibility);
+</script>
+
+<style>
+  /* Layout/positioning only — colours/type/spacing come from global.css tokens. */
+  .site-footer {
+    background: var(--color-ink-900);
+    color: var(--color-white);
+  }
+  .footer-inner {
+    display: grid;
+    grid-template-columns: 1.4fr 2fr;
+    gap: var(--space-8);
+    padding-block: var(--space-9);
+  }
+
+  .footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .logo {
+    display: inline-flex;
+    align-items: center;
+  }
+  .logo-img {
+    display: block;
+    height: 30px;
+    width: auto;
+  }
+  .footer-tagline {
+    max-width: 320px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.55);
+  }
+  .footer-social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: calc(var(--space-1) * -1);
+  }
+  .footer-social__link {
+    display: inline-grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: rgba(255, 255, 255, 0.72);
+    transition:
+      border-color var(--dur-fast) var(--ease-standard),
+      background var(--dur-fast) var(--ease-standard),
+      color var(--dur-fast) var(--ease-standard),
+      transform var(--dur-fast) var(--ease-standard);
+  }
+  .footer-social__link :global(svg) {
+    width: 17px;
+    height: 17px;
+  }
+  .footer-social__link:hover {
+    border-color: var(--color-coral);
+    background: var(--color-coral);
+    color: var(--color-white);
+    transform: translateY(-1px);
+  }
+  .footer-social__link:focus-visible {
+    outline: 2px solid var(--color-white);
+    outline-offset: 3px;
+  }
+
+  .footer-cols {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-6);
+  }
+  .footer-col {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .footer-head {
+    margin-bottom: var(--space-2);
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: rgba(255, 255, 255, 0.45);
+  }
+  .footer-link {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.72);
+  }
+  .footer-link:hover {
+    color: var(--color-white);
+  }
+
+  .footer-legal {
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .legal-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    column-gap: var(--space-6);
+    padding-block: var(--space-5);
+  }
+  .legal-copy {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+  .legal-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+  }
+  .legal-link {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+  .legal-link:hover {
+    color: var(--color-white);
+  }
+
+  /* Tablet: brand stacks above columns, columns go 2-up */
+  @media (max-width: 900px) {
+    .footer-inner {
+      grid-template-columns: 1fr;
+      gap: var(--space-7);
+    }
+    .footer-cols {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  /* Mobile: keep each group intact instead of squeezing the controls. */
+  @media (max-width: 720px) {
+    .legal-inner {
+      grid-template-columns: 1fr;
+      row-gap: var(--space-4);
+      justify-items: start;
+    }
+    .legal-links {
+      justify-content: flex-start;
+    }
+  }
+</style>

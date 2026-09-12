@@ -1,0 +1,447 @@
+/* ==========================================================================
+   Coral Pilates — global.css
+   Tailwind v4 + design tokens + responsive container.
+   Single typeface (Inter). Flat. Confident. Industrial. No serifs.
+   Drop this in at  src/styles/global.css  and import it once in a shared
+   layout (see BaseLayout.astro).
+   ========================================================================== */
+
+@import "tailwindcss";
+@import "@fontsource-variable/inter/wght.css";
+@import "@fontsource-variable/inter/wght-italic.css";
+
+/* --------------------------------------------------------------------------
+   THEME TOKENS  (Tailwind v4 — these generate utilities AND :root vars)
+   e.g.  bg-coral · text-ink-600 · border-ink-200 · bg-navy · rounded-md
+         text-h1 · text-eyebrow · font-sans
+   -------------------------------------------------------------------------- */
+@theme {
+  /* ---- Typeface: one family only ---- */
+  --font-sans: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+
+  /* ---- Brand (coral is a crimson red, despite the name) ---- */
+  --color-coral: #e60026;
+  --color-coral-hover: #c8001f;
+  --color-coral-press: #a80019;
+  --color-coral-tint: #fdecee;
+  --color-coral-border: #f5b8c0;
+
+  /* ---- Neutrals — industrial greyscale ---- */
+  --color-ink-900: #0e1013; /* near-black, body copy */
+  --color-ink-800: #1a1d22; /* headings */
+  --color-ink-700: #2c3037;
+  --color-ink-600: #4b5059; /* secondary text */
+  --color-ink-500: #6b7280; /* tertiary, captions */
+  --color-ink-400: #9aa0aa; /* placeholder, disabled */
+  --color-ink-300: #c7cbd1; /* dividers (strong) */
+  --color-ink-200: #e4e6ea; /* dividers (default / hairline) */
+  --color-ink-150: #eef0f3; /* subtle bg */
+  --color-ink-100: #f5f6f8; /* section bg */
+  --color-ink-050: #fafafb;
+  --color-white: #ffffff;
+
+  /* ---- Warm grounds + dark bands ---- */
+  --color-canvas: #f7f4ef; /* warm page ground */
+  --color-paper-2: #ece7dd; /* alternate warm ground */
+  --color-navy: #1a2332; /* dark emphasis band */
+  --color-navy-hover: #232e40;
+
+  /* ---- Status (reserved, conservative) ---- */
+  --color-success: #0e7a4d;
+  --color-whatsapp: #25d366;
+  --color-whatsapp-hover: #1ebe5d;
+  --color-warning: #b45309;
+  --color-error: #b00020;
+  --color-info: #1f4b8a;
+
+  /* ---- Type scale (clamped; fluid across the 4 frames) ---- */
+  /* Reserved exclusively for the Coral brand message on the homepage hero.
+     All page H1s use --text-h1 (52px maximum). */
+  --text-home-hero: clamp(40px, 5.2vw, 76px);
+  --text-h1: clamp(32px, 3.6vw, 52px);
+  --text-h2: clamp(26px, 2.4vw, 36px);
+  --text-h3: 22px;
+  --text-h4: 18px;
+  --text-body-l: 18px;
+  --text-body: 16px;
+  --text-body-s: 14px;
+  --text-caption: 13px;
+  --text-eyebrow: 12px;
+  --text-micro: 11px;
+
+  /* ---- Radii — minimal, industrial ---- */
+  --radius-xs: 2px;
+  --radius-sm: 4px; /* buttons, inputs */
+  --radius-md: 6px; /* cards */
+  --radius-pill: 999px; /* tags / filters only */
+}
+
+/* --------------------------------------------------------------------------
+   CLIENT-SIDE NAVIGATION
+   --------------------------------------------------------------------------
+   Astro keeps the browser shell in place and swaps the next document in a
+   native View Transition. The short vertical motion makes page changes feel
+   like switching a workspace tab, without obscuring the destination or
+   fighting the site's existing component-level motion.
+*/
+::view-transition-old(root) {
+  animation: coral-route-leave var(--dur-fast) var(--ease-standard) both;
+}
+
+::view-transition-new(root) {
+  animation: coral-route-enter var(--dur-base) var(--ease-standard) both;
+}
+
+@keyframes coral-route-leave {
+  to {
+    opacity: 0;
+    transform: translateY(calc(var(--space-1) * -1));
+  }
+}
+
+@keyframes coral-route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-1));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   ROUTE FEEDBACK
+   --------------------------------------------------------------------------
+   Client-side routing deliberately avoids a full browser reload, which also
+   removes the familiar tab-throbber signal. This unobtrusive line confirms
+   that a click has been received immediately, then completes as Astro swaps
+   in the new document. It is persistent across the View Transition so it
+   cannot blink out during a slow route fetch.
+*/
+#route-progress {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 100;
+  height: 3px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+
+#route-progress__bar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--color-coral);
+  transform: scaleX(var(--route-progress, 0));
+  transform-origin: left center;
+  transition: transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html[data-route-loading="true"] #route-progress {
+  opacity: 1;
+}
+
+a[data-route-loading="true"] {
+  cursor: progress;
+  opacity: 0.68;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #route-progress,
+  #route-progress__bar {
+    transition: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   SUPPLEMENTARY TOKENS  (plain vars — used by custom classes, no utilities)
+   -------------------------------------------------------------------------- */
+:root {
+  /* spacing (4px base, 8pt preferred) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+
+  /* line-height + tracking */
+  --lh-tight: 1.08;
+  --lh-snug: 1.2;
+  --lh-normal: 1.5;
+  --lh-loose: 1.65;
+  --tracking-tight: -0.02em;
+  --tracking-wide: 0.06em;
+  --tracking-wider: 0.12em; /* eyebrows */
+
+  /* layout — content width ladder */
+  --container-box: 1536px; /* box cap → content area caps at 1440 (1536 − 2×48) */
+  --gutter-lg: 48px; /* desktop / desktop-xl */
+  --gutter-md: 24px; /* tablet */
+  --gutter-sm: 16px; /* mobile */
+  --measure: 720px; /* reading width for long prose */
+
+  /* elevation — shadows are NOT decoration; reserve for sticky/overlay only */
+  --shadow-sticky: 0 1px 0 rgba(14, 16, 19, 0.06);
+  --shadow-overlay: 0 8px 24px rgba(14, 16, 19, 0.08),
+    0 2px 4px rgba(14, 16, 19, 0.04);
+
+  /* motion */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 240ms;
+
+  /* System layers */
+  --z-floating: 40;
+}
+
+/* Keep the fixed RFQ controls from covering the footer's legal/language row.
+   Hiding them at the very bottom avoids measuring footer geometry in JS. */
+.rfq-fab {
+  transition:
+    opacity var(--dur-base) var(--ease-standard),
+    transform var(--dur-base) var(--ease-standard);
+}
+
+html.footer-legal-visible .rfq-fab {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(var(--space-3));
+}
+
+/* --------------------------------------------------------------------------
+   BASE
+   -------------------------------------------------------------------------- */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    color: var(--color-ink-900);
+    background: var(--color-canvas);
+    font-size: var(--text-body);
+    line-height: var(--lh-normal);
+    font-feature-settings: "ss01", "cv11"; /* Inter humanist single-story a/g */
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Headings — hierarchy by weight + size. 700 is reserved for .display only. */
+  h1 {
+    font-size: var(--text-h1);
+    font-weight: 600;
+    line-height: var(--lh-tight);
+    letter-spacing: var(--tracking-tight);
+  }
+  h2 {
+    font-size: var(--text-h2);
+    font-weight: 600;
+    line-height: var(--lh-snug);
+    letter-spacing: -0.015em;
+  }
+  h3 {
+    font-size: var(--text-h3);
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  h4 {
+    font-size: var(--text-h4);
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Keyboard focus — coral ring, everywhere */
+  :focus-visible {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 2px;
+    border-radius: var(--radius-xs);
+  }
+
+  ::selection {
+    background: var(--color-coral-tint);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   LAYOUT + PRIMITIVES
+   -------------------------------------------------------------------------- */
+@layer components {
+  /* Centered content container. Content area caps at 1440 on huge screens;
+     fluid below. Gutter steps 48 → 24 → 16 by breakpoint. */
+  .container {
+    width: 100%;
+    max-width: var(--container-box);
+    margin-inline: auto;
+    padding-inline: var(--gutter-lg);
+  }
+  @media (max-width: 1279px) {
+    .container {
+      padding-inline: var(--gutter-md);
+    }
+  }
+  @media (max-width: 767px) {
+    .container {
+      padding-inline: var(--gutter-sm);
+    }
+  }
+
+  /* Full-bleed section: background runs edge-to-edge; put a .container inside
+     so the content still aligns with normal sections. */
+  .band {
+    width: 100%;
+  }
+
+  /* Vertical section rhythm. */
+  .section {
+    padding-block: var(--space-9);
+  }
+  @media (max-width: 767px) {
+    .section {
+      padding-block: var(--space-8);
+    }
+  }
+
+  /* Reading width for long-form prose (article bodies, legal text). */
+  .measure {
+    max-width: var(--measure);
+  }
+
+  /* Homepage brand heading (the only place 700 and the 76px scale are allowed).
+     Keep this intentionally specific so routine page heroes cannot adopt it. */
+  .home-display {
+    font-size: var(--text-home-hero);
+    font-weight: 700;
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+  }
+
+  /* Eyebrow micro-label — coral, uppercase, tracked. */
+  .eyebrow {
+    display: inline-block;
+    font-size: var(--text-eyebrow);
+    font-weight: 500;
+    letter-spacing: var(--tracking-wider);
+    text-transform: uppercase;
+    color: var(--color-coral);
+  }
+
+  /* Tabular figures (use on SKUs, specs, reference numbers, prices). */
+  .nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Body text helpers. */
+  .body-l {
+    font-size: var(--text-body-l);
+    line-height: 1.6;
+  }
+  .body-s {
+    font-size: var(--text-body-s);
+    line-height: 1.55;
+  }
+  .caption {
+    font-size: var(--text-caption);
+    color: var(--color-ink-500);
+  }
+
+  /* ---- Buttons (the design-system set) ---- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    height: 48px;
+    padding-inline: var(--space-5);
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--dur-base) var(--ease-standard),
+      border-color var(--dur-base) var(--ease-standard),
+      color var(--dur-base) var(--ease-standard);
+  }
+  .btn-sm {
+    height: 44px;
+    padding-inline: var(--space-4);
+    font-size: 14px;
+  }
+
+  /* Primary — solid coral */
+  .btn-coral {
+    background: var(--color-coral);
+    color: var(--color-white);
+    border-color: var(--color-coral);
+  }
+  .btn-coral:hover {
+    background: var(--color-coral-hover);
+    border-color: var(--color-coral-hover);
+  }
+  .btn-coral:active {
+    background: var(--color-coral-press);
+    border-color: var(--color-coral-press);
+  }
+
+  /* Secondary — white + grey border (on light grounds) */
+  .btn-outline {
+    background: var(--color-white);
+    color: var(--color-ink-900);
+    border-color: var(--color-ink-300);
+  }
+  .btn-outline:hover {
+    background: var(--color-ink-100);
+  }
+
+  /* Ghost — translucent-white border (on dark / navy / photo grounds) */
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-white);
+    border-color: rgba(255, 255, 255, 0.45);
+  }
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.65);
+  }
+
+  /* Tertiary — coral text link (+ arrow) */
+  .btn-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    /* Reset the .btn box so a `btn btn-link` is a flush inline text link
+       (no inherited 48px height / 24px horizontal padding / border). */
+    height: auto;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    color: var(--color-coral);
+    font-size: 15px;
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .btn-link:hover {
+    color: var(--color-coral-hover);
+  }
+}

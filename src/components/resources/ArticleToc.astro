@@ -1,0 +1,157 @@
+---
+import type { ArticleHeading } from '../../lib/article'
+
+interface Props {
+  headings: ArticleHeading[]
+  label: string
+  contentsLabel: string
+}
+
+const { headings, label, contentsLabel } = Astro.props
+---
+
+<aside class="article-toc" aria-label={label}>
+  <p class="article-toc__title">{contentsLabel}</p>
+  <nav data-article-toc>
+    <ol>
+      {headings.map((heading, index) => (
+        <li>
+          <a href={`#${heading.id}`} class:list={{ 'is-active': index === 0 }}>
+            <span class="nums">{heading.number}</span>
+            <span>{heading.title}</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </nav>
+</aside>
+
+<script>
+  function initArticleToc() {
+    const navigation = document.querySelector<HTMLElement>('[data-article-toc]')
+    if (!navigation || navigation.dataset.initialized === 'true') return
+    navigation.dataset.initialized = 'true'
+
+    const links = Array.from(
+      navigation.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'),
+    )
+    const sections = links
+      .map((link) => {
+        const id = decodeURIComponent(link.hash.slice(1))
+        const section = document.getElementById(id)
+        return section ? { link, section } : null
+      })
+      .filter(
+        (
+          item,
+        ): item is { link: HTMLAnchorElement; section: HTMLElement } =>
+          item !== null,
+      )
+
+    const setActive = (active: HTMLAnchorElement) => {
+      links.forEach((link) => {
+        const selected = link === active
+        link.classList.toggle('is-active', selected)
+        if (selected) link.setAttribute('aria-current', 'location')
+        else link.removeAttribute('aria-current')
+      })
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort(
+            (a, b) => a.boundingClientRect.top - b.boundingClientRect.top,
+          )[0]
+        if (!visible) return
+        const match = sections.find(
+          ({ section }) => section === visible.target,
+        )
+        if (match) setActive(match.link)
+      },
+      { rootMargin: '-120px 0px -68% 0px', threshold: 0 },
+    )
+
+    sections.forEach(({ section }) => observer.observe(section))
+  }
+
+  initArticleToc()
+  document.addEventListener('astro:page-load', initArticleToc)
+</script>
+
+<style>
+  .article-toc {
+    position: sticky;
+    top: calc(76px + var(--space-5));
+  }
+  .article-toc__title {
+    margin: 0 0 var(--space-4);
+    color: var(--color-ink-500);
+    font-size: var(--text-eyebrow);
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  .article-toc ol {
+    margin: 0;
+    padding: 0;
+    border-left: 1px solid var(--color-ink-300);
+    list-style: none;
+  }
+  .article-toc a {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: var(--space-3);
+    margin-left: -1px;
+    padding: 9px var(--space-4);
+    border-left: 2px solid transparent;
+    color: var(--color-ink-600);
+    font-size: var(--text-caption);
+    line-height: 1.4;
+    transition:
+      border-color var(--dur-base) var(--ease-standard),
+      color var(--dur-base) var(--ease-standard);
+  }
+  .article-toc a > span:first-child {
+    color: var(--color-ink-400);
+    font-size: var(--text-micro);
+  }
+  .article-toc a:hover,
+  .article-toc a.is-active {
+    border-left-color: var(--color-coral);
+    color: var(--color-ink-900);
+  }
+  .article-toc a.is-active > span:first-child {
+    color: var(--color-coral);
+  }
+  @media (max-width: 767px) {
+    .article-toc {
+      position: static;
+      padding: var(--space-4);
+      border: 1px solid var(--color-ink-300);
+      background: rgba(255, 255, 255, 0.45);
+    }
+    .article-toc ol {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border-left: 0;
+    }
+    .article-toc a {
+      height: 100%;
+      margin-left: 0;
+      padding: var(--space-2);
+      border-left: 0;
+      border-bottom: 2px solid transparent;
+    }
+    .article-toc a:hover,
+    .article-toc a.is-active {
+      border-bottom-color: var(--color-coral);
+    }
+  }
+  @media (max-width: 480px) {
+    .article-toc ol {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

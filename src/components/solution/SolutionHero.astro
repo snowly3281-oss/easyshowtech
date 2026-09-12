@@ -1,0 +1,328 @@
+---
+import Icon from '../Icon.astro'
+import type { Locale } from '../../i18n/config'
+import { staticUi } from '../../i18n/static'
+
+interface SolutionHeroCopy {
+  eyebrow: string
+  heading: string
+  subheading: string
+  whyHeading: string
+  whyBody: string
+  cards: {
+    icon: string
+    number: string
+    title: string
+    body: string
+    note: string
+  }[]
+}
+
+interface Props {
+  copy: SolutionHeroCopy
+  heroImage: string
+  isBoutique: boolean
+  solutionTitle?: string | null
+  proofs: string[]
+  locale?: Locale
+}
+
+const {
+  copy,
+  heroImage,
+  isBoutique,
+  solutionTitle,
+  proofs,
+  locale = 'en',
+} = Astro.props
+const t = (english: string) => staticUi(locale, english)
+---
+
+<section class="solution-hero">
+  <div class="container solution-hero__grid">
+    <div class="solution-hero__copy">
+      <p class="eyebrow">{copy.eyebrow}</p>
+      <h1>{copy.heading}</h1>
+      <p class="body-l">{copy.subheading}</p>
+      <div class="solution-hero__actions">
+        <a class="btn btn-coral" href="#packages">{t('Request a quote')}</a>
+        <a class="btn btn-outline" href="#floor-plan">{t('Browse the configuration')}</a>
+      </div>
+      <p class="solution-hero__trust">
+        <span aria-hidden="true">●</span>
+        {t('Reviewed by Coral’s studio-planning team')}
+      </p>
+    </div>
+
+    <div class="solution-hero__visual">
+      <img
+        src={heroImage}
+        alt={isBoutique
+          ? t('Bright boutique Pilates studio fitted with maple reformers')
+          : t('{solution} equipment solution').replace(
+              '{solution}',
+              solutionTitle ?? 'Pilates',
+            )}
+        width="1600"
+        height="1000"
+        loading="eager"
+        fetchpriority="high"
+      />
+      <div class="solution-hero__lead">
+        <strong class="nums">{t('4–6 weeks')}</strong>
+        <span>{t('Typical production lead time')}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="proof-strip" aria-label={t('Solution assurances')}>
+  <div class="container">
+    {proofs.map((proof) => (
+      <span><Icon name="check" size={15} />{proof}</span>
+    ))}
+  </div>
+</div>
+
+<section class="section solution-why">
+  <div class="container">
+    <div class="solution-why__intro">
+      <div>
+        <p class="eyebrow">{t('Why Coral Pilates')}</p>
+        <h2>{copy.whyHeading}</h2>
+      </div>
+      <p>{copy.whyBody}</p>
+    </div>
+    <div class="solution-why__cards">
+      {copy.cards.map((card) => (
+        <article>
+          <div class="solution-why__cardtop">
+            <span><Icon name={card.icon} size={18} /></span>
+            <small class="nums">{card.number}</small>
+          </div>
+          <h3>{card.title}</h3>
+          <p>{card.body}</p>
+          <small class="solution-why__note">{card.note}</small>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .solution-hero {
+    padding: var(--space-8) 0;
+    background: var(--color-canvas);
+  }
+  .solution-hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+    gap: var(--space-8);
+    align-items: center;
+  }
+  .solution-hero__copy {
+    max-width: 610px;
+  }
+  .solution-hero__copy h1 {
+    max-width: 12ch;
+    margin: var(--space-3) 0 0;
+    /* Solution pages use the site H1 scale; the 76px display scale is
+       deliberately reserved for the brand homepage hero only. */
+    font-size: var(--text-h1);
+  }
+  .solution-hero__copy > p:not(.eyebrow):not(.solution-hero__trust) {
+    max-width: 55ch;
+    margin: var(--space-5) 0 0;
+    color: var(--color-ink-600);
+  }
+  .solution-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin: var(--space-6) 0 0;
+  }
+  .solution-hero__trust {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-4) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .solution-hero__trust span {
+    color: var(--color-coral);
+    font-size: 8px;
+  }
+  .solution-hero__visual {
+    position: relative;
+    min-width: 0;
+  }
+  .solution-hero__visual img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    display: block;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+  }
+  .solution-hero__lead {
+    position: absolute;
+    left: var(--space-4);
+    bottom: var(--space-4);
+    min-width: 180px;
+    padding: var(--space-3) var(--space-4);
+    border-left: 3px solid var(--color-coral);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(8px);
+  }
+  .solution-hero__lead strong,
+  .solution-hero__lead span {
+    display: block;
+  }
+  .solution-hero__lead strong {
+    font-size: var(--text-h4);
+  }
+  .solution-hero__lead span {
+    margin: var(--space-1) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .proof-strip {
+    background: var(--color-ink-900);
+    color: var(--color-white);
+  }
+  .proof-strip .container {
+    min-height: 52px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: center;
+  }
+  .proof-strip span {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-right: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: var(--text-micro);
+    letter-spacing: var(--tracking-wide);
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .proof-strip span:last-child {
+    border-right: 0;
+  }
+  .proof-strip svg {
+    color: var(--color-coral-border);
+    flex: 0 0 auto;
+  }
+  .solution-why {
+    background: var(--color-paper-2);
+  }
+  .solution-why__intro {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: var(--space-8);
+    align-items: end;
+  }
+  .solution-why__intro h2 {
+    max-width: 17ch;
+    margin: var(--space-2) 0 0;
+  }
+  .solution-why__intro > p {
+    max-width: 58ch;
+    margin: 0;
+    color: var(--color-ink-600);
+  }
+  .solution-why__cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+    margin: var(--space-7) 0 0;
+  }
+  .solution-why__cards article {
+    min-height: 280px;
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(14, 16, 19, 0.08);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+  }
+  .solution-why__cardtop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .solution-why__cardtop > span {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    background: var(--color-coral-tint);
+    color: var(--color-coral);
+  }
+  .solution-why__cardtop small {
+    color: var(--color-ink-300);
+  }
+  .solution-why__cards h3 {
+    margin: var(--space-6) 0 0;
+  }
+  .solution-why__cards article > p {
+    margin: var(--space-3) 0 0;
+    color: var(--color-ink-600);
+  }
+  .solution-why__note {
+    margin: auto 0 0;
+    padding: var(--space-5) 0 0;
+    color: var(--color-coral);
+    font-size: var(--text-caption);
+  }
+  @media (max-width: 1023px) {
+    .solution-hero__grid {
+      grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
+      gap: var(--space-6);
+    }
+    .proof-strip .container {
+      grid-template-columns: repeat(3, 1fr);
+      padding-block: var(--space-2);
+    }
+    .proof-strip span:nth-child(3) {
+      border-right: 0;
+    }
+    .proof-strip span:nth-child(n + 4) {
+      grid-column: span 1;
+    }
+  }
+  @media (max-width: 767px) {
+    .solution-hero {
+      padding: var(--space-7) 0;
+    }
+    .solution-hero__grid,
+    .solution-why__intro {
+      grid-template-columns: 1fr;
+    }
+    .solution-hero__visual {
+      margin: var(--space-2) 0 0;
+    }
+    .proof-strip .container {
+      grid-template-columns: 1fr;
+      padding-block: 0;
+    }
+    .proof-strip span,
+    .proof-strip span:nth-child(3) {
+      justify-content: flex-start;
+      border-right: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    }
+    .proof-strip span:last-child {
+      border-bottom: 0;
+    }
+    .solution-why__cards {
+      grid-template-columns: 1fr;
+    }
+    .solution-why__cards article {
+      min-height: 240px;
+    }
+  }
+</style>

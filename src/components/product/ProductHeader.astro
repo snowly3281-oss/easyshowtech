@@ -1,0 +1,786 @@
+---
+import type { ProductData, SiteSettingsData } from '../../sanity/content'
+import { urlFor } from '../../sanity/image'
+import { formatPrice, getPricePresentation } from '../../lib/price'
+import QuoteModal from './QuoteModal.astro'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {localizeCountDuration, staticUi} from '../../i18n/static'
+
+interface Props {
+  product: ProductData
+  settings?: SiteSettingsData | null
+  locale?: Locale
+}
+
+const { product, settings, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const productTitle = product.title ?? t('Coral Pilates equipment')
+
+// Generic finish / upholstery configurator — global common options edited in
+// siteSettings (per-product variants come later). Frame finish only applies to
+// the wood series; upholstery to all. There's no cart on a quote site, so the
+// selection is captured into the Request-a-quote link instead.
+const isWood = (product.seriesSlug ?? '').startsWith('wood-')
+// Aluminium frames are anodised / electroplated to order — the alloy takes
+// virtually any colour, so there's no fixed swatch set. The PDP shows an
+// "any colour" note instead and the quote records an open custom-colour intent.
+const isAluminium = (product.seriesSlug ?? '') === 'aluminum'
+const frameFinishes = (isWood ? settings?.frameFinishes : null) ?? []
+const upholsteryColors = settings?.upholsteryColors ?? []
+const defaultFrame =
+  frameFinishes.find((f) =>
+    (product.seriesTitle ?? '').toLowerCase().includes((f?.name ?? '').toLowerCase())
+  )?.name ??
+  frameFinishes[0]?.name ??
+  null
+const defaultUpholstery = upholsteryColors[0]?.name ?? null
+const frameParam = defaultFrame ?? (isAluminium ? 'anodised-custom' : null)
+const quoteHref =
+  localizedPath('/contact', locale) +
+  '?product=' +
+  encodeURIComponent(product.sku ?? '') +
+  (frameParam ? '&frame=' + encodeURIComponent(frameParam) : '') +
+  (defaultUpholstery ? '&upholstery=' + encodeURIComponent(defaultUpholstery) : '')
+
+const certs = product.certifications ?? []
+// MOQ is a fixed company-wide policy ("1 unit, no minimum"); default it here
+// rather than copying onto every product doc. Lead time / warranty stay
+// per-product (and hidden until the client confirms them).
+const stats = [
+  { label: 'MOQ', value: localizeCountDuration(locale, product.moq ?? '1 unit') },
+  { label: t('Lead time'), value: localizeCountDuration(locale, product.leadTime) },
+  { label: t('Warranty'), value: localizeCountDuration(locale, product.warranty) },
+].filter((s) => s.value)
+
+const priceText = formatPrice(getPricePresentation(settings, product))
+
+// Build the gallery slides: featured main image first, then each detail shot.
+// MediaBox emits a plain <img> (no srcset), so the client can swap the main
+// image's src directly. We pre-build full + thumb URLs per slide here.
+type Slide = { full: string; thumb: string; alt: string }
+const sources = [
+  product.mainImage?.asset
+    ? { asset: product.mainImage.asset, alt: product.mainImage.alt ?? productTitle }
+    : null,
+  ...(product.gallery ?? [])
+    .filter((g) => g?.image?.asset)
+    .map((g) => ({ asset: g.image!.asset, alt: g.alt ?? productTitle })),
+].filter(Boolean) as {
+  asset: NonNullable<NonNullable<ProductData['mainImage']>['asset']>
+  alt: string
+}[]
+
+const slides: Slide[] = sources.map((s) => ({
+  full: urlFor(s.asset).width(1280).fit('max').auto('format').url(),
+  thumb: urlFor(s.asset).width(200).height(200).fit('crop').auto('format').url(),
+  alt: s.alt,
+}))
+const hasMedia = slides.length > 0
+---
+
+<section class="section ph">
+  <div class="container">
+    <nav class="ph__crumbs nums" aria-label={t('Breadcrumb')}>
+      <a href={localizedPath('/products', locale)}>{t('Products')}</a>
+      {product.seriesTitle && (
+        <>
+          <span aria-hidden="true">/</span>
+          <a href={`${localizedPath('/products', locale)}?series=${product.seriesSlug ?? ''}`}>{product.seriesTitle} {t('series')}</a>
+        </>
+      )}
+      {product.sku && (
+        <>
+          <span aria-hidden="true">/</span>
+          <span>{product.sku}</span>
+        </>
+      )}
+    </nav>
+
+    <div class="ph__grid">
+      <div class="ph__media" data-ph-gallery>
+        {hasMedia ? (
+          <>
+            {slides.length > 1 && (
+              <div class="ph__rail">
+                <button type="button" class="ph__railbtn" data-ph-up aria-label={t('Previous thumbnails')}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 10l4-4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="ph__railview" data-ph-railview>
+                  <ul class="ph__thumbs" role="list">
+                    {slides.map((s, i) => (
+                      <li>
+                        <button
+                          type="button"
+                          class:list={['ph__thumb', { 'is-active': i === 0 }]}
+                          data-ph-thumb
+                          data-index={i}
+                          data-full={s.full}
+                          data-alt={s.alt}
+                          aria-label={`${t('Show image')} ${i + 1} ${t('of')} ${slides.length}`}
+                        >
+                          <img
+                            src={s.thumb}
+                            alt=""
+                            width="200"
+                            height="200"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <button type="button" class="ph__railbtn" data-ph-down aria-label={t('Next thumbnails')}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </div>
+            )}
+            <button type="button" class="ph__mainwrap" data-ph-mainnext aria-label={t('Show next image')}>
+              <img
+                class="media ph__mainimg"
+                data-ph-main
+                src={slides[0].full}
+                alt={slides[0].alt}
+                width="1280"
+                height="1280"
+                loading="eager"
+                fetchpriority="high"
+              />
+              {product.mainImageDimensionNote && (
+                <span class="ph__dim nums">{product.mainImageDimensionNote}</span>
+              )}
+              {slides.length > 1 && (
+                <>
+                  <span class="ph__nav ph__nav--prev" data-ph-prev role="button" tabindex="0" aria-label={t('Previous image')}>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                  <span class="ph__nav ph__nav--next" data-ph-next role="button" tabindex="0" aria-label={t('Next image')}>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M8 4l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                </>
+              )}
+            </button>
+          </>
+        ) : (
+          <div class="media media--ph ph__mainimg" role="img" aria-label={t('Photography coming soon')} />
+        )}
+      </div>
+
+      <aside class="ph__card">
+        {product.sku && <p class="ph__status nums">{product.sku}</p>}
+        {product.seriesTitle && <p class="eyebrow">{product.seriesTitle} {t('series')}</p>}
+        <h1 class="ph__title">{productTitle}</h1>
+        {product.summary && <p class="body-s ph__summary">{product.summary}</p>}
+
+        <div class="ph__price">
+          {priceText ? (
+            <>
+              <span class="ph__amount nums">{priceText}</span>
+              {product.priceUnit && <span class="ph__priceunit">{product.priceUnit}</span>}
+              {product.priceNote && <span class="ph__pricenote">{product.priceNote}</span>}
+            </>
+          ) : (
+            <span class="ph__quote">{t('Price on request')}</span>
+          )}
+        </div>
+
+        {frameFinishes.length > 0 && (
+          <div class="ph__config" data-config-kind="frame">
+            <div class="ph__confighead">
+              <p class="ph__configlabel">{t('Frame finish')}</p>
+              <span class="ph__configval" data-config-value="frame">{defaultFrame}</span>
+            </div>
+            <ul class="ph__swatches">
+              {frameFinishes.map((f) => (
+                <li>
+                  <button
+                    type="button"
+                    class:list={['ph__swatch', { 'is-active': f?.name === defaultFrame }]}
+                    data-swatch="frame"
+                    data-name={f?.name}
+                    style={f?.hex ? `--sw:${f.hex}` : undefined}
+                    aria-label={f?.name ?? undefined}
+                    title={f?.name ?? undefined}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {isAluminium && (
+          <div class="ph__config" data-config-kind="frame">
+            <div class="ph__confighead">
+              <p class="ph__configlabel">{t('Frame finish')}</p>
+              <span class="ph__configval">{t('Aluminium')}</span>
+            </div>
+            <ul class="ph__pills">
+              <li><span class="ph__pill ph__pill--note">{t('Anodised aluminium — any colour')}</span></li>
+            </ul>
+            <p class="ph__confignote">{t('Tell us your colour in the quote request.')}</p>
+          </div>
+        )}
+
+        {upholsteryColors.length > 0 && (
+          <div class="ph__config" data-config-kind="upholstery">
+            <div class="ph__confighead">
+              <p class="ph__configlabel">{t('Upholstery')}</p>
+              <span class="ph__configval" data-config-value="upholstery">{defaultUpholstery}</span>
+            </div>
+            <ul class="ph__pills">
+              {upholsteryColors.map((u) => (
+                <li>
+                  <button
+                    type="button"
+                    class:list={['ph__pill', { 'is-active': u?.name === defaultUpholstery }]}
+                    data-swatch="upholstery"
+                    data-name={u?.name}
+                  >
+                    <span class="ph__pilldot" style={u?.hex ? `background:${u.hex}` : undefined} />
+                    {u?.name}
+                  </button>
+                </li>
+              ))}
+              <li><span class="ph__pill ph__pill--note">{t('Custom on request')}</span></li>
+            </ul>
+          </div>
+        )}
+
+        {stats.length > 0 && (
+          <dl class="ph__stats">
+            {stats.map((s) => (
+              <div class="ph__stat">
+                <dt>{s.label}</dt>
+                <dd class="nums">{s.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        <div class="ph__actions">
+          <button
+            type="button"
+            class="btn btn-coral ph__cta"
+            data-rfq-add
+            data-rfq-live-options
+            data-rfq-product-id={product._id}
+            data-rfq-slug={product.slug ?? ''}
+            data-rfq-title={productTitle}
+            data-rfq-sku={product.sku ?? ''}
+            data-rfq-quantity="1"
+          >
+            {t('Add to RFQ')}
+          </button>
+          <a class="btn btn-outline ph__cta" data-quote-cta href={quoteHref}>{t('Request one-product quote')}</a>
+        </div>
+        {certs.length > 0 && <p class="ph__certs">{certs.join(' · ')} {t('certified')}</p>}
+      </aside>
+    </div>
+  </div>
+
+  <QuoteModal sku={product.sku} title={productTitle} locale={locale} />
+
+</section>
+
+<script>
+  // Interactive PDP gallery: vertical thumbnail rail on the left that
+  // auto-scrolls while the cursor hovers its upper/lower half; click a
+  // thumbnail (or the main arrows) to swap the main image; click the main
+  // image to open a lightbox.
+  function initGallery() {
+    const main = document.querySelector('[data-ph-main]') as HTMLImageElement | null
+    const thumbs = Array.from(
+      document.querySelectorAll('[data-ph-thumb]')
+    ) as HTMLButtonElement[]
+    if (!main) return
+    if (main.dataset.galleryInitialized === 'true') return
+    main.dataset.galleryInitialized = 'true'
+
+    // Warm every slide's full-res image on load so clicking swaps instantly.
+    // Without this, each first view of an image waits on a CDN fetch — which is
+    // exactly the "click, then wait for the next photo" lag.
+    thumbs.forEach((btn) => {
+      const full = btn.dataset.full
+      if (full) {
+        const pre = new Image()
+        pre.src = full
+      }
+    })
+
+    let index = 0
+    const select = (i: number) => {
+      index = (i + thumbs.length) % thumbs.length
+      const btn = thumbs[index]
+      if (!btn) return
+      if (btn.dataset.full) main.src = btn.dataset.full
+      main.alt = btn.dataset.alt ?? ''
+      thumbs.forEach((t, n) => t.classList.toggle('is-active', n === index))
+      btn.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
+    }
+    thumbs.forEach((btn, i) => btn.addEventListener('click', () => select(i)))
+    // Click the main image to advance to the next photo. The arrows step
+    // prev/next and stop propagation so they don't double-fire the main click.
+    document.querySelector('[data-ph-mainnext]')?.addEventListener('click', () => select(index + 1))
+    document.querySelector('[data-ph-prev]')?.addEventListener('click', (e) => {
+      e.stopPropagation()
+      select(index - 1)
+    })
+    document.querySelector('[data-ph-next]')?.addEventListener('click', (e) => {
+      e.stopPropagation()
+      select(index + 1)
+    })
+
+    // Rail: chevron buttons + hover auto-scroll (upper half scrolls up,
+    // lower half scrolls down; speed grows toward the edges).
+    const view = document.querySelector('[data-ph-railview]') as HTMLElement | null
+    if (view) {
+      const step = () => (thumbs[0]?.getBoundingClientRect().height ?? 80) + 8
+      document.querySelector('[data-ph-up]')?.addEventListener('click', () =>
+        view.scrollBy({ top: -step() * 2, behavior: 'smooth' })
+      )
+      document.querySelector('[data-ph-down]')?.addEventListener('click', () =>
+        view.scrollBy({ top: step() * 2, behavior: 'smooth' })
+      )
+      let raf = 0
+      let speed = 0
+      const loop = () => {
+        if (speed !== 0) view.scrollTop += speed
+        raf = requestAnimationFrame(loop)
+      }
+      view.addEventListener('mousemove', (e) => {
+        const r = view.getBoundingClientRect()
+        const ratio = (e.clientY - r.top) / r.height // 0 top .. 1 bottom
+        const dz = 0.15 // dead zone around the middle
+        if (ratio < 0.5 - dz) speed = -Math.ceil((0.5 - dz - ratio) * 18)
+        else if (ratio > 0.5 + dz) speed = Math.ceil((ratio - 0.5 - dz) * 18)
+        else speed = 0
+        if (!raf) loop()
+      })
+      const stop = () => {
+        speed = 0
+        if (raf) cancelAnimationFrame(raf)
+        raf = 0
+      }
+      view.addEventListener('mouseleave', stop)
+    }
+  }
+  initGallery()
+
+  // Finish / upholstery configurator: highlight the picked option, update the
+  // "Selected: X" label, and fold the choice into the Request-a-quote link.
+  function initConfigurator() {
+    const cta = document.querySelector('[data-quote-cta]') as HTMLAnchorElement | null
+    if (!cta || cta.dataset.configuratorInitialized === 'true') return
+    cta.dataset.configuratorInitialized = 'true'
+    document.querySelectorAll('[data-swatch]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const group = btn.getAttribute('data-swatch') || ''
+        const name = btn.getAttribute('data-name') || ''
+        document
+          .querySelectorAll('[data-swatch="' + group + '"]')
+          .forEach((b) => b.classList.toggle('is-active', b === btn))
+        const valEl = document.querySelector('[data-config-value="' + group + '"]')
+        if (valEl) valEl.textContent = name
+        if (cta) {
+          try {
+            const url = new URL(cta.getAttribute('href') || '/contact', location.origin)
+            url.searchParams.set(group, name)
+            cta.setAttribute('href', url.pathname + url.search)
+          } catch (e) {
+            /* noop */
+          }
+        }
+      })
+    })
+  }
+  initConfigurator()
+  document.addEventListener('astro:page-load', () => {
+    initGallery()
+    initConfigurator()
+  })
+</script>
+
+<style>
+  .ph__crumbs {
+    display: flex;
+    gap: var(--space-2);
+    font-size: var(--text-body-s);
+    color: var(--color-ink-400, #9a948a);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide, 0.04em);
+  }
+  .ph__crumbs a:hover {
+    color: var(--color-coral);
+  }
+  .ph__grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: var(--space-7);
+    margin: var(--space-5) 0 0;
+  }
+  /* Media column: vertical thumbnail rail (left) + large main image (right). */
+  .ph__media {
+    position: relative;
+    padding-left: calc(88px + var(--space-3));
+    /* Don't stretch to the grid row height (driven by the taller info card);
+       stay at the main-image height so the absolutely-positioned rail (top:0/
+       bottom:0) matches the image instead of overflowing past its bottom. */
+    align-self: start;
+  }
+  /* Rail is absolutely positioned so its (tall) thumbnail list does NOT drive
+     the media height — the main image defines the height, and the rail fills
+     it (top:0 / bottom:0) and clips the overflow that the hover-scroll moves. */
+  .ph__rail {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 88px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .ph__railbtn {
+    flex: none;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-sm, 4px);
+    background: var(--color-paper, #f7f4ee);
+    color: var(--color-ink-600, #555);
+    cursor: pointer;
+  }
+  .ph__railbtn:hover {
+    border-color: var(--color-ink-400, #9a948a);
+    color: var(--color-ink-900, #0e1013);
+  }
+  .ph__railview {
+    flex: 1;
+    min-height: 0;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+  .ph__railview::-webkit-scrollbar {
+    display: none;
+  }
+  .ph__thumbs {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .ph__thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    padding: 0;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-sm, 4px);
+    background: none;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+  }
+  .ph__thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .ph__thumb:hover {
+    border-color: var(--color-ink-400, #9a948a);
+  }
+  .ph__thumb.is-active {
+    border-color: var(--color-coral);
+  }
+  .ph__mainwrap {
+    position: relative;
+    width: 100%;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+  }
+  .ph__mainimg {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: var(--radius-md, 6px);
+  }
+  .ph__dim {
+    position: absolute;
+    left: var(--space-3);
+    bottom: var(--space-3);
+    background: rgba(14, 16, 19, 0.7);
+    color: #fff;
+    font-size: var(--text-caption);
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .ph__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--color-ink-900, #0e1013);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+  }
+  .ph__nav--prev {
+    left: var(--space-3);
+  }
+  .ph__nav--next {
+    right: var(--space-3);
+  }
+  .ph__nav:hover {
+    background: #fff;
+  }
+  .ph__card {
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-md, 6px);
+    padding: var(--space-5);
+    align-self: start;
+  }
+  .ph__status {
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-coral);
+    margin: 0 0 var(--space-3);
+  }
+  .ph__title {
+    margin: var(--space-1) 0 0;
+  }
+  .ph__summary {
+    margin: var(--space-3) 0 0;
+    color: var(--color-ink-600, #555);
+  }
+  .ph__price {
+    margin: var(--space-5) 0 0;
+    padding: var(--space-4) 0;
+    border-block: 1px solid var(--color-ink-100, #efeae0);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2) var(--space-3);
+  }
+  .ph__amount {
+    font-size: var(--text-h1);
+    font-weight: 600;
+    line-height: 1;
+  }
+  .ph__priceunit {
+    font-size: var(--text-body-s);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .ph__pricenote {
+    flex-basis: 100%;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-600, #555);
+  }
+  .ph__quote {
+    font-size: var(--text-h2);
+    font-weight: 600;
+  }
+  .ph__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+    margin: var(--space-5) 0 0;
+  }
+  .ph__actions .ph__cta {
+    width: 100%;
+    margin: 0;
+  }
+  /* Finish / upholstery configurator. */
+  .ph__config {
+    margin: var(--space-4) 0 0;
+    /* keep the section clear of the 76px sticky header when scrolled to */
+    scroll-margin-top: calc(76px + var(--space-4));
+  }
+  .ph__confighead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin: 0 0 var(--space-2);
+  }
+  .ph__configlabel {
+    margin: 0;
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .ph__configval {
+    font-size: var(--text-body-s);
+    color: var(--color-ink-600, #555);
+  }
+  /* Helper line under the aluminium "any colour" frame note. */
+  .ph__confignote {
+    margin: var(--space-2) 0 0;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-400, #9a948a);
+  }
+  /* Frame finish — circular colour swatches. */
+  .ph__swatches {
+    margin: 0;
+    /* the active swatch draws a 4px outer coral halo; pad the row so it is
+       fully contained and never reads as clipped against the label/row edge */
+    padding: 4px 0 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .ph__swatch {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 50%;
+    background: var(--sw, var(--color-paper-2, #ece7dd));
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0 0 2px transparent;
+    cursor: pointer;
+    transition: box-shadow 0.15s ease;
+  }
+  .ph__swatch:hover {
+    box-shadow: 0 0 0 2px var(--color-ink-300, #cfc9bd);
+  }
+  .ph__swatch.is-active {
+    box-shadow:
+      0 0 0 2px var(--color-white, #fff),
+      0 0 0 4px var(--color-coral);
+  }
+  /* Upholstery — text pills with a colour dot. */
+  .ph__pills {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .ph__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-sm, 4px);
+    background: none;
+    font: inherit;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-800, #333);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .ph__pill:hover {
+    border-color: var(--color-ink-400, #9a948a);
+  }
+  .ph__pill.is-active {
+    border-color: var(--color-ink-900, #0e1013);
+    box-shadow: inset 0 0 0 1px var(--color-ink-900, #0e1013);
+  }
+  .ph__pilldot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  }
+  .ph__pill--note {
+    color: var(--color-ink-400, #9a948a);
+    cursor: default;
+  }
+  .ph__pill--note:hover {
+    border-color: var(--color-ink-200, #e2ddd3);
+  }
+  .ph__stats {
+    margin: var(--space-4) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-5);
+  }
+  .ph__stat {
+    min-width: 72px;
+  }
+  .ph__stat dt {
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .ph__stat dd {
+    margin: 2px 0 0;
+    font-weight: 600;
+  }
+  .ph__cta {
+    margin: var(--space-5) 0 0;
+    width: 100%;
+  }
+  .ph__certs {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-400, #9a948a);
+    text-align: center;
+  }
+  @media (max-width: 900px) {
+    .ph__grid {
+      grid-template-columns: 1fr;
+    }
+    /* Mobile gallery: main image full-width on top, thumbnails become a
+       horizontal swipeable strip below it (no left rail eating width). */
+    .ph__media {
+      padding-left: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      min-width: 0; /* let the grid track constrain it (no h-overflow) */
+    }
+    .ph__mainwrap {
+      order: 1;
+    }
+    .ph__rail {
+      position: static;
+      order: 2;
+      width: auto;
+      min-width: 0;
+      flex-direction: row;
+      gap: 0;
+    }
+    .ph__railbtn {
+      display: none; /* swipe/scroll the strip instead of chevrons */
+    }
+    .ph__railview {
+      flex: none;
+      width: 100%;
+      min-width: 0; /* enables the horizontal overflow-scroll of the strip */
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    .ph__thumbs {
+      flex-direction: row;
+      gap: var(--space-2);
+    }
+    .ph__thumbs > li {
+      flex: 0 0 auto;
+    }
+    .ph__thumb {
+      width: 64px;
+    }
+  }
+</style>

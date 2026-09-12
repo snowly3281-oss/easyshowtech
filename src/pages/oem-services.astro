@@ -1,0 +1,766 @@
+---
+/**
+ * OEM services — bespoke conversion page with its header, SEO and additional
+ * operator-managed content blocks supplied by the OEM singleton in Sanity.
+ * Hero + stat row + IP-protection commitment + customisation limits + 8-step
+ * process + honest comparison + FAQ + inquiry form STRUCTURE + closing band.
+ * Stats show the design's sample values; bind to Sanity
+ * later. Form is structure-only.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Icon from "../components/Icon.astro";
+import PageBuilder from "../components/blocks/PageBuilder.astro";
+import {
+  TURNSTILE_ACTION,
+  TURNSTILE_SITE_KEY,
+} from "../lib/turnstileConfig";
+import {oemPageQuery} from "../sanity/queries/oem";
+import { getSiteSettings } from "../sanity/settings";
+import {
+  getConfirmedValue,
+  type VerifiedValue,
+} from "../sanity/pages";
+import type {OemPageQueryResult} from "../sanity/sanity.types";
+import type {SolutionBlock} from "../sanity/content";
+import {fetchLocalized, localizedPath, resolveLocale} from "../i18n/config";
+import {staticUi} from "../i18n/static";
+
+const locale = resolveLocale(
+  Astro.props.locale,
+  Astro.originPathname || Astro.url.pathname,
+);
+const t = (english: string) => staticUi(locale, english);
+const [siteSettings, oemContent] = await Promise.all([
+  getSiteSettings(),
+  fetchLocalized<OemPageQueryResult>(oemPageQuery, {}, locale),
+]);
+const oemBlocks = (oemContent?.pageBuilder ?? []) as SolutionBlock[];
+const oemHero = oemBlocks.find(
+  (block): block is Extract<SolutionBlock, {_type: "heroBlock"}> =>
+    block._type === "heroBlock",
+);
+const oemSupportingBlocks = oemBlocks.filter(
+  (block) => block._type !== "heroBlock",
+);
+const eyebrow = oemHero?.eyebrow || t("OEM & private label");
+const pageTitle =
+  oemHero?.heading ||
+  oemContent?.title ||
+  t("Your brand. Our factory. Your design stays yours.");
+const pageIntro =
+  oemHero?.subheading ||
+  t("Build a private-label Pilates equipment range with specifications, commercial terms and confidentiality requirements documented in writing.");
+const metaTitle =
+  oemContent?.seo?.metaTitle || t("OEM services — Coral Pilates");
+const metaDescription = oemContent?.seo?.metaDescription || pageIntro;
+type OemCommercialFacts = Record<string, VerifiedValue | undefined>;
+const commercialFacts = (oemContent?.commercialFacts ??
+  {}) as OemCommercialFacts;
+const standardMoq = getConfirmedValue(commercialFacts.standardMoq);
+const toolingFrom = getConfirmedValue(commercialFacts.toolingFrom);
+const flexibleMoq = getConfirmedValue(commercialFacts.flexibleMoq);
+const leadTime = getConfirmedValue(commercialFacts.leadTime);
+const activeClients = getConfirmedValue(commercialFacts.activeClients);
+const toolingQuote = getConfirmedValue(commercialFacts.toolingQuote);
+const ndaTerm = getConfirmedValue(commercialFacts.ndaTerm);
+const brandedSpringColour = getConfirmedValue(
+  commercialFacts.brandedSpringColour,
+);
+const certificationScope = getConfirmedValue(
+  commercialFacts.certificationScope,
+);
+const dedicatedLines = getConfirmedValue(commercialFacts.dedicatedLines);
+const operatorNdas = getConfirmedValue(commercialFacts.operatorNdas);
+const toolingEscrow = getConfirmedValue(commercialFacts.toolingEscrow);
+const patentFilingHelp = getConfirmedValue(
+  commercialFacts.patentFilingHelp,
+);
+const nonSupplyCommitment = getConfirmedValue(
+  commercialFacts.nonSupplyCommitment,
+);
+const breachRemedy = getConfirmedValue(commercialFacts.breachRemedy);
+const toolingOwnership = getConfirmedValue(
+  commercialFacts.toolingOwnership,
+);
+
+const steps = [
+  { n: "01", t: t("Inquiry"), d: t("Share brand, target volume and references.") },
+  {
+    n: "02",
+    t: t("Confidentiality"),
+    d:
+      ndaTerm ||
+      t("Agree confidentiality requirements before sensitive design files move."),
+  },
+  { n: "03", t: t("Design & spec"), d: t("We co-finalise design, materials, finishes.") },
+  {
+    n: "04",
+    t: t("Tooling quote"),
+    d: toolingQuote || t("Confirm tooling scope, ownership and quoted cost."),
+  },
+  { n: "05", t: t("Tooling & sample"), d: t("We cut tooling and build a sample.") },
+  { n: "06", t: t("Sample approval"), d: t("You inspect and sign off; changes logged.") },
+  { n: "07", t: t("Production"), d: t("Production against the approved sample and specification.") },
+  { n: "08", t: t("QC & delivery"), d: t("Full QC, branded packaging, export & freight.") },
+];
+
+const compare = [
+  {
+    k: "MOQ",
+    a: flexibleMoq || standardMoq,
+    b: t("Confirm before comparing"),
+  },
+  {
+    k: t("Tooling quote"),
+    a: toolingQuote || toolingFrom,
+    b: t("Confirm before comparing"),
+  },
+  {
+    k: t("Production arrangement"),
+    a: dedicatedLines,
+    b: t("Confirm before comparing"),
+  },
+  {
+    k: t("Written non-supply terms"),
+    a: nonSupplyCommitment,
+    b: t("Confirm before comparing"),
+  },
+  {
+    k: t("Lead time"),
+    a: leadTime,
+    b: t("Confirm before comparing"),
+  },
+  {
+    k: t("Tooling ownership"),
+    a: toolingOwnership,
+    b: t("Confirm before comparing"),
+  },
+  {
+    k: t("Patent filing support"),
+    a: patentFilingHelp,
+    b: t("Confirm before comparing"),
+  },
+].filter((row): row is {k: string; a: string; b: string} => Boolean(row.a));
+
+const heroStats = [
+  {
+    value: standardMoq,
+    label: toolingFrom
+      ? `${t("Standard MOQ")} · ${t("tooling")} ${toolingFrom}`
+      : t("Standard MOQ"),
+  },
+  {value: flexibleMoq, label: t("Flexible / sample order")},
+  {value: leadTime, label: t("Indicative OEM lead time")},
+  {value: activeClients, label: t("Active OEM clients")},
+].filter((fact): fact is {value: string; label: string} => Boolean(fact.value));
+
+const protectionCards = [
+  {
+    eyebrow: t("Operational"),
+    heading: t("Production and access controls"),
+    items: [dedicatedLines, operatorNdas].filter(
+      (value): value is string => Boolean(value),
+    ),
+  },
+  {
+    eyebrow: t("Confidentiality"),
+    heading: t("Before design exchange"),
+    items: [ndaTerm, toolingEscrow, patentFilingHelp].filter(
+      (value): value is string => Boolean(value),
+    ),
+  },
+  {
+    eyebrow: t("Contractual"),
+    heading: t("Written ownership and supply terms"),
+    items: [nonSupplyCommitment, breachRemedy, toolingOwnership].filter(
+      (value): value is string => Boolean(value),
+    ),
+  },
+].filter((card) => card.items.length > 0);
+
+const ndaNotice =
+  ndaTerm ||
+  t("Confidentiality requirements are agreed before sensitive design files are exchanged.");
+
+const faqs = [
+  { q: t("How is my design handled?"), a: `${ndaNotice} ${t("Final IP, access, ownership and non-supply terms are stated in the applicable written OEM agreement.")}` },
+  { q: t("What's the minimum order?"), a: standardMoq ? t("The currently approved standard MOQ is {standardMoq}{flexibleMoq}. Your quotation confirms the quantity for the selected product and customisation.").replace("{standardMoq}", standardMoq).replace("{flexibleMoq}", flexibleMoq ? `; ${t("lower-volume terms are")} ${flexibleMoq}` : "") : t("Minimum quantities depend on product, tooling and customisation scope. The applicable MOQ is confirmed in your written quotation.") },
+  { q: t("Who owns the tooling?"), a: toolingOwnership || t("Tooling ownership, storage, permitted use and any transfer arrangements are confirmed in writing before tooling begins.") },
+  { q: t("How long does the whole process take?"), a: leadTime ? t("The currently approved indicative lead-time statement is {leadTime}. The final schedule starts from the milestone stated in your quotation.").replace("{leadTime}", leadTime) : t("The schedule depends on design review, tooling, sample approval, production quantity and destination. We confirm the applicable lead time in writing after reviewing the specification.") },
+  { q: t("What exactly can I customise?"), a: t("Logo and wordmark, frame colour and finish, upholstery, packaging, hardware finish, accessories and documentation. We won't alter anything safety-critical or certified.") },
+  { q: t("Which certifications apply?"), a: certificationScope || t("Certification and compliance scope varies by product, market and customisation. We identify the documents applicable to the quoted configuration before order confirmation.") },
+  { q: t("Can I get a sample before committing?"), a: t("Yes. We cut tooling and build a sample for you to inspect and sign off; every requested change is logged before production begins.") },
+];
+---
+
+<BaseLayout
+  locale={locale}
+  title={metaTitle}
+  description={metaDescription}
+>
+  <!-- HERO (navy, left) -->
+  <section class="band on-navy">
+    <div class="container section">
+      <div class="hero">
+        <div class="hero-copy">
+          <span class="eyebrow">{eyebrow}</span>
+          <h1 class="hero-h">{pageTitle}</h1>
+          <p class="body-l hero-sub">{pageIntro}</p>
+          <div class="hero-cta">
+            <a href="#oem-inquiry" class="btn btn-coral">{t("Start an OEM inquiry")}</a>
+          </div>
+        </div>
+        <div class="hero-media">
+          <img
+            src="/factory/home-realfactory-01.webp"
+            alt={t("Inside the Coral Pilates factory")}
+            width="1280"
+            height="800"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </div>
+      </div>
+
+      {heroStats.length > 0 && (
+        <ul class="stat-row">
+          {heroStats.map((stat) => (
+            <li class="stat">
+              <span class="stat-n nums">{stat.value}</span>
+              <span class="stat-d">{stat.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
+
+  {protectionCards.length > 0 && (
+    <section class="section">
+      <div class="container">
+        <div class="head">
+          <span class="eyebrow">{t("Confidentiality and IP")}</span>
+          <h2 class="head-h">{t("Put the operating rules in writing.")}</h2>
+          <p class="body-l head-sub">
+            {t("The statements below are published only after Coral Pilates has confirmed the corresponding operating or contract term.")}
+          </p>
+        </div>
+
+        <div class="commit-grid">
+          {protectionCards.map((card, index) => (
+            <div class="card commit">
+              <div class="commit-head">
+                <span class="eyebrow">{t("Protection")} {String(index + 1).padStart(2, "0")}</span>
+                <span class="tag">{card.eyebrow}</span>
+              </div>
+              <h3>{card.heading}</h3>
+              <ul class="checklist">
+                {card.items.map((item) => (
+                  <li><Icon name="check" size={16} /> {item}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- CUSTOMISATION -->
+  <section class="band section on-paper">
+    <div class="container">
+      <div class="head">
+        <span class="eyebrow">{t("Customisation")}</span>
+        <h2 class="head-h">{t("Customisation, with honest limits.")}</h2>
+        <p class="body-l head-sub">
+          {t("You can make it unmistakably your brand. But some things we won't touch — because they're what keep the equipment safe. That line is the point.")}
+        </p>
+      </div>
+
+      <div class="cust-grid">
+        <div class="card">
+          <div class="card-head coral"><Icon name="palette" size={20} /><span class="card-title">{t("What we customise")}</span></div>
+          <ul class="checklist two">
+            <li><Icon name="check" size={16} /> {t("Logo & wordmark placement")}</li>
+            <li><Icon name="check" size={16} /> {t("Frame colour & finish")}</li>
+            <li><Icon name="check" size={16} /> {t("Upholstery colour & material")}</li>
+            <li><Icon name="check" size={16} /> {t("Packaging & unboxing")}</li>
+            <li><Icon name="check" size={16} /> {t("Hardware finish")}</li>
+            <li><Icon name="check" size={16} /> {t("Accessory selection")}</li>
+            <li><Icon name="check" size={16} /> {t("Manuals & documentation")}</li>
+            {brandedSpringColour && (
+              <li><Icon name="check" size={16} /> {brandedSpringColour}</li>
+            )}
+          </ul>
+        </div>
+        <div class="card muted">
+          <div class="card-head"><Icon name="shield" size={20} /><span class="card-title">{t("What we won't change")}</span></div>
+          <ul class="dashlist">
+            <li>{t("Core safety-critical structure")}</li>
+            <li>{t("Certified spring system & resistance")}</li>
+            <li>{t("Load-bearing frame geometry")}</li>
+            <li>{t("Tested weld & joint points")}</li>
+            <li>{t("Anything that voids certification")}</li>
+          </ul>
+          <p class="caption muted-note">{t("These aren't limitations — they're why your clients stay safe.")}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8-STEP PROCESS -->
+  <section class="section">
+    <div class="container">
+      <div class="head">
+        <span class="eyebrow">{t("How OEM works")}</span>
+        <h2 class="head-h">
+          {leadTime ? `${t("Eight steps.")} ${leadTime}.` : t("Eight steps. A documented path.")}
+        </h2>
+        <p class="body-l head-sub">
+          {t("A predictable path from first email to delivered, branded equipment. (Timeline indicative.)")}
+        </p>
+      </div>
+      <ol class="steps">
+        {steps.map((s) => (
+          <li class="step">
+            <span class="step-n nums">{s.n}</span>
+            <h4 class="step-t">{s.t}</h4>
+            <p class="step-d">{s.d}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  {compare.length > 0 && (
+    <section class="band section on-paper">
+      <div class="container">
+        <div class="head">
+          <span class="eyebrow">{t("Commercial checklist")}</span>
+          <h2 class="head-h">{t("Put the decision criteria side by side.")}</h2>
+          <p class="body-l head-sub">
+            {t("Coral values below are client-confirmed. Ask every shortlisted supplier to confirm the same criteria in writing.")}
+          </p>
+        </div>
+        <div class="cmp">
+          <div class="cmp-row cmp-head">
+            <span class="cmp-k">{t("Decision criteria")}</span>
+            <span class="cmp-a"><span class="dot"></span> Coral OEM</span>
+            <span class="cmp-b">{t("Your comparison")}</span>
+          </div>
+          {compare.map((row) => (
+            <div class="cmp-row">
+              <span class="cmp-k">{row.k}</span>
+              <span class="cmp-a"><Icon name="check" size={16} /> {row.a}</span>
+              <span class="cmp-b">{row.b}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- FAQ -->
+  <section class="section">
+    <div class="container">
+      <div class="head">
+        <span class="eyebrow">FAQ</span>
+        <h2 class="head-h">{t("The seven questions every OEM client asks.")}</h2>
+      </div>
+      <div class="faq measure-wide">
+        {faqs.map((f) => (
+          <details class="faq-item">
+            <summary>{f.q}<Icon name="arrow" size={18} class="faq-caret" /></summary>
+            <div class="faq-a"><p>{f.a}</p></div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- INQUIRY FORM -->
+  <section id="oem-inquiry" class="band section on-paper scroll-mt-24">
+    <div class="container">
+      <div class="head">
+        <span class="eyebrow">{t("Start here")}</span>
+        <h2 class="head-h">{t("Tell us what you're building.")}</h2>
+        <p class="body-l head-sub">
+          {t("Share as much as you're comfortable with.")} {ndaNotice}
+        </p>
+      </div>
+
+      <div class="form-grid">
+        <div class="card form-card">
+          <form
+            class="form"
+            data-oem-form
+            data-file-hint={t("Design files or brief — PDF · DWG · DXF · JPG · PNG · max 20 MB")}
+            data-sending={t("Sending…")}
+            data-sending-status={t("Sending your inquiry…")}
+            data-success={t("Thank you. Your OEM inquiry has been received and our team will reply shortly.")}
+            data-submit-label={t("Start OEM inquiry")}
+            novalidate
+          >
+            <div class="field-grid">
+              <div class="field">
+                <label for="o-name">{t("Your name")}</label>
+                <input
+                  id="o-name"
+                  name="name"
+                  type="text"
+                  autocomplete="name"
+                  placeholder={t("Your full name")}
+                />
+              </div>
+              <div class="field">
+                <label for="o-email">{t("Your email")} <span class="req">*</span></label>
+                <input
+                  id="o-email"
+                  name="email"
+                  type="email"
+                  autocomplete="email"
+                  placeholder="you@company.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="field mt-5">
+              <label for="o-type">{t("Inquiry type")}</label>
+              <select id="o-type" name="inquiry_type">
+                <option value="" disabled selected>{t("Select inquiry type")}</option>
+                <option value="new-private-label-brand">{t("New private-label brand")}</option>
+                <option value="distributor">{t("Distributor")}</option>
+                <option value="existing-brand-expanding">{t("Existing brand expanding")}</option>
+                <option value="other">{t("Other")}</option>
+              </select>
+            </div>
+
+            <div class="field mt-5">
+              <label for="o-msg">{t("Message")} <span class="req">*</span></label>
+              <textarea
+                id="o-msg"
+                name="message"
+                rows="4"
+                required
+                placeholder={t("Tell us about your brand, design or requirements...")}
+              ></textarea>
+            </div>
+
+            <label class="dropzone mt-5" for="o-file">
+              <Icon name="download" size={22} />
+              <span class="dz-main"><strong>{t("Drag & drop")}</strong> {t("or")} <span class="dz-browse">{t("browse")}</span></span>
+              <span class="caption" data-oem-file-state>{t("Design files or brief — PDF · DWG · DXF · JPG · PNG · max 20 MB")}</span>
+            </label>
+            <input
+              id="o-file"
+              name="file"
+              type="file"
+              class="sr-file"
+              accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+            />
+
+            <p class="nda-note"><Icon name="shield" size={16} /> {ndaNotice}</p>
+            <p class="caption privacy">{t("We use your details and files only to review and respond to this inquiry.")}</p>
+
+            <input type="hidden" name="subject" value="OEM inquiry — Coral Pilates" />
+            <input type="hidden" name="source_url" value="" data-oem-source />
+            <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+            {TURNSTILE_SITE_KEY && (
+              <div
+                class="cf-turnstile"
+                data-sitekey={TURNSTILE_SITE_KEY}
+                data-action={TURNSTILE_ACTION}
+                data-theme="light"
+              ></div>
+            )}
+
+            <div class="submit-row">
+              <button type="submit" class="btn btn-coral" data-oem-submit>{t("Start OEM inquiry")}</button>
+              <span class="caption">{t("A real human reads it")} · {t("Response within")} {siteSettings.responseTime}</span>
+            </div>
+            <p class="caption form-status" data-oem-status role="status" aria-live="polite"></p>
+          </form>
+        </div>
+
+        <aside class="sidebar">
+          <div class="card protected">
+            <Icon name="lock" size={20} />
+            <p class="card-title mt-3">{t("Sensitive design files")}</p>
+            <p class="addr">{ndaNotice}</p>
+          </div>
+          {/* TODO: bind to siteSettings — OEM lead name, email, phone */}
+          <div class="card">
+            <span class="eyebrow">{t("Prefer to talk?")}</span>
+            <p class="lead-name">Chris Qian</p>
+            <p class="caption">{t("OEM lead")}</p>
+            <a class="line line-coral" href={`mailto:${siteSettings.salesEmail}`}><Icon name="mail" size={18} /><span>{siteSettings.salesEmail}</span></a>
+            <div class="line"><Icon name="chat" size={18} /><span class="nums">{siteSettings.phone}</span></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- CLOSING BAND -->
+  <section class="band section on-navy">
+    <div class="container">
+      <div class="final">
+        <span class="eyebrow">{t("Not ready yet?")}</span>
+        <h2 class="band-h">{t("Not ready for a full inquiry yet?")}</h2>
+        <p class="body-l band-sub">{t("Ask a real factory specialist about MOQ, tooling, IP terms and the right next step for your brand.")}</p>
+        <div class="final-cta">
+          <a href={localizedPath("/contact", locale)} class="btn btn-coral">{t("Talk to Chris directly")} <Icon name="chat" size={18} /></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {oemSupportingBlocks.length > 0 && (
+    <PageBuilder blocks={oemSupportingBlocks} />
+  )}
+</BaseLayout>
+
+<script>
+  import { submitQuoteForm, thankYouUrl } from "../lib/quoteForm";
+  import {
+    markTurnstileSpent,
+    prepareTurnstile,
+    resetTurnstile,
+  } from "../lib/turnstileClient";
+
+  function initOemInquiryForm() {
+    const form = document.querySelector<HTMLFormElement>("[data-oem-form]");
+    if (!form || form.dataset.initialized === "true") return;
+    form.dataset.initialized = "true";
+    prepareTurnstile("[data-oem-form] .cf-turnstile");
+    const source = form.querySelector<HTMLInputElement>("[data-oem-source]");
+    const fileInput = form.querySelector<HTMLInputElement>("#o-file");
+    const fileState = form.querySelector<HTMLElement>("[data-oem-file-state]");
+    const submit = form.querySelector<HTMLButtonElement>("[data-oem-submit]");
+    const status = form.querySelector<HTMLElement>("[data-oem-status]");
+    if (source) source.value = window.location.href;
+
+    fileInput?.addEventListener("change", () => {
+      const file = fileInput.files?.[0];
+      if (!fileState) return;
+      fileState.textContent = file
+        ? `${file.name} · ${(file.size / (1024 * 1024)).toFixed(1)} MB`
+        : form.dataset.fileHint || "Design files or brief — PDF · DWG · DXF · JPG · PNG · max 20 MB";
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!form.reportValidity()) return;
+
+      if (submit) {
+        submit.disabled = true;
+        submit.textContent = form.dataset.sending || "Sending…";
+      }
+      if (status) {
+        status.dataset.state = "";
+        status.textContent = form.dataset.sendingStatus || "Sending your inquiry…";
+      }
+
+      markTurnstileSpent("[data-oem-form] .cf-turnstile");
+      const result = await submitQuoteForm(form);
+      if (result.status === "ok") {
+        const destination = thankYouUrl(result.inquiryId);
+        if (destination) {
+          window.location.assign(destination);
+          return;
+        }
+        form.reset();
+        if (fileState) {
+          fileState.textContent =
+            form.dataset.fileHint || "Design files or brief — PDF · DWG · DXF · JPG · PNG · max 20 MB";
+        }
+        if (status) {
+          status.dataset.state = "success";
+          status.textContent =
+            form.dataset.success || "Thank you. Your OEM inquiry has been received and our team will reply shortly.";
+        }
+        resetTurnstile("[data-oem-form] .cf-turnstile");
+      } else if (status) {
+        status.dataset.state = "error";
+        status.textContent = result.message;
+        resetTurnstile("[data-oem-form] .cf-turnstile");
+      }
+
+      if (submit) {
+        submit.disabled = false;
+        submit.textContent = form.dataset.submitLabel || "Start OEM inquiry";
+      }
+    });
+  }
+
+  initOemInquiryForm();
+  document.addEventListener("astro:page-load", initOemInquiryForm);
+</script>
+
+<style>
+  /* ---- section heads (centered) ---- */
+  .head { max-width: 760px; margin-inline: auto; text-align: center; }
+  .head-h { margin-top: var(--space-3); }
+  .head-sub { margin-top: var(--space-4); color: var(--color-ink-600); }
+
+  .mt-5 { margin-top: var(--space-5); }
+
+  /* ---- hero (navy, two-column) ---- */
+  .on-navy { background: var(--color-navy); }
+  .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--space-8); align-items: center; }
+  @media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: var(--space-7); } }
+  .hero-h { margin-top: var(--space-4); color: var(--color-white); font-size: var(--text-h1); font-weight: 600; line-height: var(--lh-tight); letter-spacing: var(--tracking-tight); }
+  .hero-sub { margin-top: var(--space-4); color: var(--color-ink-200); }
+  .hero-cta { display: flex; gap: var(--space-3); margin-top: var(--space-6); flex-wrap: wrap; }
+  .hero-media { border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 16 / 10; }
+  .hero-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* ---- stat row ---- */
+  .stat-row {
+    list-style: none;
+    margin: var(--space-8) 0 0;
+    padding: var(--space-6) 0 0;
+    border-top: 1px solid rgba(255,255,255,0.14);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-5);
+  }
+  @media (max-width: 767px) { .stat-row { grid-template-columns: 1fr 1fr; } }
+  .stat { display: flex; flex-direction: column; gap: var(--space-1); }
+  .stat-n { font-size: var(--text-h3); font-weight: 600; color: var(--color-white); }
+  .stat-d { font-size: var(--text-body-s); color: var(--color-ink-400); }
+
+  /* ---- grounds ---- */
+  .on-paper { background: var(--color-paper-2, #ece7dd); }
+
+  /* ---- cards ---- */
+  .card { background: var(--color-white); border: 1px solid var(--color-ink-200); border-radius: var(--radius-md); padding: var(--space-6); }
+
+  /* ---- commitment cards ---- */
+  .commit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); margin-top: var(--space-6); }
+  @media (max-width: 900px) { .commit-grid { grid-template-columns: 1fr; } }
+  .commit-head { display: flex; align-items: center; justify-content: space-between; }
+  .tag { font-size: var(--text-micro); color: var(--color-ink-600); background: var(--color-ink-100); border-radius: var(--radius-pill); padding: 3px 10px; }
+  /* Keep same-class rows on one line across the 3 cards: reserve the title and
+     the lead at 2 lines each so 1-line and 2-line copy occupy equal height —
+     the checklists then start on the same row, each keeping its normal spacing
+     above (var(--space-5)) so the list never touches the copy. */
+  .commit h3 { margin-top: var(--space-4); min-height: 2lh; }
+  .commit-lead { margin-top: var(--space-3); min-height: 2lh; color: var(--color-ink-600); }
+
+  /* ---- checklists ---- */
+  .checklist { list-style: none; margin: var(--space-5) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+  .checklist.two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3) var(--space-5); }
+  @media (max-width: 560px) { .checklist.two { grid-template-columns: 1fr; } }
+  .checklist li { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--color-ink-800); }
+  .checklist :global(svg) { color: var(--color-coral); flex: none; margin-top: 3px; }
+
+  .dashlist { list-style: none; margin: var(--space-5) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+  .dashlist li { display: flex; gap: var(--space-3); color: var(--color-ink-700); }
+  .dashlist li::before { content: "—"; color: var(--color-ink-400); }
+
+  /* ---- customisation ---- */
+  .cust-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--space-5); margin-top: var(--space-6); align-items: start; }
+  @media (max-width: 900px) { .cust-grid { grid-template-columns: 1fr; } }
+  .card-head { display: flex; align-items: center; gap: var(--space-2); }
+  .card-head :global(svg) { color: var(--color-ink-500); }
+  .card-head.coral :global(svg) { color: var(--color-coral); }
+  .card-title { font-weight: 600; color: var(--color-ink-900); }
+  .muted { background: var(--color-ink-100); border-color: var(--color-ink-200); }
+  .muted-note { margin-top: var(--space-4); }
+
+  /* ---- 8-step process ---- */
+  .steps { list-style: none; margin: var(--space-7) 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-6) var(--space-5); }
+  @media (max-width: 900px) { .steps { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .steps { grid-template-columns: 1fr; } }
+  .step { border-top: 1px solid var(--color-ink-200); padding-top: var(--space-4); }
+  .step-n { color: var(--color-coral); font-size: var(--text-h3); font-weight: 600; }
+  .step-t { margin-top: var(--space-2); }
+  .step-d { margin-top: var(--space-2); color: var(--color-ink-600); font-size: var(--text-body-s); }
+
+  /* ---- comparison ---- */
+  .cmp { margin-top: var(--space-6); }
+  .cmp-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: var(--space-4); align-items: center; padding: var(--space-4) var(--space-5); border-bottom: 1px solid var(--color-ink-200); }
+  .cmp-head { color: var(--color-ink-500); font-size: var(--text-body-s); font-weight: 500; border-bottom: 1px solid var(--color-ink-300); }
+  .cmp-k { color: var(--color-ink-800); }
+  .cmp-a { display: flex; align-items: center; gap: var(--space-2); color: var(--color-ink-900); font-weight: 500; }
+  .cmp-a :global(svg) { color: var(--color-coral); flex: none; }
+  .cmp-b { display: flex; align-items: center; gap: var(--space-2); color: var(--color-ink-500); }
+  .cmp-b :global(svg) { color: var(--color-ink-400); flex: none; }
+  .cmp-row .cmp-a { background: var(--color-coral-tint); margin: calc(-1 * var(--space-4)) 0; padding: var(--space-4) var(--space-4); }
+  .dot { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--color-coral); display: inline-block; }
+
+  /* ---- FAQ ---- */
+  .measure-wide { max-width: 860px; margin-inline: auto; }
+  .faq { margin-top: var(--space-6); }
+  .faq-item { border-bottom: 1px solid var(--color-ink-200); }
+  .faq-item summary {
+    display: flex; align-items: center; justify-content: space-between; gap: var(--space-4);
+    padding-block: var(--space-5);
+    font-size: var(--text-h4); font-weight: 600; color: var(--color-ink-900);
+    cursor: pointer; list-style: none;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-caret { color: var(--color-ink-400); transition: transform var(--dur-base) var(--ease-standard); }
+  .faq-item[open] .faq-caret { transform: rotate(90deg); color: var(--color-coral); }
+  .faq-a { padding-bottom: var(--space-5); color: var(--color-ink-600); max-width: 70ch; }
+
+  /* ---- form ---- */
+  .form-grid { display: grid; grid-template-columns: 1.7fr 1fr; gap: var(--space-6); margin-top: var(--space-7); align-items: start; }
+  @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-card { padding: var(--space-7); }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
+  @media (max-width: 560px) { .field-grid { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: var(--space-2); }
+  .field > label { font-size: var(--text-body-s); font-weight: 500; color: var(--color-ink-800); }
+  .req { color: var(--color-coral); }
+  .field input, .field select, .field textarea {
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-white); border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-sm); font: inherit; font-size: var(--text-body); color: var(--color-ink-900);
+  }
+  .field input, .field select { height: 46px; }
+  .field textarea { resize: vertical; min-height: 110px; }
+  .field input::placeholder, .field textarea::placeholder { color: var(--color-ink-400); }
+  .field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible { outline: none; border-color: var(--color-coral); }
+  .field .caption { margin-top: var(--space-1); }
+
+  .dropzone { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); padding-block: var(--space-7); padding-inline: var(--space-5); text-align: center; color: var(--color-ink-500); background: var(--color-ink-050); border: 1px dashed var(--color-ink-300); border-radius: var(--radius-md); cursor: pointer; }
+  .dropzone.mt-5 { margin-top: var(--space-5); }
+  .dz-main { color: var(--color-ink-700); }
+  .dz-browse { color: var(--color-coral); }
+  .sr-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  .nda-note { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-5); color: var(--color-ink-700); font-size: var(--text-body-s); }
+  .nda-note :global(svg) { color: var(--color-success); }
+  .privacy { margin-top: var(--space-3); }
+  .submit-row { display: flex; align-items: center; gap: var(--space-4); margin-top: var(--space-5); flex-wrap: wrap; }
+  .hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+  .form-status { min-height: 1.5em; margin-top: var(--space-3); }
+  .form-status[data-state="success"] { color: var(--color-success); }
+  .form-status[data-state="error"] { color: var(--color-coral); }
+
+  /* ---- sidebar ---- */
+  .sidebar { display: flex; flex-direction: column; gap: var(--space-4); }
+  .protected { background: var(--color-ink-100); }
+  .protected :global(svg) { color: var(--color-coral); }
+  .mt-3 { margin-top: var(--space-3); }
+  .addr { margin-top: var(--space-2); color: var(--color-ink-600); line-height: var(--lh-loose); }
+  .lead-name { margin-top: var(--space-3); font-size: var(--text-h4); font-weight: 600; color: var(--color-ink-900); }
+  .line { display: flex; align-items: center; gap: var(--space-3); color: var(--color-ink-800); margin-top: var(--space-3); }
+  .line :global(svg) { color: var(--color-ink-500); flex: none; }
+  .line-coral { color: var(--color-coral); font-weight: 500; }
+  .line-coral :global(svg) { color: var(--color-coral); }
+
+  /* ---- bands ---- */
+  .band-h { margin-top: var(--space-3); color: var(--color-white); }
+  .band-sub { margin-top: var(--space-4); color: var(--color-ink-200); }
+  .final { max-width: 680px; margin-inline: auto; text-align: center; }
+  .final-cta { display: flex; gap: var(--space-3); justify-content: center; margin-top: var(--space-6); flex-wrap: wrap; }
+
+  /* ---- dark-ground text legibility (2-class selectors outrank the base rules) ---- */
+  .on-navy .hero-sub,
+  .on-navy .band-sub { color: var(--color-ink-100); }
+  .on-navy .stat-d { color: var(--color-ink-200); }
+</style>

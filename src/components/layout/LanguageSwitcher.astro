@@ -1,0 +1,167 @@
+---
+import LanguageFlag from "./LanguageFlag.astro";
+import {resolveLocale} from "../../i18n/config";
+import {staticUi} from "../../i18n/static";
+
+const languages = [
+  { locale: "en", shortLabel: "EN", name: "English" },
+  { locale: "es", shortLabel: "ES", name: "Español" },
+  { locale: "fr", shortLabel: "FR", name: "Français" },
+  { locale: "de", shortLabel: "DE", name: "Deutsch" },
+  { locale: "it", shortLabel: "IT", name: "Italiano" },
+] as const;
+
+type Locale = (typeof languages)[number]["locale"];
+interface Props {
+  locale?: Locale;
+}
+
+const localeCodes = new Set<Locale>(languages.map(({ locale }) => locale));
+const originalPath = Astro.originPathname || Astro.url.pathname;
+const pathSegments = originalPath.split("/").filter(Boolean);
+const routeLocale = localeCodes.has(pathSegments[0] as Locale)
+  ? (pathSegments.shift() as Locale)
+  : "en";
+const {locale: explicitLocale} = Astro.props;
+const pathLocale = explicitLocale ?? routeLocale;
+const documentLocale = resolveLocale(pathLocale, originalPath);
+const t = (english: string) => staticUi(documentLocale, english);
+const contentPath = pathSegments.length ? `/${pathSegments.join("/")}` : "/";
+
+function localeHref(locale: Locale) {
+  const pathname =
+    locale === "en"
+      ? contentPath
+      : contentPath === "/"
+        ? `/${locale}`
+        : `/${locale}${contentPath}`;
+
+  return `${pathname}${Astro.url.search}${Astro.url.hash}`;
+}
+---
+
+<nav class="language-switcher" aria-label={t("Choose language")} data-language-switcher>
+  <div class="language-switcher__options">
+    {
+      languages.map(({ locale, shortLabel, name }) => (
+        <a
+          class:list={["language-option", { "is-active": pathLocale === locale }]}
+          href={localeHref(locale)}
+          lang={locale}
+          hreflang={locale}
+          aria-label={t("Switch language to {language}").replace("{language}", name)}
+          aria-current={pathLocale === locale ? "true" : undefined}
+          data-language-option={locale}
+        >
+          <LanguageFlag locale={locale} />
+          <span>{shortLabel}</span>
+        </a>
+      ))
+    }
+  </div>
+</nav>
+
+<script>
+  const LOCALE_COOKIE = "coral_locale";
+  const SUPPORTED_LOCALES = new Set(["en", "es", "fr", "de", "it"]);
+  type Locale = "en" | "es" | "fr" | "de" | "it";
+
+  function isSupportedLocale(locale: string | null | undefined): locale is Locale {
+    return Boolean(locale && SUPPORTED_LOCALES.has(locale));
+  }
+
+  function writeLocaleCookie(locale: Locale) {
+    const maxAge = 60 * 60 * 24 * 365;
+    document.cookie = `${LOCALE_COOKIE}=${locale}; Max-Age=${maxAge}; Path=/; SameSite=Lax; Secure`;
+  }
+
+  function initLanguageSwitcher() {
+    const routeLocale = window.location.pathname.match(
+      /^\/(es|fr|de|it)(?:\/|$)/,
+    )?.[1] ?? "en";
+
+    document.querySelectorAll<HTMLElement>("[data-language-switcher]").forEach((switcher) => {
+      if (switcher.dataset.initialized === "true") return;
+      switcher.dataset.initialized = "true";
+      switcher.querySelectorAll<HTMLAnchorElement>("[data-language-option]").forEach((option) => {
+        const isActive = option.dataset.languageOption === routeLocale;
+        option.classList.toggle("is-active", isActive);
+        if (isActive) {
+          option.setAttribute("aria-current", "true");
+        } else {
+          option.removeAttribute("aria-current");
+        }
+
+        option.addEventListener("click", () => {
+          const locale = option.dataset.languageOption;
+          if (!isSupportedLocale(locale)) return;
+          writeLocaleCookie(locale);
+        });
+      });
+    });
+  }
+
+  initLanguageSwitcher();
+  document.addEventListener("astro:page-load", initLanguageSwitcher);
+</script>
+
+<style>
+  .language-switcher {
+    display: grid;
+    justify-items: end;
+  }
+
+  .language-switcher__options {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-4);
+  }
+
+  .language-option {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    min-height: 28px;
+    padding: var(--space-1) 0;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: var(--text-micro);
+    font-weight: 600;
+    line-height: 1;
+    transition:
+      color var(--dur-base) var(--ease-standard),
+      opacity var(--dur-base) var(--ease-standard),
+      transform var(--dur-fast) var(--ease-standard);
+  }
+
+  .language-option:hover {
+    color: var(--color-white);
+  }
+
+  .language-option:active {
+    transform: translateY(1px);
+  }
+
+  .language-option.is-active {
+    color: var(--color-white);
+    font-weight: 700;
+  }
+
+  @media (max-width: 720px) {
+    .language-switcher {
+      justify-items: start;
+    }
+
+    .language-switcher__options {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .language-switcher__options {
+      display: grid;
+      grid-template-columns: repeat(3, max-content);
+    }
+  }
+</style>

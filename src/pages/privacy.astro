@@ -1,0 +1,16 @@
+---
+import LegalFallbackContent from "../components/legal/LegalFallbackContent.astro";
+import legalFallbacks from "../i18n/legal-fallbacks.json";
+import LegalLayout from "../layouts/LegalLayout.astro";
+---
+
+<LegalLayout
+  title="Privacy Policy"
+  pageKey="privacy"
+  description="How Coral Pilates collects, uses, stores and shares information submitted through its B2B equipment inquiry website."
+  effectiveDate="July 26, 2026"
+>
+  <Fragment slot="fallback">
+    <LegalFallbackContent content={legalFallbacks.privacy} />
+  </Fragment>
+</LegalLayout>

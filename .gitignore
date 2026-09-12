@@ -1,0 +1,15 @@
+# 环境密钥
+.env
+.env.local
+.dev.vars
+
+# node依赖
+node_modules
+studio/node_modules
+
+# 构建产物
+dist
+studio/dist
+
+# 系统文件
+.DS_Store

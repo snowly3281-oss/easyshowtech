@@ -1,0 +1,538 @@
+---
+/**
+ * Factory — bespoke page layout with its operator-facing page header, SEO and
+ * optional supporting sections managed in Sanity.
+ * Dark hero + auditable address + build process + QC gates + OEM CTA + founders
+ * + visit band. Capacity/team figures render only after editorial confirmation.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Icon from "../components/Icon.astro";
+import PageBuilder from "../components/blocks/PageBuilder.astro";
+import {getConfirmedValue, getSitePage} from "../sanity/pages";
+import {urlFor} from "../sanity/image";
+import {getSiteSettings} from "../sanity/settings";
+import type {SolutionBlock} from "../sanity/content";
+import {localizedPath, resolveLocale} from "../i18n/config";
+import {staticUi} from "../i18n/static";
+import type {SanityImageSource} from "@sanity/image-url";
+
+const locale = resolveLocale(
+  Astro.props.locale,
+  Astro.originPathname || Astro.url.pathname,
+);
+const t = (english: string) => staticUi(locale, english);
+const [page, siteSettings] = await Promise.all([
+  getSitePage("factory", locale),
+  getSiteSettings(),
+]);
+const eyebrow = page?.hero?.eyebrow || t("Our factory · Suzhou");
+const pageTitle =
+  page?.hero?.heading || page?.title || t("Built, not sourced. In one building.");
+const pageIntro =
+  page?.hero?.subheading ||
+  page?.introduction ||
+  t("Most “Pilates manufacturers” are trading companies sourcing from third-party workshops. We are the workshop — and you're welcome to come see it.");
+const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
+const metaTitle = page?.seo?.metaTitle || t("Factory — Coral Pilates");
+const metaDescription = page?.seo?.metaDescription || pageIntro;
+
+const facts = page?.factoryFacts;
+const heroStats = [
+  {value: getConfirmedValue(facts?.floorArea), label: t("Floor area")},
+  {value: getConfirmedValue(facts?.teamMembers), label: t("Team members")},
+  {
+    value: getConfirmedValue(facts?.productionLines),
+    label: t("Production lines"),
+  },
+  {
+    value: getConfirmedValue(facts?.manufacturingSteps),
+    label: t("Manufacturing steps"),
+  },
+].filter((fact): fact is {value: string; label: string} => Boolean(fact.value));
+const cncTolerance = getConfirmedValue(facts?.cncTolerance);
+const capacityFacts = [
+  {
+    value: getConfirmedValue(facts?.annualCapacity),
+    label: t("Annual production capacity"),
+    featured: true,
+  },
+  {
+    value: getConfirmedValue(facts?.productionTeam),
+    label: t("Production team · people"),
+    featured: false,
+  },
+  {
+    value: getConfirmedValue(facts?.totalTeam),
+    label: t("Total team · people"),
+    featured: false,
+  },
+].filter(
+  (fact): fact is {value: string; label: string; featured: boolean} =>
+    Boolean(fact.value),
+);
+const primaryCapacity =
+  capacityFacts.find((fact) => fact.featured) || capacityFacts[0];
+const secondaryCapacity = capacityFacts.filter(
+  (fact) => fact !== primaryCapacity,
+);
+
+const fallbackStages = [
+  { n: "01", t: t("Raw hardwood"), d: t("Kiln-dried maple, oak and walnut, graded on arrival."), tag: t("Materials") },
+  {
+    n: "02",
+    t: t("CNC & laser machining"),
+    d: cncTolerance
+      ? t("Frames cut to approved specifications; stated tolerance {tolerance}.").replace("{tolerance}", cncTolerance)
+      : t("Frames cut to the approved production specification."),
+    tag: t("Precision"),
+  },
+  { n: "03", t: t("Mortise-and-tenon joinery"), d: t("Traditional load-bearing joints, glued and clamped."), tag: t("Joinery") },
+  { n: "04", t: t("Sanding & finishing"), d: t("Hand-sanded through five grits; low-VOC seal."), tag: t("Finishing") },
+  { n: "05", t: t("Upholstery"), d: t("High-density foam and covers, fitted in-house."), tag: t("Upholstery") },
+  { n: "06", t: t("Assembly & packaging"), d: t("Final assembly, function test, and export carton."), tag: t("Assembly") },
+];
+type FactoryStageImage = {
+  asset?: SanityImageSource;
+  alt?: string | null;
+};
+const stages =
+  facts?.manufacturingStages?.length
+    ? facts.manufacturingStages.map((stage) => ({
+        n: stage.number || "--",
+        t: stage.title || t("Manufacturing stage"),
+        d: stage.description || "",
+        tag: stage.tag || t("Process"),
+        image: stage.image as FactoryStageImage | undefined,
+      }))
+    : fallbackStages.map((stage) => ({...stage, image: undefined}));
+
+const gates = [
+  { g: t("Gate 01"), t: "IQC", d: t("Incoming material inspection — wood, springs, hardware.") },
+  { g: t("Gate 02"), t: "IPQC", d: t("In-process checks at machining and joinery.") },
+  { g: t("Gate 03"), t: "FQC", d: t("Final assembly inspection and function test.") },
+  { g: t("Gate 04"), t: "OQC", d: t("Outgoing audit before the carton is sealed.") },
+];
+
+const certs = (facts?.certifications ?? [])
+  .map((certification) => getConfirmedValue(certification))
+  .filter((value): value is string => Boolean(value));
+
+const oemPoints = [
+  {
+    icon: "book",
+    t: t("Production arrangement"),
+    d: getConfirmedValue(facts?.dedicatedLines),
+  },
+  {
+    icon: "lock",
+    t: t("Confidentiality"),
+    d: getConfirmedValue(facts?.mutualNda),
+  },
+  {
+    icon: "shield",
+    t: t("IP and supply terms"),
+    d: getConfirmedValue(facts?.nonSupplyCommitment),
+  },
+].filter((point): point is {icon: string; t: string; d: string} =>
+  Boolean(point.d),
+);
+---
+
+<BaseLayout
+  locale={locale}
+  title={metaTitle}
+  description={metaDescription}
+>
+  <!-- HERO (dark photo) -->
+  <section class="band hero-band">
+    <div class="container section">
+      <div class="hero-copy">
+        <span class="eyebrow">{eyebrow}</span>
+        <h1 class="hero-h">{pageTitle}</h1>
+        <p class="body-l hero-sub">{pageIntro}</p>
+        <div class="hero-cta">
+          <a href="#visit" class="btn btn-coral">{t("Schedule a factory visit")}</a>
+        </div>
+      </div>
+      {heroStats.length > 0 && (
+        <ul class="hero-stats">
+          {heroStats.map((stat) => (
+            <li>
+              <span class="hs-n">{stat.value}</span>
+              <span class="hs-d">{stat.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
+
+  <!-- ADDRESS -->
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">{t("Where we are")}</span>
+      <h2 class="sec-h">{t("A real address you can audit.")}</h2>
+      <div class:list={["addr-grid", {single: capacityFacts.length === 0}]}>
+        <div class="addr-left">
+          <p class="body-l sec-sub">
+            {t("We're in Suzhou, Jiangsu — about 90 minutes from Shanghai. The building is ours: design, machining, joinery, finishing, assembly and QC all happen under one roof. Come walk the floor.")}
+          </p>
+          <div class="card addr-card">
+            <p class="addr-co">{siteSettings.brand}</p>
+            <p class="addr">
+              {siteSettings.companyAddress || siteSettings.location}
+            </p>
+          </div>
+        </div>
+        {primaryCapacity && (
+          <aside class="cap card">
+            <span class="eyebrow">{primaryCapacity.label}</span>
+            <span class="cap-n">{primaryCapacity.value}</span>
+            <p class="caption">
+              {t("Verified operating information supplied by Coral Pilates.")}
+            </p>
+            {secondaryCapacity.length > 0 && (
+              <div class="cap-sub">
+                {secondaryCapacity.map((fact) => (
+                  <div>
+                    <span class="cap-sn">{fact.value}</span>
+                    <span class="caption">{fact.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </aside>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <!-- BUILD PROCESS -->
+  <section id="process" class="band section on-paper scroll-mt-24">
+    <div class="container">
+      <div class="process-head">
+        <div class="process-head-l">
+          <span class="eyebrow">{t("How it's made")}</span>
+          <h2 class="process-h">{t("From hardwood to shipped reformer.")}</h2>
+        </div>
+        <p class="body-l process-sub">
+          {t("Every reformer travels a fixed sequence of manufacturing stages and quality gates — walk the line, stage by stage.")}
+        </p>
+      </div>
+      <div class="process-rail">
+        <div class="process-nav">
+          <button type="button" class="pnav" data-dir="-1" aria-label={t("Previous steps")}><Icon name="chevron-left" size={20} /></button>
+          <button type="button" class="pnav" data-dir="1" aria-label={t("Next steps")}><Icon name="chevron-right" size={20} /></button>
+        </div>
+      </div>
+      <div class="process-scroll" id="processScroll">
+        <div class="process">
+        {stages.map((s) => (
+          <article class="stage">
+            {s.image?.asset ? (
+              <img
+                class="stage-img"
+                src={urlFor(s.image.asset).width(720).height(480).fit("crop").auto("format").url()}
+                alt={s.image.alt || s.t}
+                width="720"
+                height="480"
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <div class="stage-img ph"><Icon name="image" size={24} /></div>
+            )}
+            <div class="stage-body">
+              <span class="eyebrow">{t("Process")} · {s.n}</span>
+              <h3 class="stage-t">{s.t}</h3>
+              <p class="stage-d">{s.d}</p>
+              <span class="tag">{s.tag}</span>
+            </div>
+          </article>
+        ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function initFactoryProcessScroller() {
+      const track = document.getElementById("processScroll");
+      if (!track || track.dataset.initialized === "true") return;
+      track.dataset.initialized = "true";
+      const btns = Array.from(document.querySelectorAll<HTMLButtonElement>(".pnav"));
+      const step = () => {
+        const c = track.querySelector(".stage");
+        return c ? c.getBoundingClientRect().width + 24 : track.clientWidth * 0.8;
+      };
+      btns.forEach((b) =>
+        b.addEventListener("click", () =>
+          track.scrollBy({ left: Number(b.dataset.dir) * step(), behavior: "smooth" })
+        )
+      );
+      const sync = () => {
+        const max = track.scrollWidth - track.clientWidth - 2;
+        btns.forEach((b) => {
+          b.disabled = Number(b.dataset.dir) > 0 ? track.scrollLeft >= max : track.scrollLeft <= 2;
+        });
+      };
+      track.addEventListener("scroll", sync, { passive: true });
+      window.addEventListener("resize", sync);
+      sync();
+    }
+
+    initFactoryProcessScroller();
+    document.addEventListener("astro:page-load", initFactoryProcessScroller);
+  </script>
+
+  <!-- QC GATES -->
+  <section id="quality" class="band section qc scroll-mt-24">
+    <div class="container">
+      <div class="head">
+        <span class="eyebrow">{t("Quality control")}</span>
+        <h2 class="head-h on-dark">{t("Four gates. Every unit inspected.")}</h2>
+        <p class="body-l head-sub on-dark-sub">
+          {t("A four-stage QC process is applied to every unit. Each gate has a dedicated inspector and a written report you can request.")}
+        </p>
+      </div>
+      <div class="gates">
+        {gates.map((g) => (
+          <article class="gate">
+            <span class="eyebrow">{g.g}</span>
+            <h3 class="gate-t">{g.t}</h3>
+            <p class="gate-d">{g.d}</p>
+          </article>
+        ))}
+      </div>
+      {certs.length > 0 && (
+        <div class="certs">
+          <ul class="cert-list">
+            {certs.map((certification) => (
+              <li><Icon name="check" size={16} /> {certification}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- OEM CTA -->
+  <section class="band section on-navy">
+    <div class="container">
+      <div class="head">
+        <span class="eyebrow">{t("OEM services")}</span>
+        <h2 class="head-h on-dark">{t("Want this factory building under your brand?")}</h2>
+        <p class="body-l head-sub on-dark-sub">
+          {t("Private-label the line under your own brand. Your design stays yours — protected operationally, legally and contractually, in writing.")}
+        </p>
+      </div>
+      {oemPoints.length > 0 && (
+        <div class="oem-grid">
+          {oemPoints.map((point) => (
+            <div class="oem-card">
+              <Icon name={point.icon} size={20} />
+              <h4 class="oem-t">{point.t}</h4>
+              <p class="oem-d">{point.d}</p>
+            </div>
+          ))}
+        </div>
+      )}
+      <div class="oem-cta"><a href={localizedPath("/oem-services", locale)} class="btn btn-coral">{t("Explore OEM services")}</a></div>
+    </div>
+  </section>
+
+  <!-- FOUNDERS -->
+  <section id="team" class="section scroll-mt-24">
+    <div class="container">
+      <div class="founders">
+        <div class="founders-copy">
+          <span class="eyebrow">{t("The people behind it")}</span>
+          <h2 class="sec-h">{t("Team of Coral Pilates")}</h2>
+          <p class="body-l sec-sub">
+            {t("No layered sales department, no outsourced QC. The people who answer your inquiry walk past the production line every morning. Founder Chris runs the factory hands-on.")}
+          </p>
+          <a class="btn-link" href={localizedPath("/about", locale)}>{t("Meet the team")} <Icon name="arrow" size={16} /></a>
+        </div>
+        {/* TODO: add team photo (static image) */}
+        <div class="founders-photo ph">
+          <span class="ph-i"><Icon name="users" size={28} /></span>
+          <span class="caption">{t("Team photo · production floor")}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VISIT BAND -->
+  <section id="visit" class="band section on-navy scroll-mt-24">
+    <div class="container">
+      <div class="final">
+        <span class="eyebrow">{t("Come see for yourself")}</span>
+        <h2 class="band-h">{t("Visits welcome. Audits welcome.")}</h2>
+        <p class="body-l band-sub">
+          {t("Book a walkthrough of the floor — or take the full factory profile with you. We'll reply within one business day.")}
+        </p>
+        <div class="final-cta">
+          <a href={localizedPath("/contact", locale)} class="btn btn-coral"><Icon name="pin" size={18} /> {t("Schedule a factory visit")}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {pageBlocks.length > 0 && <PageBuilder blocks={pageBlocks} />}
+</BaseLayout>
+
+<style>
+  /* ---- grounds / dark text ---- */
+  .on-paper { background: var(--color-paper-2, #ece7dd); }
+  .on-navy { background: var(--color-navy); }
+  .qc { background: var(--color-ink-900); }
+  .on-dark { color: var(--color-white); }
+  .on-dark-sub { color: var(--color-ink-200); }
+
+  /* ---- centered + left heads ---- */
+  .head { max-width: 760px; margin-inline: auto; text-align: center; }
+  .head-h { margin-top: var(--space-3); }
+  .head-sub { margin-top: var(--space-4); color: var(--color-ink-600); }
+  .sec-h { margin-top: var(--space-3); }
+  .sec-sub { margin-top: var(--space-4); color: var(--color-ink-600); max-width: 56ch; }
+
+  /* ---- hero (dark photo) ---- */
+  .hero-band {
+    background:
+      linear-gradient(180deg, rgba(14,16,19,0.78), rgba(14,16,19,0.62)),
+      var(--color-navy) center / cover;
+    background-image:
+      linear-gradient(180deg, rgba(14,16,19,0.78), rgba(14,16,19,0.62)),
+      url("/factory/home-realfactory-01.webp");
+    background-size: cover;
+    background-position: center;
+  }
+  .hero-copy { max-width: 640px; }
+  .hero-h { margin-top: var(--space-4); color: var(--color-white); font-size: var(--text-h1); font-weight: 600; line-height: var(--lh-tight); letter-spacing: var(--tracking-tight); }
+  .hero-sub { margin-top: var(--space-4); color: var(--color-ink-200); }
+  .hero-cta { display: flex; gap: var(--space-3); margin-top: var(--space-6); flex-wrap: wrap; }
+  .hero-stats { list-style: none; margin: var(--space-8) 0 0; padding: var(--space-6) 0 0; border-top: 1px solid rgba(255,255,255,0.18); display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-5); }
+  @media (max-width: 767px) { .hero-stats { grid-template-columns: 1fr 1fr; } }
+  .hero-stats li { display: flex; flex-direction: column; gap: var(--space-1); }
+  .hs-n { font-size: var(--text-h2); font-weight: 600; color: var(--color-white); }
+  .hs-d { font-size: var(--text-body-s); color: var(--color-ink-400); }
+
+  /* ---- cards ---- */
+  .card { background: var(--color-white); border: 1px solid var(--color-ink-200); border-radius: var(--radius-md); padding: var(--space-6); }
+  .tag { display: inline-block; font-size: var(--text-micro); color: var(--color-ink-600); background: var(--color-ink-100); border-radius: var(--radius-pill); padding: 3px 10px; }
+
+  /* ---- address ---- */
+  .addr-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--space-6); margin-top: var(--space-6); align-items: start; }
+  .addr-grid.single { grid-template-columns: 1fr; }
+  @media (max-width: 900px) { .addr-grid { grid-template-columns: 1fr; } }
+  .addr-card { margin-top: var(--space-5); }
+  .addr-co { font-weight: 600; color: var(--color-ink-900); }
+  .addr { margin-top: var(--space-3); color: var(--color-ink-600); line-height: var(--lh-loose); }
+  .map-link { margin-top: var(--space-4); }
+  .cap-n { display: block; margin-top: var(--space-3); font-size: var(--text-h1); font-weight: 600; line-height: 1; letter-spacing: var(--tracking-tight); color: var(--color-ink-900); }
+  .cap .caption { margin-top: var(--space-3); }
+  .cap-sub { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-5); padding-top: var(--space-5); border-top: 1px solid var(--color-ink-200); }
+  .cap-sn { display: block; font-size: var(--text-h3); font-weight: 600; color: var(--color-ink-900); }
+
+  /* ---- build process (left header + justified rail + snap carousel) ---- */
+  .process-head { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-7); align-items: end; }
+  @media (max-width: 767px) { .process-head { grid-template-columns: 1fr; gap: var(--space-4); align-items: start; } }
+  .process-h { margin-top: var(--space-3); }
+  .process-sub { color: var(--color-ink-600); }
+  .process-rail {
+    display: flex; align-items: center; justify-content: flex-end;
+    margin-top: var(--space-7); padding-block: var(--space-4);
+    border-bottom: 1px solid var(--color-ink-300);
+  }
+  .process-nav { display: flex; gap: var(--space-2); flex: none; }
+  .pnav {
+    width: 44px; height: 44px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--color-white); border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-pill); color: var(--color-ink-800); cursor: pointer;
+    transition: background var(--dur-base) var(--ease-standard),
+      border-color var(--dur-base) var(--ease-standard),
+      opacity var(--dur-base) var(--ease-standard);
+  }
+  .pnav:hover { background: var(--color-ink-100); border-color: var(--color-ink-400); }
+  .pnav:disabled { opacity: 0.35; cursor: default; }
+
+  .process-scroll {
+    overflow-x: auto;
+    margin-top: var(--space-6);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .process-scroll::-webkit-scrollbar { display: none; }
+  .process { display: flex; gap: var(--space-5); }
+  /* exactly 3 cards fill the content box; the carousel is clipped to the content
+     width, so nothing bleeds into the gutters — extra cards scroll in on click */
+  .stage {
+    flex: 0 0 calc((100% - 2 * var(--space-5)) / 3);
+    scroll-snap-align: start;
+    background: var(--color-white); border: 1px solid var(--color-ink-200);
+    border-radius: var(--radius-md); overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  @media (max-width: 1279px) { .stage { flex-basis: calc((100% - var(--space-5)) / 2); } }
+  @media (max-width: 767px) { .stage { flex-basis: calc(100% - var(--space-8)); } }
+  /* full-bleed image (no padding); 2-class selector overrides the .ph border */
+  .stage .stage-img {
+    aspect-ratio: 16 / 10;
+    border: 0; border-bottom: 1px solid var(--color-ink-200); border-radius: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .stage-body { padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-2); flex: 1; }
+  .stage-t { margin-top: var(--space-1); }
+  .stage-d { color: var(--color-ink-600); font-size: var(--text-body-s); flex: 1; }
+  .stage .tag { align-self: flex-start; margin-top: var(--space-3); }
+
+  /* ---- QC gates (near-black) ---- */
+  .gates { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-5); margin-top: var(--space-7); }
+  @media (max-width: 900px) { .gates { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .gates { grid-template-columns: 1fr; } }
+  .gate { background: var(--color-ink-800); border: 1px solid var(--color-ink-700); border-radius: var(--radius-md); padding: var(--space-5); }
+  .gate-t { margin-top: var(--space-3); color: var(--color-white); }
+  .gate-d { margin-top: var(--space-2); color: var(--color-ink-400); font-size: var(--text-body-s); }
+  .certs { display: flex; align-items: center; justify-content: space-between; gap: var(--space-5); flex-wrap: wrap; margin-top: var(--space-6); }
+  .cert-list { list-style: none; margin: 0; padding: 0; display: flex; gap: var(--space-5); flex-wrap: wrap; align-items: center; }
+  .cert-list li { display: flex; align-items: center; gap: var(--space-2); color: var(--color-ink-200); font-size: var(--text-body-s); }
+  .cert-list :global(svg) { color: var(--color-coral); }
+  .cert-note { color: var(--color-ink-500); }
+
+  /* ---- OEM CTA ---- */
+  .oem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); margin-top: var(--space-7); }
+  @media (max-width: 900px) { .oem-grid { grid-template-columns: 1fr; } }
+  .oem-card { background: var(--color-white); border: 1px solid var(--color-ink-200); border-radius: var(--radius-md); padding: var(--space-5); }
+  .oem-card :global(svg) { color: var(--color-coral); }
+  .oem-t { margin-top: var(--space-3); }
+  .oem-d { margin-top: var(--space-2); color: var(--color-ink-600); font-size: var(--text-body-s); }
+  .oem-cta { display: flex; justify-content: center; margin-top: var(--space-6); }
+
+  /* ---- founders ---- */
+  .founders { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--space-7); align-items: center; }
+  @media (max-width: 900px) { .founders { grid-template-columns: 1fr; } }
+  .founders-copy .btn-link { margin-top: var(--space-5); }
+  .founders-photo { aspect-ratio: 4 / 3; border-radius: var(--radius-md); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); }
+
+  /* ---- placeholders ---- */
+  .ph { background: var(--color-ink-150); border: 1px solid var(--color-ink-200); color: var(--color-ink-400); }
+  .ph-i { color: var(--color-ink-400); }
+
+  /* ---- bands ---- */
+  .band-h { margin-top: var(--space-3); color: var(--color-white); }
+  .band-sub { margin-top: var(--space-4); color: var(--color-ink-200); }
+  .final { max-width: 680px; margin-inline: auto; text-align: center; }
+  .final-cta { display: flex; gap: var(--space-3); justify-content: center; margin-top: var(--space-6); flex-wrap: wrap; }
+
+  /* ---- dark-ground text legibility (2-class selectors outrank the base rules) ---- */
+  .hero-band .hero-sub,
+  .qc .head-sub,
+  .on-navy .head-sub,
+  .on-navy .band-sub { color: var(--color-ink-100); }
+  .hero-band .hs-d,
+  .qc .gate-d,
+  .qc .cert-list li,
+  .qc .cert-note { color: var(--color-ink-200); }
+</style>

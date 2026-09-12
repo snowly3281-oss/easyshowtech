@@ -1,0 +1,46 @@
+---
+import type { HomeData } from '../../sanity/content'
+import {localizedPath, resolveLocale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  data?: HomeData['finalCta']
+}
+
+const { data } = Astro.props
+const locale = resolveLocale(undefined, Astro.url.pathname)
+const t = (english: string) => staticUi(locale, english)
+---
+
+{
+  data && (
+    <section class="band finalcta">
+      <div class="container section finalcta__inner">
+        {data.heading && <h2 class="finalcta__title">{data.heading}</h2>}
+        {data.body && <p class="body-l finalcta__body">{data.body}</p>}
+        <a class="btn finalcta__cta" href={localizedPath('/contact', locale)}>{t('Get a quote')}</a>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .finalcta {
+    background: var(--color-coral, #e60026);
+    color: #fff;
+    text-align: center;
+  }
+  .finalcta__title {
+    margin: 0;
+  }
+  .finalcta__body {
+    margin: var(--space-3) auto 0;
+    max-width: 48ch;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .finalcta__cta {
+    margin: var(--space-5) 0 0;
+    background: #fff;
+    color: var(--color-coral, #e60026);
+  }
+</style>

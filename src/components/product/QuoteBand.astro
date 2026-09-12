@@ -1,0 +1,100 @@
+---
+import type { SiteSettingsData } from '../../sanity/content'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {localizeCountDuration, staticUi} from '../../i18n/static'
+
+interface Props {
+  settings?: SiteSettingsData | null
+  moq?: string | null
+  locale?: Locale
+}
+
+const { settings, moq, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const email = settings?.salesEmail ?? 'chris@coralpilates.com'
+const phone = settings?.phone ?? '+86 139 2197 4459'
+
+const contacts = [
+  { label: t('Sales'), value: email, href: `mailto:${email}` },
+  { label: t('Phone'), value: phone, href: `tel:${phone.replace(/\s+/g, '')}` },
+  { label: t('Min. order'), value: localizeCountDuration(locale, moq ?? '1 unit')!, href: null },
+]
+---
+
+<section class="band quote">
+  <div class="container quote__inner">
+    <div class="quote__lead">
+      <p class="eyebrow quote__eyebrow">{t('Request a quote')}</p>
+      <h2 class="quote__title">{t("Let's spec your studio.")}</h2>
+      <p class="quote__intro">
+        {t("Send us your model list and quantities — we'll reply within one business day with unit pricing, lead times and freight to your door.")}
+      </p>
+      <a class="btn quote__btn" href={localizedPath('/contact', locale)}>{t('Request a quote')}</a>
+    </div>
+    <dl class="quote__contacts">
+      {
+        contacts.map((c) => (
+          <div class="quote__contact">
+            <dt>{c.label}</dt>
+            <dd class="nums">{c.href ? <a href={c.href}>{c.value}</a> : c.value}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</section>
+
+<style>
+  .quote {
+    background: var(--color-coral, #e60026);
+    color: #fff;
+    padding-block: var(--space-9);
+  }
+  .quote__inner {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: var(--space-7);
+    align-items: center;
+  }
+  .quote__eyebrow {
+    color: #fff;
+    opacity: 0.8;
+  }
+  .quote__title {
+    margin: var(--space-2) 0 0;
+  }
+  .quote__intro {
+    margin: var(--space-3) 0 0;
+    max-width: 48ch;
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .quote__btn {
+    margin: var(--space-5) 0 0;
+    background: #fff;
+    color: var(--color-coral, #e60026);
+  }
+  .quote__contacts {
+    margin: 0;
+    display: grid;
+    gap: var(--space-4);
+  }
+  .quote__contact dt {
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    opacity: 0.75;
+  }
+  .quote__contact dd {
+    margin: 2px 0 0;
+    font-size: var(--text-h4);
+    font-weight: 600;
+  }
+  .quote__contact a:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 767px) {
+    .quote__inner {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

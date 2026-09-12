@@ -1,0 +1,16 @@
+---
+import LegalLayout from "../layouts/LegalLayout.astro";
+
+const sections = [
+  "Warranty coverage",
+  "What is not covered",
+  "Making a claim",
+  "Remedies",
+];
+---
+<LegalLayout
+  title="Warranty"
+  pageKey="warranty"
+  sections={sections}
+  noIndex={true}
+/>

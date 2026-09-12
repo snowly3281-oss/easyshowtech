@@ -1,0 +1,361 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import PostCard from '../../components/resources/PostCard.astro'
+import PageBuilder from '../../components/blocks/PageBuilder.astro'
+import { postListQuery, postTaxonomyQuery } from '../../sanity/queries/posts'
+import type { PostListQueryResult, PostTaxonomyQueryResult } from '../../sanity/sanity.types'
+import type { SolutionBlock } from '../../sanity/content'
+import { getSitePage } from '../../sanity/pages'
+import {fetchLocalized, fetchLocalizedList, resolveLocale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+const locale = resolveLocale(
+  Astro.props.locale,
+  Astro.originPathname || Astro.url.pathname,
+)
+const t = (english: string) => staticUi(locale, english)
+const [posts, page, taxonomy] = await Promise.all([
+  fetchLocalizedList<PostListQueryResult[number]>(
+    postListQuery,
+    {},
+    locale,
+    (item) => item.slug,
+  ),
+  getSitePage('resources', locale),
+  fetchLocalized<PostTaxonomyQueryResult>(postTaxonomyQuery, {}, locale),
+])
+const categoryTitles = new Map(
+  (taxonomy?.categories ?? [])
+    .filter((item) => item.slug && item.title)
+    .map((item) => [item.slug as string, item.title as string]),
+)
+const list = (posts ?? []).map((post) => ({
+  ...post,
+  categories:
+    post.categories?.map((category) => ({
+      ...category,
+      title:
+        (category.slug && categoryTitles.get(category.slug)) || category.title,
+    })) ?? null,
+}))
+const eyebrow = page?.hero?.eyebrow || t('Resources')
+const pageTitle =
+  page?.hero?.heading ||
+  page?.title ||
+  t('Guides for studio owners and facility managers.')
+const pageIntro =
+  page?.hero?.subheading ||
+  page?.introduction ||
+  t('Short, practical guides for buyers — not shoppers.')
+const pageBlocks = (page?.sections ?? []) as SolutionBlock[]
+const metaTitle = page?.seo?.metaTitle || `${pageTitle} — Coral Pilates`
+const metaDescription = page?.seo?.metaDescription || pageIntro
+
+const categoryForPost = (post: PostListQueryResult[number]) =>
+  post.categories?.find((item) => item?.title)?.title?.trim() || t('Articles')
+
+const categoryOrder = [
+  t('Buying guides'),
+  t('Studio setup'),
+  t('Comparisons'),
+  t('Articles'),
+]
+const categories = Array.from(new Set(list.map(categoryForPost))).sort((a, b) => {
+  const aIndex = categoryOrder.indexOf(a)
+  const bIndex = categoryOrder.indexOf(b)
+  if (aIndex === -1 && bIndex === -1) return a.localeCompare(b)
+  if (aIndex === -1) return 1
+  if (bIndex === -1) return -1
+  return aIndex - bIndex
+})
+---
+
+<BaseLayout
+  locale={locale}
+  title={metaTitle}
+  description={metaDescription}
+>
+  <section class="archive" data-resource-archive>
+    <div class="container archive__inner">
+      <header class="archive__header">
+        <p class="eyebrow archive__eyebrow">{eyebrow}</p>
+        <h1 class="archive__title">{pageTitle}</h1>
+        <p class="body-l archive__intro">{pageIntro}</p>
+      </header>
+
+      {
+        list.length > 0 ? (
+          <>
+            <div class="archive__filters" role="group" aria-label={t('Filter articles by category')}>
+              <button
+                class="archive__filter is-active"
+                type="button"
+                data-resource-filter="all"
+                aria-pressed="true"
+              >
+                {t('All')}
+              </button>
+              {categories.map((category) => (
+                <button
+                  class="archive__filter"
+                  type="button"
+                  data-resource-filter={category}
+                  aria-pressed="false"
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+
+            <ul class="archive__grid">
+              {list.map((post, index) => (
+                <PostCard
+                  post={post}
+                  category={categoryForPost(post)}
+                  hidden={index >= 9}
+                  locale={locale}
+                />
+              ))}
+            </ul>
+
+            <p class="archive__filter-empty" data-resource-empty hidden>
+              {t('No articles are available in this category yet.')}
+            </p>
+
+            <div class="archive__pagination" data-resource-pagination>
+              <p class="archive__count nums" aria-live="polite">
+                {t('Showing')} <span data-resource-visible>{Math.min(list.length, 9)}</span> {t('of')}{' '}
+                <span data-resource-total>{list.length}</span> {t('articles')}
+              </p>
+              <button
+                class="btn btn-outline archive__load"
+                type="button"
+                data-resource-load
+                hidden={list.length <= 9}
+              >
+                {t('Load more')}
+              </button>
+            </div>
+          </>
+        ) : (
+          <div class="archive__empty">
+            <p>{t('No articles yet — check back soon.')}</p>
+          </div>
+        )
+      }
+    </div>
+  </section>
+  {pageBlocks.length > 0 && <PageBuilder blocks={pageBlocks} />}
+</BaseLayout>
+
+<script>
+  const RESOURCE_PAGE_SIZE = 9
+
+  function initResourceArchive() {
+    const root = document.querySelector<HTMLElement>('[data-resource-archive]')
+    if (!root || root.dataset.archiveReady === 'true') return
+
+    const cards = Array.from(root.querySelectorAll<HTMLElement>('[data-resource-card]'))
+    const filters = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-resource-filter]'))
+    const loadButton = root.querySelector<HTMLButtonElement>('[data-resource-load]')
+    const visibleCount = root.querySelector<HTMLElement>('[data-resource-visible]')
+    const totalCount = root.querySelector<HTMLElement>('[data-resource-total]')
+    const emptyState = root.querySelector<HTMLElement>('[data-resource-empty]')
+
+    if (cards.length === 0 || filters.length === 0) return
+
+    root.dataset.archiveReady = 'true'
+    let activeCategory = 'all'
+    let visibleLimit = RESOURCE_PAGE_SIZE
+
+    const update = () => {
+      const matches = cards.filter(
+        (card) =>
+          activeCategory === 'all' || card.dataset.category === activeCategory,
+      )
+      const visibleCards = matches.slice(0, visibleLimit)
+
+      cards.forEach((card) => {
+        card.hidden = true
+      })
+      visibleCards.forEach((card) => {
+        card.hidden = false
+      })
+
+      if (visibleCount) visibleCount.textContent = String(visibleCards.length)
+      if (totalCount) totalCount.textContent = String(matches.length)
+      if (emptyState) emptyState.hidden = matches.length > 0
+      if (loadButton) loadButton.hidden = visibleCards.length >= matches.length
+    }
+
+    filters.forEach((filter) => {
+      filter.addEventListener('click', () => {
+        activeCategory = filter.dataset.resourceFilter || 'all'
+        visibleLimit = RESOURCE_PAGE_SIZE
+
+        filters.forEach((item) => {
+          const isActive = item === filter
+          item.classList.toggle('is-active', isActive)
+          item.setAttribute('aria-pressed', String(isActive))
+        })
+
+        update()
+      })
+    })
+
+    loadButton?.addEventListener('click', () => {
+      visibleLimit += RESOURCE_PAGE_SIZE
+      update()
+    })
+
+    update()
+  }
+
+  initResourceArchive()
+  document.addEventListener('astro:page-load', initResourceArchive)
+</script>
+
+<style>
+  .archive {
+    padding-block: var(--space-9) var(--space-10);
+  }
+  .archive__inner {
+    max-width: 1376px;
+  }
+  .archive__header {
+    max-width: 1280px;
+    margin-inline: auto;
+    text-align: center;
+  }
+  .archive__eyebrow {
+    margin: 0;
+  }
+  .archive__title {
+    margin: var(--space-4) 0 0;
+    text-wrap: balance;
+  }
+  .archive__intro {
+    max-width: 680px;
+    margin: var(--space-3) auto 0;
+    color: var(--color-ink-500);
+  }
+  .archive__filters {
+    margin: var(--space-7) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+  }
+  .archive__filter {
+    min-height: 36px;
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-pill);
+    color: var(--color-ink-600);
+    background: var(--color-white);
+    font-size: var(--text-body-s);
+    font-weight: 500;
+    line-height: 1;
+    cursor: pointer;
+    transition:
+      color var(--dur-base) var(--ease-standard),
+      border-color var(--dur-base) var(--ease-standard),
+      background var(--dur-base) var(--ease-standard);
+  }
+  .archive__filter:hover {
+    color: var(--color-coral);
+    border-color: var(--color-coral);
+  }
+  .archive__filter.is-active {
+    color: var(--color-white);
+    border-color: var(--color-coral);
+    background: var(--color-coral);
+  }
+  .archive__grid {
+    list-style: none;
+    margin: var(--space-7) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-6) var(--space-5);
+  }
+  .archive__filter-empty,
+  .archive__empty {
+    margin: var(--space-8) 0 0;
+    padding: var(--space-7);
+    border: 1px solid var(--color-ink-200);
+    border-radius: var(--radius-md);
+    color: var(--color-ink-500);
+    background: var(--color-white);
+    text-align: center;
+  }
+  .archive__pagination {
+    margin: var(--space-7) 0 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+  }
+  .archive__count {
+    margin: 0;
+    color: var(--color-ink-400);
+    font-size: var(--text-caption);
+  }
+  .archive__load {
+    min-width: 112px;
+  }
+  .archive__pagination:has(.archive__load[hidden]) .archive__count {
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 1023px) {
+    .archive {
+      padding-block: var(--space-8) var(--space-9);
+    }
+    .archive__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 639px) {
+    .archive {
+      padding-block: var(--space-8);
+    }
+    .archive__title {
+      margin-top: var(--space-3);
+    }
+    .archive__intro {
+      font-size: var(--text-body);
+    }
+    .archive__filters {
+      margin-top: var(--space-6);
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: var(--space-1);
+      scrollbar-width: none;
+    }
+    .archive__filters::-webkit-scrollbar {
+      display: none;
+    }
+    .archive__filter {
+      flex: 0 0 auto;
+    }
+    .archive__grid {
+      margin-top: var(--space-6);
+      grid-template-columns: 1fr;
+      gap: var(--space-5);
+    }
+    .archive__filter-empty,
+    .archive__empty {
+      margin-top: var(--space-6);
+      padding: var(--space-6) var(--space-4);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .archive__filter {
+      transition: none;
+    }
+  }
+</style>

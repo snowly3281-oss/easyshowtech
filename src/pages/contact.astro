@@ -1,0 +1,558 @@
+---
+/**
+ * Contact — inquiry workflow with its operator-facing page header, SEO and
+ * optional supporting sections managed in Sanity.
+ * Hero + inquiry form STRUCTURE + direct-contact sidebar + map placeholder +
+ * factory-visit band + talk bar. Editable values come from site.ts (real
+ * samples now; bind to Sanity siteSettings later).
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Icon from "../components/Icon.astro";
+import PageBuilder from "../components/blocks/PageBuilder.astro";
+import { getSiteSettings } from "../sanity/settings";
+import {getSitePage} from "../sanity/pages";
+import type {SolutionBlock} from "../sanity/content";
+import {
+  TURNSTILE_ACTION,
+  TURNSTILE_SITE_KEY,
+} from "../lib/turnstileConfig";
+import {localizedPath, resolveLocale} from "../i18n/config";
+import {staticUi} from "../i18n/static";
+const locale = resolveLocale(
+  Astro.props.locale,
+  Astro.originPathname || Astro.url.pathname,
+);
+const t = (english: string) => staticUi(locale, english);
+const [siteSettings, page] = await Promise.all([
+  getSiteSettings(),
+  getSitePage("contact", locale),
+]);
+const eyebrow = page?.hero?.eyebrow || t("Contact");
+const pageTitle =
+  page?.hero?.heading || page?.title || t("Tell us what you're equipping.");
+const pageIntro =
+  page?.hero?.subheading ||
+  page?.introduction ||
+  t("Send us your product list or floor plan and a real person will reply with a tailored quote and lead time — usually within two business days.");
+const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
+const metaTitle = page?.seo?.metaTitle || t("Contact — Coral Pilates");
+const metaDescription = page?.seo?.metaDescription || pageIntro;
+---
+
+<BaseLayout
+  locale={locale}
+  title={metaTitle}
+  description={metaDescription}
+>
+  <!-- HERO (centered / focused) -->
+  <section class="section">
+    <div class="container">
+      <div class="hero">
+        <span class="eyebrow">{eyebrow}</span>
+        <h1 class="hero-h" data-contact-heading>{pageTitle}</h1>
+        <p class="body-l hero-sub" data-contact-intro>{pageIntro}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- INQUIRY FORM + DIRECT CONTACT -->
+  <section id="inquiry" class="section pt-0 scroll-mt-24">
+    <div class="container">
+      <div class="contact-grid">
+        <!-- inquiry form → submits via the shared quote helper (Web3Forms) -->
+        <div class="card form-card">
+          <form
+            class="form"
+            id="inquiryForm"
+            data-frame-label={t("Frame")}
+            data-upholstery-label={t("Upholstery")}
+            data-quoting-label={t("Quoting")}
+            data-floor-heading={t("Share your customer floor plan, if available.")}
+            data-floor-intro={t("We will review circulation, class capacity and equipment mix, then return a tailored recommendation and RFQ.")}
+            data-configuring-label={t("Configuring")}
+            data-floor-request-label={t("Floor-plan configuration request")}
+            data-file-hint={t("Customer floor plan, product list, or RFQ — PDF · DWG · DXF · JPG · PNG · max 20 MB")}
+            data-sending={t("Sending…")}
+            data-send-label={t("Send inquiry")}
+            data-error={t("Something went wrong. Please email us directly.")}
+            novalidate
+          >
+            <p class="form-prefill" data-inq-prefill hidden></p>
+            <div class="field-grid">
+              <div class="field">
+                <label for="name">{t("Full name")}</label>
+                <input id="name" name="name" type="text" autocomplete="name" placeholder={t("Your full name")} />
+              </div>
+              <div class="field">
+                <label for="email">{t("Email")} <span class="req">*</span></label>
+                <input id="email" name="email" type="email" required autocomplete="email" placeholder="you@company.com" />
+              </div>
+            </div>
+
+            <div class="field-grid field-grid--second">
+              <div class="field">
+                <label for="company">{t("Company")}</label>
+                <input id="company" name="company" type="text" autocomplete="organization" placeholder={t("Studio / business name")} />
+              </div>
+              <div class="field">
+                <label for="phone">{t("WhatsApp / phone")}</label>
+                <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+1 312 847 1928" />
+              </div>
+            </div>
+
+            <div class="field msg-field">
+              <label for="message">{t("Message")} <span class="req">*</span></label>
+              <textarea id="message" name="message" rows="4" required placeholder={t("Tell us what you're equipping — product list, customer floor plan, quantities, timeline...")}></textarea>
+            </div>
+
+            <div class="field file-field">
+              <label for="file">{t("Attach a file")}</label>
+              <label class="dropzone" for="file">
+                <Icon name="download" size={22} />
+                <span class="dz-main"><strong>{t("Drag & drop")}</strong> {t("or")} <span class="dz-browse">{t("browse")}</span></span>
+                <span class="caption" data-file-state>{t("Customer floor plan, product list, or RFQ — PDF · DWG · DXF · JPG · PNG · max 20 MB")}</span>
+              </label>
+              <input
+                id="file"
+                name="file"
+                type="file"
+                class="sr-file"
+                accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+              />
+            </div>
+
+            <p class="caption privacy">
+              {t("We use your details only to review and respond to your inquiry. We do not add you to marketing lists without your opt-in.")}
+            </p>
+
+            <!-- Context (set from the PDP prefill) + service meta + honeypot. -->
+            <input type="hidden" name="subject" value="Website inquiry — Coral Pilates" data-inq-subject />
+            <input type="hidden" name="product" value="" data-inq-product />
+            <input type="hidden" name="frame_finish" value="" data-inq-frame />
+            <input type="hidden" name="upholstery" value="" data-inq-upholstery />
+            <input type="hidden" name="inquiry_kind" value="quote" data-inq-kind />
+            <input type="hidden" name="source_url" value="" data-inq-source />
+            <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+            {TURNSTILE_SITE_KEY && (
+              <div
+                class="cf-turnstile form-turnstile"
+                data-sitekey={TURNSTILE_SITE_KEY}
+                data-action={TURNSTILE_ACTION}
+                data-refresh-expired="auto"
+              ></div>
+            )}
+
+            <p class="form-status" data-inq-status role="alert" aria-live="assertive"></p>
+
+            <div class="submit-row" data-inq-submitrow>
+              <button type="submit" class="btn btn-coral">{t("Send inquiry")}</button>
+              <span class="caption">{t("Chris will read it. Response within 24 hours")}</span>
+            </div>
+
+            <div class="form-done" data-inq-done hidden>
+              <p class="form-done__title">{t("Thanks — your inquiry is on its way.")}</p>
+              <p class="caption">{t("A real person will reply within 24 hours.")}</p>
+            </div>
+          </form>
+        </div>
+
+        <script>
+          import { submitQuoteForm, thankYouUrl } from '../lib/quoteForm'
+          import {
+            markTurnstileSpent,
+            prepareTurnstile,
+            resetTurnstile,
+          } from '../lib/turnstileClient'
+
+          function initInquiryForm() {
+            const form = document.getElementById('inquiryForm') as HTMLFormElement | null
+            if (!form || form.dataset.initialized === 'true') return
+            form.dataset.initialized = 'true'
+            prepareTurnstile('.form-turnstile')
+            // Consume the PDP prefill (product/frame/upholstery) that used to be
+            // dropped on arrival — surface it and attach it to the submission.
+            const params = new URLSearchParams(location.search)
+            const product = params.get('product') ?? ''
+            const frame = params.get('frame') ?? ''
+            const uph = params.get('upholstery') ?? ''
+            const inquiryKind = params.get('inquiry') === 'floorplan' ? 'floorplan' : 'quote'
+            const solution = params.get('solution') ?? ''
+            const setHidden = (sel: string, v: string) => {
+              const el = form.querySelector(sel) as HTMLInputElement | null
+              if (el && v) el.value = v
+            }
+            setHidden('[data-inq-product]', product)
+            setHidden('[data-inq-frame]', frame)
+            setHidden('[data-inq-upholstery]', uph)
+            setHidden('[data-inq-kind]', inquiryKind)
+            setHidden('[data-inq-source]', location.href)
+            if (product) {
+              const subj = form.querySelector('[data-inq-subject]') as HTMLInputElement | null
+              if (subj) subj.value = `Quote request — ${product}`
+              const banner = form.querySelector('[data-inq-prefill]') as HTMLElement | null
+              if (banner) {
+                const bits = [
+                  product,
+                  frame && `${form.dataset.frameLabel || 'Frame'}: ${frame}`,
+                  uph && `${form.dataset.upholsteryLabel || 'Upholstery'}: ${uph}`,
+                ].filter(Boolean)
+                banner.textContent = `${form.dataset.quotingLabel || 'Quoting'}: ${bits.join(' · ')}`
+                banner.hidden = false
+              }
+            }
+            if (inquiryKind === 'floorplan') {
+              const heading = document.querySelector('[data-contact-heading]')
+              const intro = document.querySelector('[data-contact-intro]')
+              if (heading) heading.textContent = form.dataset.floorHeading || 'Share your customer floor plan, if available.'
+              if (intro) {
+                intro.textContent =
+                  form.dataset.floorIntro || 'We will review circulation, class capacity and equipment mix, then return a tailored recommendation and RFQ.'
+              }
+              const subj = form.querySelector('[data-inq-subject]') as HTMLInputElement | null
+              if (subj) {
+                subj.value = `Floor-plan configuration request${solution ? ` — ${solution}` : ''}`
+              }
+              const banner = form.querySelector('[data-inq-prefill]') as HTMLElement | null
+              if (banner) {
+                banner.textContent = solution
+                  ? `${form.dataset.configuringLabel || 'Configuring'}: ${solution}`
+                  : form.dataset.floorRequestLabel || 'Floor-plan configuration request'
+                banner.hidden = false
+              }
+            }
+
+            const fileInput = form.querySelector('#file') as HTMLInputElement | null
+            const fileState = form.querySelector('[data-file-state]') as HTMLElement | null
+            fileInput?.addEventListener('change', () => {
+              const file = fileInput.files?.[0]
+              if (fileState) {
+                fileState.textContent = file
+                  ? `${file.name} · ${(file.size / (1024 * 1024)).toFixed(1)} MB`
+                  : form.dataset.fileHint || 'Customer floor plan, product list, or RFQ — PDF · DWG · DXF · JPG · PNG · max 20 MB'
+              }
+            })
+
+            const statusEl = form.querySelector('[data-inq-status]') as HTMLElement
+            const submitRow = form.querySelector('[data-inq-submitrow]') as HTMLElement
+            const doneEl = form.querySelector('[data-inq-done]') as HTMLElement
+            const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement
+
+            form.addEventListener('submit', async (e) => {
+              e.preventDefault()
+              if (!form.reportValidity()) return
+              submitBtn.disabled = true
+              submitBtn.textContent = form.dataset.sending || 'Sending…'
+              statusEl.textContent = ''
+              statusEl.dataset.state = ''
+
+              markTurnstileSpent('.form-turnstile')
+              const result = await submitQuoteForm(form)
+              submitBtn.disabled = false
+              submitBtn.textContent = form.dataset.sendLabel || 'Send inquiry'
+
+              if (result.status === 'ok') {
+                const destination = thankYouUrl(result.inquiryId)
+                if (destination) {
+                  window.location.assign(destination)
+                  return
+                }
+                submitRow.hidden = true
+                doneEl.hidden = false
+              } else {
+                resetTurnstile('.form-turnstile')
+                statusEl.dataset.state = 'error'
+                statusEl.textContent = result.message || form.dataset.error || 'Something went wrong. Please email us directly.'
+              }
+            })
+          }
+
+          initInquiryForm()
+          document.addEventListener('astro:page-load', initInquiryForm)
+        </script>
+
+        <!-- direct contact (editable values → siteSettings later) -->
+        <aside class="sidebar">
+          {/* TODO: bind to siteSettings — contact name, email, phone, office, hours */}
+          <div class="card">
+            <span class="eyebrow">{t("Talk to us directly")}</span>
+            <p class="lead-name">Chris Qian</p>
+            <p class="caption">{t("Your contact at Coral Pilates")}</p>
+            <hr class="rule" />
+            <a class="line line-coral" href={`mailto:${siteSettings.salesEmail}`}>
+              <Icon name="mail" size={18} /><span>{siteSettings.salesEmail}</span>
+            </a>
+            <div class="line">
+              <Icon name="chat" size={18} />
+              <span><span class="nums">{siteSettings.phone}</span><span class="sub">WhatsApp</span></span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><Icon name="pin" size={18} /><span class="card-title">{t("Office")}</span></div>
+            <p class="addr">
+              Room 708, Building A, Yuewuli, No. 6 Tengqi Street, Suzhou Taihu
+              National Tourism Resort, Wuzhong District, Suzhou, Jiangsu, China
+            </p>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><Icon name="clock" size={18} /><span class="card-title">{t("What happens next")}</span></div>
+            <ol class="steps">
+              <li>{t("Engineering review of your drawings")}</li>
+              <li>{t("Clarification by email or WhatsApp")}</li>
+              <li>{t("Transparent itemized quote")}</li>
+              <li>{t("Weekly photo and video updates")}</li>
+            </ol>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- Keep the real Suzhou location visible while loading Google Maps lazily. -->
+  <section class="band">
+    <div class="map">
+      <iframe
+        class="map__frame"
+        title={`${t("Suzhou office")} — Coral Pilates`}
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d40000!2d120.3830647252851!3d31.22957807806323!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x35b3713cfcb56fad%3A0xed1eb1a014def43d!2sTaihu%20Resort%2C%20Wuzhong%20District%2C%20Suzhou%2C%20Jiangsu%2C%20China%2C%20215105!5e0!3m2!1sen!2sus!4v1782529791948!5m2!1sen!2sus"
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+      ></iframe>
+    </div>
+  </section>
+
+  <!-- FACTORY-VISIT BAND -->
+  <section class="band on-navy">
+    <div class="container section">
+      <div class="cta-row">
+        <div class="cta-copy">
+          <span class="eyebrow">{t("Factory visits")}</span>
+          <h2 class="band-h">{t("Audits and site visits welcome.")}</h2>
+          <p class="body-l band-sub">
+            {t("Come meet the team, inspect materials and watch your order being built. We arrange the logistics — just tell us when.")}
+          </p>
+        </div>
+        <a href="#inquiry" class="btn btn-coral cta-btn">{t("Schedule a factory visit")}</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- TALK BAR -->
+  <section class="band on-paper">
+    <div class="container">
+      <div class="talk">
+        <span class="talk-lead">{t("Still looking for something else?")}</span>
+        <nav class="talk-links">
+          <a class="btn-link" href={localizedPath("/products", locale)}>{t("Browse the catalog")} <Icon name="arrow" size={16} /></a>
+          <a class="btn-link" href={localizedPath("/oem-services", locale)}>{t("Explore OEM services")} <Icon name="arrow" size={16} /></a>
+        </nav>
+      </div>
+    </div>
+  </section>
+
+  {pageBlocks.length > 0 && <PageBuilder blocks={pageBlocks} />}
+</BaseLayout>
+
+<style>
+  /* ---- hero (centered) ---- */
+  .hero { max-width: 760px; margin-inline: auto; text-align: center; }
+  .hero-h { margin-top: var(--space-3); }
+  .hero-sub { margin-top: var(--space-4); color: var(--color-ink-600); }
+
+  .pt-0 { padding-top: 0; }
+
+  /* ---- two-column layout ---- */
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1.7fr 1fr;
+    gap: var(--space-7);
+    align-items: start;
+  }
+  @media (max-width: 900px) { .contact-grid { grid-template-columns: 1fr; } }
+
+  /* ---- cards ---- */
+  .card {
+    background: var(--color-white);
+    border: 1px solid var(--color-ink-200);
+    border-radius: var(--radius-md);
+    padding: var(--space-6);
+  }
+  .form-card { padding: var(--space-7); }
+
+  /* ---- form fields ---- */
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5);
+  }
+  @media (max-width: 560px) { .field-grid { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: var(--space-2); }
+  .field > label { font-size: var(--text-body-s); font-weight: 500; color: var(--color-ink-800); }
+  .req { color: var(--color-coral); }
+
+  .field input,
+  .field select,
+  .field textarea {
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-white);
+    border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-size: var(--text-body);
+    color: var(--color-ink-900);
+  }
+  .field input, .field select { height: 46px; }
+  .field textarea { resize: vertical; min-height: 120px; line-height: var(--lh-normal); }
+  .field input::placeholder,
+  .field textarea::placeholder { color: var(--color-ink-400); }
+  .field input:focus-visible,
+  .field select:focus-visible,
+  .field textarea:focus-visible { outline: none; border-color: var(--color-coral); }
+  .msg-field { margin-top: var(--space-5); }
+  .field-grid--second { margin-top: var(--space-5); }
+
+  .file-field { margin-top: var(--space-5); }
+  .dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding-block: var(--space-7);
+    padding-inline: var(--space-5);
+    text-align: center;
+    color: var(--color-ink-500);
+    background: var(--color-ink-050);
+    border: 1px dashed var(--color-ink-300);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+  .dropzone:hover { border-color: var(--color-coral-border); }
+  .dz-main { color: var(--color-ink-700); }
+  .dz-browse { color: var(--color-coral); }
+  .sr-file { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+  .privacy { margin-top: var(--space-4); }
+  .submit-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-top: var(--space-5);
+    flex-wrap: wrap;
+  }
+  /* Prefill banner carried over from a PDP "Request a quote" click. */
+  .form-prefill {
+    margin: 0 0 var(--space-4);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm, 4px);
+    background: var(--color-paper-2, #ece7dd);
+    font-size: var(--text-body-s);
+    color: var(--color-ink-700, #444);
+  }
+  .form-status {
+    margin-top: var(--space-3);
+    font-size: var(--text-body-s);
+  }
+  .form-status[data-state='error'] {
+    color: var(--color-coral);
+  }
+  .form-done {
+    margin-top: var(--space-5);
+  }
+  .form-done__title {
+    font-weight: 600;
+    color: var(--color-ink-900, #0e1013);
+  }
+  /* Honeypot — hidden from humans. */
+  .hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+
+  /* ---- sidebar ---- */
+  .sidebar { display: flex; flex-direction: column; gap: var(--space-4); }
+  .lead-name { margin-top: var(--space-3); font-size: var(--text-h4); font-weight: 600; color: var(--color-ink-900); }
+  .rule { border: 0; border-top: 1px solid var(--color-ink-200); margin-block: var(--space-4); }
+  .line { display: flex; align-items: flex-start; gap: var(--space-3); color: var(--color-ink-800); margin-top: var(--space-3); }
+  .line :global(svg) { color: var(--color-ink-500); flex: none; margin-top: 2px; }
+  .line-coral { color: var(--color-coral); font-weight: 500; }
+  .line-coral :global(svg) { color: var(--color-coral); }
+  .sub { display: block; font-size: var(--text-caption); color: var(--color-ink-500); }
+
+  .card-head { display: flex; align-items: center; gap: var(--space-2); }
+  .card-head :global(svg) { color: var(--color-ink-500); }
+  .card-title { font-weight: 600; color: var(--color-ink-900); }
+  .addr { margin-top: var(--space-3); color: var(--color-ink-600); line-height: var(--lh-loose); }
+
+  .steps {
+    list-style: none;
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    counter-reset: step;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: var(--space-5);
+    color: var(--color-ink-600);
+    line-height: var(--lh-normal);
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--color-coral);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- map (Google embed) ---- */
+  .map {
+    position: relative;
+    height: 380px;
+    overflow: hidden;
+    background: var(--color-ink-100);
+    border-block: 1px solid var(--color-ink-200);
+  }
+  .map__frame {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  /* ---- navy band (text left, button right) ---- */
+  .on-navy { background: var(--color-navy); }
+  .cta-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-7); flex-wrap: wrap; }
+  .cta-copy { max-width: 620px; }
+  .cta-btn { flex: none; }
+  .band-h { margin-top: var(--space-3); color: var(--color-white); }
+  .band-sub { margin-top: var(--space-4); color: var(--color-ink-200); }
+
+  /* ---- talk bar ---- */
+  .on-paper { background: var(--color-paper-2, #ece7dd); border-top: 1px solid var(--color-ink-200); }
+  .talk {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+    padding-block: var(--space-6);
+  }
+  .talk-lead { font-weight: 500; color: var(--color-ink-800); }
+  .talk-links { display: flex; gap: var(--space-6); flex-wrap: wrap; }
+
+  /* ---- dark-ground text legibility (2-class selector outranks the base rule) ---- */
+  .on-navy .band-sub { color: var(--color-ink-100); }
+</style>

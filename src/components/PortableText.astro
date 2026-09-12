@@ -1,0 +1,850 @@
+---
+import {escapeHTML, toHTML, uriLooksSafe} from "@portabletext/to-html";
+import type {SanityImageSource} from "@sanity/image-url";
+import {urlFor} from "../sanity/image";
+import {buildArticleHeadings} from "../lib/article";
+import {localizedPath, resolveLocale, type Locale} from "../i18n/config";
+import {staticUi} from "../i18n/static";
+
+interface Props {
+  value?: unknown[] | null;
+  variant?: "default" | "article";
+  locale?: Locale;
+}
+
+type RecordValue = Record<string, any>;
+
+const {value, variant = "default", locale: explicitLocale} = Astro.props;
+const locale = resolveLocale(explicitLocale, Astro.url.pathname);
+const t = (english: string) => staticUi(locale, english);
+const esc = (input: unknown) => escapeHTML(String(input ?? ""));
+const articleHeadings = buildArticleHeadings(value);
+const headingByKey = new Map(
+  articleHeadings.map((heading) => [heading.key, heading]),
+);
+
+function imageUrl(source: unknown, width = 1200) {
+  if (!source) return "";
+  try {
+    return urlFor(source as SanityImageSource)
+      .width(width)
+      .auto("format")
+      .url();
+  } catch {
+    return "";
+  }
+}
+
+function imageSizeAttributes(source: unknown, targetWidth = 1200) {
+  const asset = (source as RecordValue | null)?.asset as
+    | RecordValue
+    | string
+    | undefined;
+  const reference =
+    typeof asset === "string"
+      ? asset
+      : typeof asset?._ref === "string"
+        ? asset._ref
+        : "";
+  const match = reference.match(
+    /^image-[^-]+-(\d+)x(\d+)-[a-z0-9]+$/i,
+  );
+  if (!match) return "";
+
+  const sourceWidth = Number.parseInt(match[1], 10);
+  const sourceHeight = Number.parseInt(match[2], 10);
+  if (sourceWidth <= 0 || sourceHeight <= 0) return "";
+
+  const width = Math.min(sourceWidth, targetWidth);
+  const height = Math.round((width * sourceHeight) / sourceWidth);
+  return ` width="${width}" height="${height}"`;
+}
+
+function internalHref(reference: RecordValue | null | undefined) {
+  if (!reference?._type) return "";
+  if (reference._type === "sitePage") return localizedPath(reference.route || "", locale);
+  const slug = reference.slug;
+  if (!slug) return "";
+  if (reference._type === "product") return localizedPath(`/products/${slug}`, locale);
+  if (reference._type === "solution") return localizedPath(`/solutions/${slug}`, locale);
+  if (reference._type === "post") return localizedPath(`/resources/${slug}`, locale);
+  return "";
+}
+
+function ctaHref(cta: RecordValue | null | undefined) {
+  return internalHref(cta?.internal) || cta?.external || "";
+}
+
+function renderTableCell(value: unknown) {
+  if (!Array.isArray(value) || value.length === 0) return "";
+  return toHTML(value as Parameters<typeof toHTML>[0], {
+    onMissingComponent: false,
+  });
+}
+
+function renderCta(cta: RecordValue | null | undefined, className: string) {
+  const href = ctaHref(cta);
+  if (!href || !uriLooksSafe(href)) return "";
+  const targetHref = href.startsWith("/") ? localizedPath(href, locale) : href;
+  return `<a class="${className}" href="${esc(targetHref)}">${esc(cta?.label || t("Learn more"))}</a>`;
+}
+
+const html =
+  Array.isArray(value) && value.length > 0
+    ? toHTML(value as Parameters<typeof toHTML>[0], {
+        onMissingComponent: false,
+        components: {
+          block: {
+            h2: ({value: block, children}) => {
+              const heading = headingByKey.get(String(block?._key ?? ""));
+              const id = heading?.id
+                ? ` id="${esc(heading.id)}"`
+                : "";
+              const number = heading?.number
+                ? `<span class="pt-section-number" aria-hidden="true">${esc(heading.number)}</span>`
+                : "";
+              return `<h2${id}>${number}<span>${children}</span></h2>`;
+            },
+            blockquote: ({children}) => `<blockquote>${children}</blockquote>`,
+          },
+          marks: {
+            link: ({value: mark, children}) => {
+              const href = String(mark?.href ?? "");
+              if (!href || !uriLooksSafe(href)) return children;
+              const target = mark?.blank
+                ? ' target="_blank" rel="noreferrer"'
+                : "";
+              return `<a href="${esc(href)}"${target}>${children}</a>`;
+            },
+            internalLink: ({value: mark, children}) => {
+              const href = internalHref(mark?.reference);
+              return href
+                ? `<a href="${esc(href)}">${children}</a>`
+                : children;
+            },
+          },
+          types: {
+            image: ({value: image}) => {
+              const src = imageUrl(image);
+              if (!src) return "";
+              const size = imageSizeAttributes(image);
+              return `<figure class="pt-media">
+                <img src="${esc(src)}" alt="${esc(image.alt)}"${size} loading="lazy" decoding="async" />
+                ${image.caption ? `<figcaption>${esc(image.caption)}</figcaption>` : ""}
+              </figure>`;
+            },
+            postImageBlock: ({value: block}) => {
+              const src = imageUrl(block.image);
+              if (!src) return "";
+              const size = imageSizeAttributes(block.image);
+              return `<figure class="pt-media">
+                <img src="${esc(src)}" alt="${esc(block.image?.alt)}"${size} loading="lazy" decoding="async" />
+                ${block.caption ? `<figcaption>${esc(block.caption)}</figcaption>` : ""}
+              </figure>`;
+            },
+            postGalleryBlock: ({value: block}) => {
+              const images = Array.isArray(block.images)
+                ? block.images
+                    .map((item: RecordValue) => {
+                      const src = imageUrl(item.image, 900);
+                      if (!src) return "";
+                      const size = imageSizeAttributes(item.image, 900);
+                      return `<figure>
+                        <img src="${esc(src)}" alt="${esc(item.alt)}"${size} loading="lazy" decoding="async" />
+                        ${item.caption ? `<figcaption>${esc(item.caption)}</figcaption>` : ""}
+                      </figure>`;
+                    })
+                    .filter(Boolean)
+                    .join("")
+                : "";
+              if (!images) return "";
+              return `<section class="pt-gallery">
+                ${block.heading ? `<h3>${esc(block.heading)}</h3>` : ""}
+                <div class="pt-gallery__grid">${images}</div>
+              </section>`;
+            },
+            postVideoBlock: ({value: block}) => {
+              const caption = block.caption
+                ? `<figcaption>${esc(block.caption)}</figcaption>`
+                : "";
+              if (block.source === "upload" && block.fileUrl) {
+                return `<figure class="pt-video">
+                  <video controls preload="metadata" src="${esc(block.fileUrl)}"></video>
+                  ${caption}
+                </figure>`;
+              }
+              const href = String(block.url ?? "");
+              if (!href || !uriLooksSafe(href)) return "";
+              return `<figure class="pt-video-link">
+                <a class="pt-button pt-button--secondary" href="${esc(href)}" target="_blank" rel="noreferrer">${esc(t("Watch video"))}</a>
+                ${caption}
+              </figure>`;
+            },
+            postCalloutBlock: ({value: block}) => {
+              const allowedTones = new Set([
+                "note",
+                "important",
+                "success",
+                "warning",
+              ]);
+              const tone = allowedTones.has(block.tone)
+                ? block.tone
+                : "note";
+              return `<aside class="pt-callout pt-callout--${tone}">
+                ${block.heading ? `<h3>${esc(block.heading)}</h3>` : ""}
+                <p>${esc(block.body)}</p>
+              </aside>`;
+            },
+            table: ({value: block}) => {
+              const rows = Array.isArray(block.rows)
+                ? block.rows.map((row: RecordValue) =>
+                    Array.isArray(row?.cells) ? row.cells : [],
+                  )
+                : [];
+              const columnCount = rows.reduce(
+                (maximum: number, cells: unknown[]) =>
+                  Math.max(maximum, cells.length),
+                0,
+              );
+              if (rows.length === 0 || columnCount === 0) return "";
+
+              const requestedHeaderRows = Number.isFinite(block.headerRows)
+                ? Math.trunc(block.headerRows)
+                : 1;
+              const headerRowCount = Math.min(
+                Math.max(requestedHeaderRows, 0),
+                rows.length,
+              );
+              const compactComparison =
+                columnCount === 2 && rows.length <= 8;
+              const tableClass = compactComparison
+                ? "pt-table pt-table--compact"
+                : "pt-table";
+              const renderRow = (
+                cells: RecordValue[],
+                cellElement: "th" | "td",
+              ) =>
+                `<tr>${Array.from({length: columnCount}, (_, index) => {
+                  const cell = cells[index];
+                  return `<${cellElement}>${renderTableCell(cell?.value)}</${cellElement}>`;
+                }).join("")}</tr>`;
+
+              const headerRows = rows
+                .slice(0, headerRowCount)
+                .map((cells: RecordValue[]) => renderRow(cells, "th"))
+                .join("");
+              const bodyRows = rows
+                .slice(headerRowCount)
+                .map((cells: RecordValue[]) => renderRow(cells, "td"))
+                .join("");
+
+              return `<figure class="${tableClass}" style="--pt-table-columns: ${Math.max(columnCount, 2)}">
+                ${
+                  compactComparison
+                    ? ""
+                    : `<div class="pt-table__meta" aria-hidden="true">
+                        <span>${rows.length} ${esc(t("rows"))} · ${columnCount} ${esc(t("columns"))}</span>
+                        <span>${esc(t("Scroll inside the table to explore"))}</span>
+                      </div>`
+                }
+                <div
+                  class="pt-table__scroll"
+                  role="region"
+                  aria-label="${esc(t("Article data table"))}"
+                  tabindex="0"
+                >
+                  <table>
+                    ${headerRows ? `<thead>${headerRows}</thead>` : ""}
+                    <tbody>${bodyRows}</tbody>
+                  </table>
+                </div>
+              </figure>`;
+            },
+            postTableBlock: ({value: block}) => {
+              const columns = Array.isArray(block.columns)
+                ? block.columns
+                : [];
+              const rows = Array.isArray(block.rows) ? block.rows : [];
+              if (columns.length === 0) return "";
+              const tableLabel = block.heading || t("Article data table");
+              const compactComparison =
+                columns.length === 2 && rows.length <= 8;
+              const tableClass = compactComparison
+                ? "pt-table pt-table--compact"
+                : "pt-table";
+              return `<figure class="${tableClass}" style="--pt-table-columns: ${Math.max(columns.length, 2)}">
+                ${block.heading ? `<h3>${esc(block.heading)}</h3>` : ""}
+                ${
+                  compactComparison
+                    ? ""
+                    : `<div class="pt-table__meta" aria-hidden="true">
+                        <span>${rows.length} ${esc(t("rows"))} · ${columns.length} ${esc(t("columns"))}</span>
+                        <span>${esc(t("Scroll inside the table to explore"))}</span>
+                      </div>`
+                }
+                <div
+                  class="pt-table__scroll"
+                  role="region"
+                  aria-label="${esc(tableLabel)}"
+                  tabindex="0"
+                >
+                  <table>
+                    <thead><tr>${columns.map((column: unknown) => `<th>${esc(column)}</th>`).join("")}</tr></thead>
+                    <tbody>
+                      ${rows
+                        .map((row: RecordValue) => {
+                          const cells = Array.isArray(row.cells)
+                            ? row.cells
+                            : [];
+                          return `<tr>${columns
+                            .map(
+                              (_: unknown, index: number) =>
+                                `<td>${esc(cells[index] ?? "")}</td>`,
+                            )
+                            .join("")}</tr>`;
+                        })
+                        .join("")}
+                    </tbody>
+                  </table>
+                </div>
+                ${block.caption ? `<figcaption>${esc(block.caption)}</figcaption>` : ""}
+              </figure>`;
+            },
+            postCodeBlock: ({value: block}) => {
+              const code = String(block.code ?? "");
+              if (!code) return "";
+              const language = String(block.language || "text").replace(/[^a-z0-9+#.-]/gi, "");
+              return `<figure class="pt-code">
+                ${block.caption ? `<figcaption>${esc(block.caption)}</figcaption>` : ""}
+                <pre><code class="language-${esc(language || "text")}">${esc(code)}</code></pre>
+              </figure>`;
+            },
+            postDividerBlock: () => '<hr class="pt-divider" />',
+            postProductBlock: ({value: block}) => {
+              const products = Array.isArray(block.products)
+                ? block.products
+                    .map((product: RecordValue) => {
+                      if (!product?.slug) return "";
+                      const src = imageUrl(product.mainImage, 520);
+                      const size = imageSizeAttributes(product.mainImage, 520);
+                      return `<a class="pt-product" href="${esc(localizedPath(`/products/${product.slug}`, locale))}">
+                        ${src ? `<img src="${esc(src)}" alt="${esc(product.mainImage?.alt || product.title)}"${size} loading="lazy" decoding="async" />` : ""}
+                        <span>
+                          <small>${esc(product.sku)}</small>
+                          <strong>${esc(product.title)}</strong>
+                          ${product.summary ? `<span>${esc(product.summary)}</span>` : ""}
+                        </span>
+                      </a>`;
+                    })
+                    .filter(Boolean)
+                    .join("")
+                : "";
+              if (!products) return "";
+              return `<section class="pt-related">
+                ${block.heading ? `<h3>${esc(block.heading)}</h3>` : ""}
+                ${block.body ? `<p>${esc(block.body)}</p>` : ""}
+                <div class="pt-related__grid">${products}</div>
+              </section>`;
+            },
+            postSolutionBlock: ({value: block}) => {
+              const solution = block.solution as RecordValue | undefined;
+              if (!solution?.slug) return "";
+              return `<aside class="pt-solution">
+                <small>${esc(t("Solution"))}</small>
+                <h3>${esc(block.heading || solution.title)}</h3>
+                <p>${esc(block.body || solution.summary)}</p>
+                <a href="${esc(localizedPath(`/solutions/${solution.slug}`, locale))}">${esc(t("View solution"))}</a>
+              </aside>`;
+            },
+            postDownloadBlock: ({value: block}) => {
+              if (!block.fileUrl) return "";
+              return `<aside class="pt-download">
+                <div>
+                  <h3>${esc(block.title)}</h3>
+                  ${block.description ? `<p>${esc(block.description)}</p>` : ""}
+                </div>
+                <a class="pt-button" href="${esc(block.fileUrl)}" download>${esc(block.buttonLabel || t("Download"))}</a>
+              </aside>`;
+            },
+            postCtaBlock: ({value: block}) => {
+              const primary = renderCta(block.primaryCta, "pt-button");
+              const secondary = renderCta(
+                block.secondaryCta,
+                "pt-button pt-button--secondary",
+              );
+              return `<aside class="pt-cta">
+                <div>
+                  <h3>${esc(block.heading)}</h3>
+                  ${block.body ? `<p>${esc(block.body)}</p>` : ""}
+                </div>
+                <div class="pt-cta__actions">${primary}${secondary}</div>
+              </aside>`;
+            },
+            faqsBlock: ({value: block}) => {
+              const items = Array.isArray(block.items) ? block.items : [];
+              if (items.length === 0) return "";
+              return `<section class="pt-faq">
+                ${block.heading ? `<h3>${esc(block.heading)}</h3>` : ""}
+                <div>
+                  ${items
+                    .map(
+                      (item: RecordValue) =>
+                        `<details><summary>${esc(item.question)}</summary><p>${esc(item.answer)}</p></details>`,
+                    )
+                    .join("")}
+                </div>
+              </section>`;
+            },
+          },
+        },
+      })
+    : "";
+---
+
+{
+  html && (
+    <div
+      class:list={["rich-text", variant === "article" && "rich-text--article"]}
+      set:html={html}
+    />
+  )
+}
+
+<style>
+  .rich-text :global(p) {
+    margin: var(--space-4) 0 0;
+  }
+
+  .rich-text :global(h2),
+  .rich-text :global(h3),
+  .rich-text :global(h4) {
+    margin: var(--space-6) 0 0;
+    font-weight: 600;
+  }
+
+  .rich-text :global(ul),
+  .rich-text :global(ol) {
+    margin: var(--space-4) 0 0;
+    padding-inline-start: var(--space-5);
+  }
+
+  .rich-text :global(a) {
+    color: var(--color-coral);
+  }
+
+  .rich-text--article {
+    color: var(--color-ink-600);
+    font-size: 17px;
+    line-height: 1.72;
+  }
+
+  .rich-text--article > :global(p:first-child) {
+    margin-top: 0;
+  }
+
+  .rich-text--article > :global(p:first-child::first-letter) {
+    float: left;
+    margin: 0 var(--space-3) 0 0;
+    color: var(--color-coral);
+    font-size: 4.85em;
+    font-weight: 600;
+    line-height: 0.82;
+  }
+
+  .rich-text--article :global(h2) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    scroll-margin-top: calc(76px + var(--space-5));
+    margin-top: var(--space-8);
+    color: var(--color-ink-900);
+    font-size: clamp(28px, 3vw, 34px);
+    line-height: var(--lh-snug);
+  }
+
+  .rich-text--article :global(.pt-section-number) {
+    color: var(--color-coral);
+    font-size: var(--text-caption);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wider);
+  }
+
+  .rich-text--article :global(h3) {
+    margin-top: var(--space-6);
+    color: var(--color-ink-900);
+    font-size: var(--text-h4);
+  }
+
+  .rich-text--article :global(strong) {
+    color: var(--color-ink-800);
+  }
+
+  .rich-text--article :global(ul),
+  .rich-text--article :global(ol) {
+    display: grid;
+    gap: var(--space-2);
+    color: var(--color-ink-600);
+  }
+
+  .rich-text--article :global(ul li::marker) {
+    color: #c7a06a;
+  }
+
+  .rich-text--article :global(blockquote) {
+    margin: var(--space-8) 0 0;
+    padding: var(--space-3) 0 var(--space-3) var(--space-5);
+    border-left: 3px solid var(--color-coral);
+    color: var(--color-ink-900);
+    font-size: clamp(24px, 3vw, 30px);
+    font-style: italic;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .rich-text--article :global(blockquote p) {
+    margin: 0;
+    color: inherit;
+  }
+
+  .rich-text :global(.pt-media),
+  .rich-text :global(.pt-video),
+  .rich-text :global(.pt-video-link),
+  .rich-text :global(.pt-gallery),
+  .rich-text :global(.pt-table),
+  .rich-text :global(.pt-code),
+  .rich-text :global(.pt-related),
+  .rich-text :global(.pt-solution),
+  .rich-text :global(.pt-download),
+  .rich-text :global(.pt-cta),
+  .rich-text :global(.pt-faq),
+  .rich-text :global(.pt-callout) {
+    margin: var(--space-7) 0 0;
+  }
+
+  .rich-text :global(.pt-media img),
+  .rich-text :global(.pt-gallery img),
+  .rich-text :global(.pt-product img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .rich-text--article :global(.pt-media img) {
+    max-height: 720px;
+    object-fit: cover;
+  }
+
+  .rich-text :global(figcaption) {
+    margin-top: var(--space-2);
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+
+  .rich-text--article :global(figcaption) {
+    padding-left: var(--space-1);
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+
+  .rich-text :global(.pt-gallery__grid),
+  .rich-text :global(.pt-related__grid) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+  }
+
+  .rich-text :global(.pt-gallery figure) {
+    margin: 0;
+  }
+
+  .rich-text :global(.pt-video video) {
+    display: block;
+    width: 100%;
+    background: var(--color-navy);
+  }
+
+  .rich-text :global(.pt-code) {
+    overflow: hidden;
+    border: 1px solid var(--color-ink-200);
+    background: var(--color-navy);
+  }
+
+  .rich-text :global(.pt-code figcaption) {
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid color-mix(in srgb, white 18%, transparent);
+    color: color-mix(in srgb, white 72%, transparent);
+  }
+
+  .rich-text :global(.pt-code pre) {
+    max-height: min(56vh, 560px);
+    margin: 0;
+    overflow: auto;
+    padding: var(--space-4);
+    color: #f6f3ef;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.875em;
+    line-height: 1.6;
+    white-space: pre;
+  }
+
+  .rich-text :global(.pt-divider) {
+    width: min(100%, 9rem);
+    margin: var(--space-8) 0;
+    border: 0;
+    border-top: 2px solid var(--color-coral);
+  }
+
+  .rich-text :global(.pt-callout),
+  .rich-text :global(.pt-solution),
+  .rich-text :global(.pt-download),
+  .rich-text :global(.pt-cta) {
+    padding: var(--space-5);
+    border: 1px solid var(--color-ink-200);
+    background: var(--color-paper-2, #ece7dd);
+  }
+
+  .rich-text :global(.pt-callout--important),
+  .rich-text :global(.pt-callout--warning) {
+    border-left: 4px solid var(--color-coral);
+  }
+
+  .rich-text :global(.pt-table__scroll) {
+    max-height: min(62vh, 640px);
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    border: 1px solid var(--color-ink-200);
+    background: var(--color-white);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .rich-text :global(.pt-table__scroll:focus-visible) {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 2px;
+  }
+
+  .rich-text :global(.pt-table--compact .pt-table__scroll) {
+    max-height: none;
+    overflow: visible;
+    scrollbar-gutter: auto;
+  }
+
+  .rich-text :global(.pt-table--compact table) {
+    min-width: 0;
+  }
+
+  .rich-text :global(.pt-table__meta) {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+    padding: 0 var(--space-1) var(--space-2);
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+    line-height: var(--lh-normal);
+  }
+
+  .rich-text :global(.pt-table table) {
+    width: 100%;
+    min-width: max(100%, calc(var(--pt-table-columns, 3) * 11rem));
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: var(--text-body-s);
+    line-height: var(--lh-normal);
+  }
+
+  .rich-text :global(.pt-table th),
+  .rich-text :global(.pt-table td) {
+    padding: var(--space-3);
+    border-right: 1px solid var(--color-ink-200);
+    border-bottom: 1px solid var(--color-ink-200);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .rich-text :global(.pt-table th:last-child),
+  .rich-text :global(.pt-table td:last-child) {
+    border-right: 0;
+  }
+
+  .rich-text :global(.pt-table tbody tr:last-child td) {
+    border-bottom: 0;
+  }
+
+  .rich-text :global(.pt-table th) {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--color-paper-2, #ece7dd);
+    color: var(--color-ink-800);
+    font-weight: 600;
+  }
+
+  .rich-text :global(.pt-table td) {
+    background: var(--color-white);
+    color: var(--color-ink-700);
+  }
+
+  .rich-text :global(.pt-table th p),
+  .rich-text :global(.pt-table td p) {
+    margin: 0;
+    color: inherit;
+    font: inherit;
+  }
+
+  .rich-text :global(.pt-table tbody tr:nth-child(even) td) {
+    background: var(--color-ink-050);
+  }
+
+  .rich-text :global(.pt-table tbody tr:hover td) {
+    background: var(--color-coral-tint);
+  }
+
+  .rich-text :global(.pt-table th:first-child),
+  .rich-text :global(.pt-table td:first-child) {
+    position: sticky;
+    left: 0;
+    min-width: 13rem;
+    box-shadow: 1px 0 0 var(--color-ink-200);
+  }
+
+  .rich-text :global(.pt-table th:first-child) {
+    z-index: 3;
+  }
+
+  .rich-text :global(.pt-table td:first-child) {
+    z-index: 1;
+    color: var(--color-ink-800);
+    font-weight: 600;
+  }
+
+  .rich-text :global(.pt-table--compact th),
+  .rich-text :global(.pt-table--compact th:first-child),
+  .rich-text :global(.pt-table--compact td:first-child) {
+    position: static;
+  }
+
+  .rich-text :global(.pt-table--compact th:first-child),
+  .rich-text :global(.pt-table--compact td:first-child) {
+    min-width: 0;
+    box-shadow: none;
+  }
+
+  .rich-text :global(.pt-product) {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: var(--space-4);
+    align-items: center;
+    padding: var(--space-3);
+    border: 1px solid var(--color-ink-200);
+    color: var(--color-ink);
+  }
+
+  .rich-text :global(.pt-product > span) {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .rich-text :global(.pt-product small) {
+    color: var(--color-coral);
+  }
+
+  .rich-text :global(.pt-product > span > span) {
+    color: var(--color-ink-600);
+    font-size: var(--text-body-s);
+  }
+
+  .rich-text :global(.pt-solution small) {
+    color: var(--color-coral);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+
+  .rich-text :global(.pt-download),
+  .rich-text :global(.pt-cta) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-5);
+  }
+
+  .rich-text :global(.pt-button) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 var(--space-4);
+    background: var(--color-coral);
+    color: white;
+    font-weight: 600;
+  }
+
+  .rich-text :global(.pt-button--secondary) {
+    border: 1px solid var(--color-ink-200);
+    background: transparent;
+    color: var(--color-ink);
+  }
+
+  .rich-text :global(.pt-cta__actions) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .rich-text :global(.pt-faq details) {
+    border-top: 1px solid var(--color-ink-200);
+    padding: var(--space-4) 0;
+  }
+
+  .rich-text :global(.pt-faq details:last-child) {
+    border-bottom: 1px solid var(--color-ink-200);
+  }
+
+  .rich-text :global(.pt-faq summary) {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  @media (max-width: 640px) {
+    .rich-text :global(.pt-table__scroll) {
+      max-height: min(56vh, 480px);
+    }
+
+    .rich-text :global(.pt-table__meta) {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .rich-text :global(.pt-table table) {
+      min-width: max(100%, calc(var(--pt-table-columns, 3) * 9.5rem));
+    }
+
+    .rich-text :global(.pt-table th),
+    .rich-text :global(.pt-table td) {
+      padding: var(--space-2) var(--space-3);
+    }
+
+    .rich-text :global(.pt-table th:first-child),
+    .rich-text :global(.pt-table td:first-child) {
+      min-width: 11rem;
+    }
+
+    .rich-text :global(.pt-gallery__grid),
+    .rich-text :global(.pt-related__grid) {
+      grid-template-columns: 1fr;
+    }
+
+    .rich-text :global(.pt-product) {
+      grid-template-columns: 90px minmax(0, 1fr);
+    }
+
+    .rich-text :global(.pt-download),
+    .rich-text :global(.pt-cta) {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+</style>

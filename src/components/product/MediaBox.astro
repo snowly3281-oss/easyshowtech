@@ -1,0 +1,79 @@
+---
+import type { SanityImageSource } from '@sanity/image-url'
+import { urlFor } from '../../sanity/image'
+
+/**
+ * Renders a Sanity image, or a tasteful placeholder when the asset is missing
+ * (the dataset has no product photography yet — import-images.mjs fills it in
+ * later with no code change). Never emits a broken <img>.
+ */
+interface Props {
+  source?: { asset?: SanityImageSource | null } | null
+  alt?: string | null
+  width?: number
+  height?: number
+  ratio?: string
+  class?: string
+  /** Local/static image URL to use when the Sanity asset is missing. */
+  fallback?: string
+}
+
+const { source, alt, width = 1000, height, ratio = '4 / 3', class: className, fallback } = Astro.props
+const asset = source?.asset ?? null
+const [ratioWidth, ratioHeight] = ratio
+  .split('/')
+  .map((part) => Number.parseFloat(part.trim()))
+const intrinsicHeight =
+  height ??
+  (Number.isFinite(ratioWidth) &&
+  Number.isFinite(ratioHeight) &&
+  ratioWidth > 0
+    ? Math.round((width * ratioHeight) / ratioWidth)
+    : undefined)
+
+let url: string | null = null
+if (asset) {
+  let b = urlFor(asset).width(width).auto('format')
+  if (height) b = b.height(height).fit('crop')
+  url = b.url()
+}
+const src = url ?? fallback ?? null
+---
+
+{
+  src ? (
+    <img
+      class:list={['media', className]}
+      src={src}
+      alt={alt ?? ''}
+      width={width}
+      height={intrinsicHeight}
+      loading="lazy"
+      decoding="async"
+      style={`aspect-ratio:${ratio}`}
+    />
+  ) : (
+    <div class:list={['media media--ph', className]} role="img" aria-label={alt ?? 'Photography coming soon'} style={`aspect-ratio:${ratio}`} />
+  )
+}
+
+<style>
+  .media {
+    display: block;
+    width: 100%;
+    object-fit: cover;
+  }
+  .media--ph {
+    background: var(--color-paper-2, #ece7dd);
+    display: grid;
+    place-items: center;
+  }
+  .media--ph::after {
+    content: '';
+    width: 28px;
+    height: 28px;
+    border: 2px solid currentColor;
+    border-radius: 4px;
+    opacity: 0.25;
+  }
+</style>

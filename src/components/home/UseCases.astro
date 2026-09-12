@@ -1,0 +1,246 @@
+---
+import type { HomeData, HomeSolution } from '../../sanity/content'
+import {localizedPath, resolveLocale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  intro?: HomeData['useCases']
+  solutions?: HomeSolution[]
+}
+
+const { intro, solutions } = Astro.props
+const locale = resolveLocale(undefined, Astro.url.pathname)
+const t = (english: string) => staticUi(locale, english)
+const items = solutions ?? []
+// WP "Solutions for 6 Core Client Scenarios" — a tabbed explorer.
+const eyebrow = intro?.eyebrow ?? t('Who we work with')
+const heading = intro?.heading ?? t('Solutions for {count} Core Client Scenarios').replace('{count}', String(items.length))
+const pad2 = (n: number) => String(n + 1).padStart(2, '0')
+---
+
+{
+  items.length > 0 && (
+    <section class="section sx">
+      <div class="container">
+        <div class="sx__head">
+          <div class="sx__head-left">
+            <p class="eyebrow">{eyebrow}</p>
+            <h2 class="sx__title">{heading}</h2>
+            <p class="body-l sx__intro">{t('Six buying profiles | Tailored setup guide | Volume terms per profile')}</p>
+          </div>
+          <div class="sx__head-right">
+            <a class="btn btn-link" href={localizedPath('/solutions', locale)}>{t('All solutions')} →</a>
+          </div>
+        </div>
+
+        <div class="sx__explorer">
+          <div class="sx__tabs" role="tablist">
+            {items.map((s, i) => (
+              <button class={`sx__tab${i === 0 ? ' is-active' : ''}`} data-sx-tab={i} role="tab" type="button">
+                <span class="sx__num">{pad2(i)}</span>
+                <span class="sx__label">{s.title}</span>
+                <span class="sx__arrow" aria-hidden="true">→</span>
+              </button>
+            ))}
+          </div>
+
+          <div class="sx__panel">
+            {items.map((s, i) => (
+              <article class={`sx__item${i === 0 ? ' is-active' : ''}`} data-sx-item={i}>
+                <div class="sx__photo" />
+                <div class="sx__body">
+                  <span class="eyebrow">{pad2(i)}</span>
+                  <h3 class="sx__h3">{s.title}</h3>
+                  {s.summary && <p class="sx__desc">{s.summary}</p>}
+                  <a class="btn btn-link sx__cta" href={localizedPath(`/solutions/${s.slug ?? ''}`, locale)}>
+                    {t('See setup options')} →
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<script is:inline>
+  function initUseCaseExplorer() {
+    const root = document.querySelector('.sx__explorer')
+    if (!root || root.dataset.initialized === 'true') return
+    root.dataset.initialized = 'true'
+    const tabs = root.querySelectorAll('[data-sx-tab]')
+    const items = root.querySelectorAll('[data-sx-item]')
+    tabs.forEach((t) =>
+      t.addEventListener('click', function () {
+        const i = t.getAttribute('data-sx-tab')
+        tabs.forEach((x) => x.classList.toggle('is-active', x === t))
+        items.forEach((x) => x.classList.toggle('is-active', x.getAttribute('data-sx-item') === i))
+      })
+    )
+  }
+
+  initUseCaseExplorer()
+  document.addEventListener('astro:page-load', initUseCaseExplorer)
+</script>
+
+<style>
+  .sx__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--space-5);
+  }
+  .sx__title {
+    margin: var(--space-2) 0 0;
+  }
+  .sx__intro {
+    margin: var(--space-3) 0 0;
+    color: var(--color-ink-600, #4b5059);
+  }
+  .sx__head-right {
+    flex: none;
+  }
+
+  .sx__explorer {
+    margin: var(--space-7) 0 0;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: var(--space-7);
+    align-items: start;
+  }
+
+  .sx__tabs {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--color-ink-200, #e4e6ea);
+  }
+  .sx__tab {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-5) 0;
+    border: none;
+    border-bottom: 1px solid var(--color-ink-200, #e4e6ea);
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+    position: relative;
+    transition: padding-left 180ms;
+  }
+  .sx__num {
+    font-size: var(--text-micro);
+    letter-spacing: 0.12em;
+    color: var(--color-ink-500, #6b7280);
+    min-width: 28px;
+    transition: color 180ms;
+  }
+  .sx__label {
+    font-size: var(--text-body);
+    font-weight: 500;
+    color: var(--color-ink-900, #0e1013);
+    transition: color 180ms;
+  }
+  .sx__arrow {
+    font-size: var(--text-body-s);
+    color: var(--color-ink-300, #c7cbd1);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 180ms, transform 180ms, color 180ms;
+  }
+  .sx__tab:hover .sx__label,
+  .sx__tab:hover .sx__arrow {
+    color: var(--color-coral);
+  }
+  .sx__tab:hover .sx__arrow {
+    opacity: 0.6;
+    transform: translateX(0);
+  }
+  .sx__tab.is-active {
+    padding-left: var(--space-4);
+  }
+  .sx__tab.is-active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 24px;
+    background: var(--color-coral);
+  }
+  .sx__tab.is-active .sx__num,
+  .sx__tab.is-active .sx__label,
+  .sx__tab.is-active .sx__arrow {
+    color: var(--color-coral);
+  }
+  .sx__tab.is-active .sx__arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .sx__panel {
+    position: relative;
+  }
+  .sx__item {
+    display: none;
+    background: #fff;
+    border: 1px solid var(--color-ink-200, #e4e6ea);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+  }
+  .sx__item.is-active {
+    display: flex;
+    flex-direction: column;
+    animation: sxFade 200ms ease;
+  }
+  .sx__photo {
+    aspect-ratio: 16 / 9;
+    background: var(--color-paper-2, #ece7dd);
+  }
+  .sx__body {
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+  .sx__h3 {
+    margin: 0;
+    font-size: var(--text-h3);
+    font-weight: 600;
+    color: var(--color-ink-900, #0e1013);
+    line-height: 1.2;
+  }
+  .sx__desc {
+    margin: 0;
+    font-size: var(--text-body-l);
+    color: var(--color-ink-600, #4b5059);
+    line-height: 1.5;
+  }
+  .sx__cta {
+    align-self: flex-start;
+  }
+  @keyframes sxFade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .sx__head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .sx__explorer {
+      grid-template-columns: 1fr;
+      gap: var(--space-5);
+    }
+  }
+</style>
