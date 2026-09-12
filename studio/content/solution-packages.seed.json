@@ -1,0 +1,170 @@
+{
+  "_note": "Client-supplied standard configurations captured on 2026-07-24. Boutique Studio includes three approved CMS-training examples (Compact, Recommended, Expanded); its middle tier is the client-approved baseline and the outer tiers are illustrative operating schedules pending each buyer's floor-plan review. The other Solutions remain Recommended-only until the client confirms their exact BOMs. This file is a source-of-truth handoff, not a published Sanity import. Existing catalog product IDs are included only where the mapping is unambiguous.",
+  "packages": [
+    {
+      "solutionSlug": "boutique-studio",
+      "tiers": [
+        {
+          "tier": "compact",
+          "title": "Compact Fit",
+          "summary": "A premium eight-piece maple package for compact boutique classes and focused private sessions. Coral confirms room clearances and orientation from the final floor plan.",
+          "areaMinSqm": 74,
+          "areaMaxSqm": 95,
+          "areaMinSqFt": 800,
+          "areaMaxSqFt": 1020,
+          "equipmentTotalMin": 8,
+          "equipmentTotalMax": 8,
+          "showItemQuantities": true,
+          "priceDisplay": "quote",
+          "items": [
+            { "productId": "product-eleven-m-re001", "quantity": 4, "unit": "unit", "sourceNameZh": "枫木核心床" },
+            { "productId": "product-eleven-m-re002", "quantity": 1, "unit": "unit", "sourceNameZh": "枫木半高架床" },
+            { "productId": "product-eleven-m-re005", "quantity": 1, "unit": "unit", "sourceNameZh": "凯迪拉克床" },
+            { "productId": "product-eleven-m-re010", "quantity": 1, "unit": "unit", "sourceNameZh": "梯桶" },
+            { "productId": "product-eleven-m-re008", "quantity": 1, "unit": "unit", "sourceNameZh": "稳踏椅" }
+          ],
+          "internalNote": "Boutique Studio demonstration template. Illustrative Compact schedule; confirm circulation and orientation from every buyer floor plan before quotation."
+        },
+        {
+          "tier": "recommended",
+          "title": "Standard Fit",
+          "summary": "The approved maple package for premium small-group classes and one-to-one training. Exact placement is confirmed after reviewing the room plan.",
+          "areaMinSqm": 96,
+          "areaMaxSqm": 139,
+          "areaMinSqFt": 1030,
+          "areaMaxSqFt": 1500,
+          "equipmentTotalMin": 11,
+          "equipmentTotalMax": 11,
+          "showItemQuantities": true,
+          "priceDisplay": "quote",
+          "items": [
+            { "productId": "product-eleven-m-re001", "quantity": 6, "unit": "unit", "sourceNameZh": "枫木核心床" },
+            { "productId": "product-eleven-m-re002", "quantity": 2, "unit": "unit", "sourceNameZh": "枫木半高架床" },
+            { "productId": "product-eleven-m-re005", "quantity": 1, "unit": "unit", "sourceNameZh": "凯迪拉克床" },
+            { "productId": "product-eleven-m-re010", "quantity": 1, "unit": "unit", "sourceNameZh": "梯桶" },
+            { "productId": "product-eleven-m-re008", "quantity": 1, "unit": "unit", "sourceNameZh": "稳踏椅" }
+          ],
+          "internalNote": "Boutique Studio approved standard baseline supplied by the client. Confirm final placement from every buyer floor plan before quotation."
+        },
+        {
+          "tier": "expanded",
+          "title": "Expanded Fit",
+          "summary": "A 16-piece maple package for more simultaneous small-group formats and a fuller teaching schedule, while retaining dedicated circulation.",
+          "areaMinSqm": 140,
+          "areaMaxSqm": 186,
+          "areaMinSqFt": 1510,
+          "areaMaxSqFt": 2000,
+          "equipmentTotalMin": 16,
+          "equipmentTotalMax": 16,
+          "showItemQuantities": true,
+          "priceDisplay": "quote",
+          "items": [
+            { "productId": "product-eleven-m-re001", "quantity": 8, "unit": "unit", "sourceNameZh": "枫木核心床" },
+            { "productId": "product-eleven-m-re002", "quantity": 4, "unit": "unit", "sourceNameZh": "枫木半高架床" },
+            { "productId": "product-eleven-m-re005", "quantity": 1, "unit": "unit", "sourceNameZh": "凯迪拉克床" },
+            { "productId": "product-eleven-m-re010", "quantity": 1, "unit": "unit", "sourceNameZh": "梯桶" },
+            { "productId": "product-eleven-m-re008", "quantity": 2, "unit": "unit", "sourceNameZh": "稳踏椅" }
+          ],
+          "internalNote": "Boutique Studio demonstration template. Illustrative Expanded schedule; confirm circulation, class format and orientation from every buyer floor plan before quotation."
+        }
+      ],
+      "sourceDescriptionZh": "主打高端精品小班、一对一私教，枫木材质质感高级、适配工作室轻奢定位。小面积74㎡紧凑舒适、无拥挤感；大面积186㎡动线开阔，可同时开展多组小班课，设备配比均衡，完全适配精品工作室日常运营。"
+    },
+    {
+      "solutionSlug": "franchise",
+      "tier": "recommended",
+      "title": "Recommended franchise studio",
+      "areaMinSqm": 139,
+      "areaMaxSqm": 186,
+      "areaMinSqFt": 1500,
+      "areaMaxSqFt": 2000,
+      "equipmentTotalMin": 10,
+      "equipmentTotalMax": 14,
+      "_review": "The listed quantities total 15, while the stated equipment range is 10–14. Confirm whether ladder barrels and chairs are excluded from the total before publishing.",
+      "items": [
+        { "productId": "product-eleven-a-re001", "quantity": 8, "unit": "unit", "sourceNameZh": "铝合金核心床" },
+        { "productId": "product-eleven-a-re002", "quantity": 2, "unit": "unit", "sourceNameZh": "铝合金半高架床" },
+        { "productId": "product-eleven-m-re005", "quantity": 1, "unit": "unit", "sourceNameZh": "凯迪拉克床", "mappingNote": "Material was not specified by the client; confirm the mapped model." },
+        { "productId": "product-eleven-m-re010", "quantity": 2, "unit": "unit", "sourceNameZh": "梯桶", "mappingNote": "Material was not specified by the client; confirm the mapped model." },
+        { "productId": "product-eleven-a-re011", "quantity": 2, "unit": "unit", "sourceNameZh": "稳踏椅" }
+      ],
+      "sourceDescriptionZh": "优化原过载配置，适配连锁门店高频团课、大批量客流需求。铝合金设备耐用抗造、性价比高，适合标准化连锁运营。删减冗余大型设备，139㎡小面积不拥挤，186㎡大面积充足富余，兼顾营收效率与客户体验，为连锁门店最优标配。"
+    },
+    {
+      "solutionSlug": "rehab-clinic",
+      "tier": "recommended",
+      "title": "Recommended rehabilitation clinic",
+      "areaMinSqm": 93,
+      "areaMaxSqm": 372,
+      "areaMinSqFt": 1000,
+      "areaMaxSqFt": 4000,
+      "equipmentTotalMin": 4,
+      "equipmentTotalMax": 8,
+      "items": [
+        { "customName": "Classical Reformer", "quantity": 2, "unit": "unit", "sourceNameZh": "古典核心床" },
+        { "customName": "Classical Cadillac", "quantity": 1, "unit": "unit", "sourceNameZh": "古典凯迪拉克床" },
+        { "customName": "Classical Ladder Barrel", "quantity": 1, "unit": "unit", "sourceNameZh": "梯桶" },
+        { "customName": "Classical Wunda Chair", "quantity": 1, "unit": "unit", "sourceNameZh": "稳踏椅" },
+        { "customName": "Pedi Pole", "quantity": 1, "unit": "unit", "sourceNameZh": "体态矫正杆（Pedi Pole）" }
+      ],
+      "sourceDescriptionZh": "康复场景主打一对一精准矫正、术后恢复、体态修复，无需密集设备。全套古典专业器械，搭配体态矫正杆适配康复理疗需求，场地留白充足，保障训练私密性与操作安全性，大小面积均可完美适配，是专业康复机构通用标准配置。"
+    },
+    {
+      "solutionSlug": "hotel-spa",
+      "tier": "recommended",
+      "title": "Recommended hotel, resort or spa",
+      "areaMinSqm": 93,
+      "areaMaxSqm": 280,
+      "areaMinSqFt": 1000,
+      "areaMaxSqFt": 3000,
+      "equipmentTotalMin": 6,
+      "equipmentTotalMax": 12,
+      "items": [
+        { "productId": "product-eleven-m-re001", "quantity": 4, "unit": "unit", "sourceNameZh": "枫木核心床" },
+        { "productId": "product-eleven-m-re002", "quantity": 2, "unit": "unit", "sourceNameZh": "枫木半高架床" },
+        { "productId": "product-eleven-m-re005", "quantity": 1, "unit": "unit", "sourceNameZh": "凯迪拉克床" },
+        { "productId": "product-eleven-m-re010", "quantity": 1, "unit": "unit", "sourceNameZh": "梯桶" },
+        { "productId": "product-eleven-m-re008", "quantity": 1, "unit": "unit", "sourceNameZh": "稳踏椅" }
+      ],
+      "sourceDescriptionZh": "修正原错误极小面积，适配酒店、会所配套健身空间。选用高端枫木全系设备，质感适配高端休闲场景，设备数量精简精致，不占用过多公共空间，可满足住客轻训练、塑形拉伸需求，兼顾美观与实用性。"
+    },
+    {
+      "solutionSlug": "home-pt",
+      "tier": "recommended",
+      "title": "Recommended home or private training space",
+      "areaMinSqm": 18,
+      "areaMaxSqm": 28,
+      "areaMinSqFt": 200,
+      "areaMaxSqFt": 300,
+      "equipmentTotalMin": 2,
+      "equipmentTotalMax": 4,
+      "items": [
+        { "productId": "product-eleven-m-re003", "quantity": 1, "unit": "unit", "sourceNameZh": "枫木三合一普拉提床", "mappingNote": "Mapped to the current catalog's Maple Cadillac Reformer (High leg); confirm it is the intended three-in-one model." },
+        { "productId": "product-eleven-m-re010", "quantity": 1, "unit": "unit", "sourceNameZh": "梯桶" },
+        { "productId": "product-eleven-m-re008", "quantity": 1, "unit": "unit", "sourceNameZh": "稳踏椅" }
+      ],
+      "sourceDescriptionZh": "适配家用、小私教工作室极小空间。用三合一床替代传统核心床+凯迪拉克，一机多用、极致省空间，彻底解决小场地拥挤问题。配置精简齐全，可满足全身塑形、核心训练、拉伸康复全需求，是家用场景最高性价比搭配。"
+    },
+    {
+      "solutionSlug": "training-academy",
+      "tier": "recommended",
+      "title": "Recommended training academy",
+      "areaMinSqm": 140,
+      "areaMaxSqm": 280,
+      "areaMinSqFt": 1500,
+      "areaMaxSqFt": 3000,
+      "equipmentTotalMin": 6,
+      "equipmentTotalMax": 10,
+      "items": [
+        { "customName": "Classical Reformer", "quantity": 2, "unit": "unit", "sourceNameZh": "古典核心床" },
+        { "customName": "Classical Reformer Tower", "quantity": 2, "unit": "unit", "sourceNameZh": "半高架床" },
+        { "customName": "Classical Three-in-one Reformer", "quantity": 1, "unit": "unit", "sourceNameZh": "三合一床" },
+        { "customName": "Classical Cadillac", "quantity": 1, "unit": "unit", "sourceNameZh": "凯迪拉克" },
+        { "customName": "Classical Ladder Barrel", "quantity": 1, "unit": "unit", "sourceNameZh": "梯桶" },
+        { "customName": "Classical Wunda Chair", "quantity": 1, "unit": "unit", "sourceNameZh": "稳踏椅" },
+        { "customName": "Spine Corrector + Arc + Small Barrel", "quantity": 1, "unit": "set", "sourceNameZh": "Spine Corrector+Arc+Small Barrel" }
+      ],
+      "sourceDescriptionZh": "针对教练培训、考证教学、系统授课设计，设备品类最全，覆盖零基础进修、高阶进阶、康复教学所有课程体系。场地开阔、设备标准化统一，可满足多人同步教学、动作对比实操、学员考核实训需求，是专业普拉提教学学院标准配置。"
+    }
+  ]
+}

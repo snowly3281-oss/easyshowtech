@@ -1,0 +1,83 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import HomeHero from '../components/home/HomeHero.astro'
+import HowWeWork from '../components/home/HowWeWork.astro'
+import CatalogStrip from '../components/home/CatalogStrip.astro'
+import UseCases from '../components/home/UseCases.astro'
+import OemBanner from '../components/home/OemBanner.astro'
+import FactorySection from '../components/home/FactorySection.astro'
+import IpProtection from '../components/home/IpProtection.astro'
+import Insights from '../components/home/Insights.astro'
+import FinalCta from '../components/home/FinalCta.astro'
+import { sanityClient } from '../sanity/client'
+import {
+  homeQuery,
+  homeSeriesQuery,
+  homeCatalogStatsQuery,
+  homeSolutionsQuery,
+  homePostsQuery,
+} from '../sanity/queries/home'
+import type {
+  HomeQueryResult,
+  HomeSeriesQueryResult,
+  HomeCatalogStatsQueryResult,
+  HomeSolutionsQueryResult,
+  HomePostsQueryResult,
+} from '../sanity/sanity.types'
+import { urlFor } from '../sanity/image'
+import {
+  fetchLocalized,
+  fetchLocalizedList,
+  resolveLocale,
+} from '../i18n/config'
+
+const locale = resolveLocale(
+  Astro.props.locale,
+  Astro.originPathname || Astro.url.pathname,
+)
+const [home, series, catalogStats, solutions, posts] = await Promise.all([
+  fetchLocalized<HomeQueryResult>(homeQuery, {}, locale),
+  fetchLocalizedList<HomeSeriesQueryResult[number]>(
+    homeSeriesQuery,
+    {},
+    locale,
+    (item) => item.slug,
+  ),
+  sanityClient.fetch<HomeCatalogStatsQueryResult>(homeCatalogStatsQuery),
+  fetchLocalizedList<HomeSolutionsQueryResult[number]>(
+    homeSolutionsQuery,
+    {},
+    locale,
+    (item) => item.slug,
+  ),
+  fetchLocalizedList<HomePostsQueryResult[number]>(
+    homePostsQuery,
+    {},
+    locale,
+    (item) => item.slug,
+  ),
+])
+const heroImageAsset = home?.hero?.image?.asset
+const heroPoster = heroImageAsset
+  ? urlFor(heroImageAsset).width(2200).auto('format').url()
+  : home?.hero?.videoUrl
+    ? '/images/home-hero-poster.webp'
+    : undefined
+---
+
+<BaseLayout
+  locale={locale}
+  title={home?.seo?.metaTitle ?? undefined}
+  description={home?.seo?.metaDescription ?? undefined}
+  preloadImage={heroPoster}
+>
+  <HomeHero hero={home?.hero} poster={heroPoster} catalogStats={catalogStats} />
+  <HowWeWork data={home?.howWeWork} />
+  <CatalogStrip intro={home?.catalog} series={series ?? []} />
+  <UseCases intro={home?.useCases} solutions={solutions ?? []} />
+  <OemBanner data={home?.oemBanner} />
+  <FactorySection data={home?.factory} />
+  <IpProtection data={home?.ipProtection} />
+  <Insights intro={home?.insights} posts={(posts ?? []).slice(0, 3)} />
+  <FinalCta data={home?.finalCta} />
+</BaseLayout>

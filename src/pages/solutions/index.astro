@@ -1,0 +1,207 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import PageBuilder from "../../components/blocks/PageBuilder.astro";
+import Icon from "../../components/Icon.astro";
+import {homeSolutionsQuery} from "../../sanity/queries/home";
+import {getSitePage} from "../../sanity/pages";
+import type {HomeSolutionsQueryResult} from "../../sanity/sanity.types";
+import type {SolutionBlock} from "../../sanity/content";
+import {fetchLocalizedList, localizedPath, resolveLocale} from "../../i18n/config";
+import {staticUi} from "../../i18n/static";
+
+const locale = resolveLocale(
+  Astro.props.locale,
+  Astro.originPathname || Astro.url.pathname,
+);
+const t = (english: string) => staticUi(locale, english);
+const [solutions, page] = await Promise.all([
+  fetchLocalizedList<HomeSolutionsQueryResult[number]>(
+    homeSolutionsQuery,
+    {},
+    locale,
+    (item) => item.slug,
+  ),
+  getSitePage("solutions", locale),
+]);
+
+const list = solutions ?? [];
+const eyebrow = page?.hero?.eyebrow || t("Solutions");
+const pageTitle =
+  page?.hero?.heading || page?.title || t("A complete studio starts with the room.");
+const pageIntro =
+  page?.hero?.subheading ||
+  page?.introduction ||
+  t("Choose your setting to see a recommended equipment mix, area range and a faster route to a confirmed quote.");
+const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
+const metaTitle = page?.seo?.metaTitle || `${pageTitle} — Coral Pilates`;
+const metaDescription = page?.seo?.metaDescription || pageIntro;
+---
+
+<BaseLayout locale={locale} title={metaTitle} description={metaDescription}>
+  <section class="section">
+    <div class="container">
+      <p class="eyebrow">{eyebrow}</p>
+      <div class="solutions-head">
+        <h1>{pageTitle}</h1>
+        <p class="body-l">{pageIntro}</p>
+      </div>
+
+      {
+        list.length > 0 ? (
+          <ul class="solutions-list">
+            {list.map((solution, index) => (
+              <li>
+                <a href={localizedPath(`/solutions/${solution.slug ?? ""}`, locale)}>
+                  <span class="solutions-list__number nums">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span class="solutions-list__copy">
+                    <strong>{solution.title}</strong>
+                    <span>{solution.summary || t("View the recommended configuration and planning approach.")}</span>
+                  </span>
+                  <span aria-hidden="true" class="solutions-list__arrow">
+                    <Icon name="arrow" size={18} />
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="solutions-empty">
+            {t("Solution pages are being prepared. Send us your floor plan and we will recommend a configuration directly.")}
+          </p>
+        )
+      }
+    </div>
+  </section>
+
+  {pageBlocks.length > 0 && <PageBuilder blocks={pageBlocks} />}
+
+  <section class="section band on-paper">
+    <div class="container solutions-cta">
+      <div>
+        <p class="eyebrow">{t("Floor-plan service")}</p>
+        <h2>{t("Prefer us to choose the equipment?")}</h2>
+      </div>
+      <div>
+        <p>
+          {t("Upload the real room. Coral will review circulation, class capacity and equipment mix before preparing a tailored RFQ.")}
+        </p>
+        <a class="btn btn-coral" href={localizedPath("/contact?inquiry=floorplan", locale)}>{t("Upload a floor plan")}</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .solutions-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.75fr);
+    gap: var(--space-7);
+    align-items: end;
+    margin-top: var(--space-3);
+  }
+
+  .solutions-head h1 {
+    max-width: 17ch;
+  }
+
+  .solutions-head p {
+    margin: 0;
+    color: var(--color-ink-600);
+  }
+
+  .solutions-list {
+    list-style: none;
+    margin: var(--space-8) 0 0;
+    padding: 0;
+    border-top: 1px solid var(--color-ink-200);
+  }
+
+  .solutions-list li {
+    border-bottom: 1px solid var(--color-ink-200);
+  }
+
+  .solutions-list a {
+    display: grid;
+    grid-template-columns: 4rem minmax(0, 1fr) auto;
+    gap: var(--space-5);
+    align-items: center;
+    padding: var(--space-5) 0;
+    transition:
+      color 180ms ease,
+      transform 180ms ease;
+  }
+
+  .solutions-list a:hover {
+    color: var(--color-coral);
+    transform: translateX(3px);
+  }
+
+  .solutions-list a:active {
+    transform: translateX(3px) translateY(1px);
+  }
+
+  .solutions-list__number {
+    color: var(--color-ink-400);
+  }
+
+  .solutions-list__copy {
+    display: grid;
+    gap: var(--space-2);
+  }
+
+  .solutions-list__copy strong {
+    font-size: var(--text-h3);
+    color: var(--color-ink);
+  }
+
+  .solutions-list__copy > span {
+    max-width: 70ch;
+    color: var(--color-ink-600);
+  }
+
+  .solutions-list__arrow {
+    font-size: var(--text-h3);
+  }
+
+  .solutions-empty {
+    margin: var(--space-7) 0 0;
+    padding: var(--space-5) 0;
+    border-block: 1px solid var(--color-ink-200);
+    color: var(--color-ink-600);
+  }
+
+  .solutions-cta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+    gap: var(--space-8);
+    align-items: start;
+  }
+
+  .solutions-cta h2 {
+    margin-top: var(--space-2);
+  }
+
+  .solutions-cta p {
+    margin: 0;
+    color: var(--color-ink-600);
+  }
+
+  .solutions-cta .btn {
+    margin-top: var(--space-4);
+  }
+
+  @media (max-width: 760px) {
+    .solutions-head,
+    .solutions-cta {
+      grid-template-columns: 1fr;
+      gap: var(--space-4);
+    }
+
+    .solutions-list a {
+      grid-template-columns: 2.5rem minmax(0, 1fr) auto;
+      gap: var(--space-3);
+    }
+  }
+</style>

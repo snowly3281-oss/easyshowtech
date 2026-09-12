@@ -1,0 +1,418 @@
+---
+/**
+ * About — bespoke page layout with its operator-facing page header, SEO and
+ * optional supporting sections managed in Sanity.
+ * Hero + verified scale stats + principles + founder + workshop + milestones, then
+ * data-driven team / exhibitions / clients as labelled placeholders.
+ */
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Icon from "../components/Icon.astro";
+import PageBuilder from "../components/blocks/PageBuilder.astro";
+import {getConfirmedValue, getSitePage} from "../sanity/pages";
+import {urlFor} from "../sanity/image";
+import type {SolutionBlock} from "../sanity/content";
+import {localizedPath, resolveLocale} from "../i18n/config";
+import {staticUi} from "../i18n/static";
+
+const locale = resolveLocale(
+  Astro.props.locale,
+  Astro.originPathname || Astro.url.pathname,
+);
+const t = (english: string) => staticUi(locale, english);
+const page = await getSitePage("about", locale);
+const eyebrow = page?.hero?.eyebrow || t("Coral Pilates");
+const pageTitle =
+  page?.hero?.heading ||
+  page?.title ||
+  t("A real Pilates equipment factory, building for the world.");
+const pageIntro =
+  page?.hero?.subheading ||
+  page?.introduction ||
+  t("We design and build Pilates equipment in Suzhou for studios, clinics and distributors.");
+const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
+const metaTitle = page?.seo?.metaTitle || t("About — Coral Pilates");
+const metaDescription = page?.seo?.metaDescription || pageIntro;
+const heroBackgroundImage = page?.hero?.backgroundImage as
+  | {asset?: unknown; alt?: string}
+  | undefined;
+const heroImage = heroBackgroundImage?.asset
+  ? urlFor(heroBackgroundImage as any).width(1200).height(900).fit("crop").auto("format").url()
+  : "/factory/home-realfactory-02.webp";
+const heroImageAlt =
+  heroBackgroundImage?.alt ||
+  t("The Coral Pilates factory floor in Suzhou");
+
+const principles = [
+  { n: "01", icon: "factory", t: t("Our own factory"), d: t("We design and build in-house — no trading middlemen, with full control over quality and lead times.") },
+  { n: "02", icon: "award", t: t("Studio-grade quality"), d: t("Engineered and tested against leading global brands.") },
+  { n: "03", icon: "layers", t: t("Wholesale + OEM"), d: t("A standard catalogue plus full private-label, from a low MOQ.") },
+];
+
+const aboutFacts = page?.aboutFacts;
+const scaleStats = [
+  {
+    value: getConfirmedValue(aboutFacts?.yearsManufacturing),
+    label: t("Years manufacturing"),
+  },
+  {
+    value: getConfirmedValue(aboutFacts?.unitsShipped),
+    label: t("Units shipped"),
+  },
+  {
+    value: getConfirmedValue(aboutFacts?.countriesServed),
+    label: t("Countries served"),
+  },
+  {
+    value: getConfirmedValue(aboutFacts?.productPatents),
+    label: t("Product patents"),
+  },
+].filter((fact): fact is {value: string; label: string} => Boolean(fact.value));
+const factoryStats = [
+  {value: getConfirmedValue(aboutFacts?.factorySize), label: t("Factory size")},
+  {value: getConfirmedValue(aboutFacts?.machines), label: t("Machines")},
+  {
+    value: getConfirmedValue(aboutFacts?.productionLines),
+    label: t("Production lines"),
+  },
+  {
+    value: getConfirmedValue(aboutFacts?.annualCapacity),
+    label: t("Annual capacity"),
+  },
+].filter((fact): fact is {value: string; label: string} => Boolean(fact.value));
+const founderExp = [
+  getConfirmedValue(aboutFacts?.founderExperience),
+  getConfirmedValue(aboutFacts?.founderFactoryRole),
+  getConfirmedValue(aboutFacts?.founderClientRole),
+].filter((value): value is string => Boolean(value));
+const milestones = (aboutFacts?.milestones ?? [])
+  .filter(
+    (milestone) =>
+      milestone?.confirmed && milestone.year?.trim() && milestone.title?.trim(),
+  )
+  .map((milestone) => ({
+    y: milestone.year!.trim(),
+    t: milestone.title!.trim(),
+    d: milestone.description?.trim() || "",
+  }));
+const countriesServed = getConfirmedValue(aboutFacts?.countriesServed);
+
+const workshop = [t("Machining floor"), t("Joinery & finishing"), t("Final assembly")];
+---
+
+<BaseLayout
+  locale={locale}
+  title={metaTitle}
+  description={metaDescription}
+>
+  <!-- HERO (left) -->
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">{eyebrow}</span>
+      <div class="hero">
+        <div class="hero-copy">
+          <h1 class="hero-h">{pageTitle}</h1>
+          <p class="body-l hero-sub">{pageIntro}</p>
+          <div class="hero-cta">
+            {/* TODO: placeholder action — quote handled by inquiry form (later) */}
+            <a href={localizedPath("/contact", locale)} class="btn btn-coral">{t("Get a quote")}</a>
+            <a href={localizedPath("/factory", locale)} class="btn btn-outline">{t("Visit our factory")}</a>
+          </div>
+        </div>
+        <figure class="hero-media">
+          <img
+            src={heroImage}
+            alt={heroImageAlt}
+            width="1200"
+            height="900"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  {scaleStats.length > 0 && (
+    <section class="band section on-navy">
+      <div class="container">
+        <div class="sec-head">
+          <div>
+            <span class="eyebrow">{t("The business")}</span>
+            <h2 class="sec-h on-dark">{t("Built at real scale.")}</h2>
+          </div>
+          <p class="sec-intro on-dark-sub">
+            {t("Verified operating figures supplied and approved by Coral Pilates.")}
+          </p>
+        </div>
+        <ul class="stat-row">
+          {scaleStats.map((stat) => (
+            <li class="stat">
+              <span class="stat-rule"></span>
+              <span class="stat-n">{stat.value}</span>
+              <span class="stat-d">{stat.label}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )}
+
+  <!-- PRINCIPLES -->
+  <section class="section">
+    <div class="container">
+      <span class="eyebrow">{t("Principles")}</span>
+      <h2 class="sec-h">{t("What we build on.")}</h2>
+      <p class="body-l sec-sub">{t("Three commitments that shape every reformer we ship — and every relationship behind it.")}</p>
+      <div class="principles">
+        {principles.map((p) => (
+          <article class="principle">
+            <div class="principle-top"><span class="principle-n nums">{p.n}</span><Icon name={p.icon} size={22} /></div>
+            <h3 class="principle-t">{p.t}</h3>
+            <p class="principle-d">{p.d}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- FOUNDER -->
+  <section class="band section on-paper">
+    <div class="container">
+      <div class="sec-head">
+        <div>
+          <span class="eyebrow">{t("The founder")}</span>
+          <h2 class="sec-h">{t("Founder of Coral – Chris")}</h2>
+        </div>
+        <p class="sec-intro">
+          {t("Chris started Coral and still walks the factory floor every morning — so you deal with the people who actually build your equipment.")}
+        </p>
+      </div>
+
+      <div class="founder">
+        {/* TODO: add founder portrait (static image) */}
+        <div class="founder-photo ph" aria-hidden="true"><Icon name="user" size={28} /></div>
+        <div class="founder-body">
+          <p class="founder-quote">
+            {t("“I started Coral because I was tired of watching good studios get sold mediocre equipment by people who'd never set foot on a factory floor.”")}
+          </p>
+          <p class="founder-copy">
+            {t("We build everything ourselves, in Suzhou: I walk the line every morning — I know who cut the wood and who wrapped the upholstery. Whether you buy one reformer or private-label a full range, you deal with the people who actually make it. That's the company I wanted to build.")}
+          </p>
+          <p class="founder-name">Chris</p>
+          <p class="caption">{t("Founder, Coral Pilates")}</p>
+          {founderExp.length > 0 && (
+            <ul class="checklist">
+              {founderExp.map((experience) => (
+                <li><Icon name="check" size={16} /> {experience}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKSHOP -->
+  <section class="section">
+    <div class="container">
+      <div class="sec-head">
+        <div>
+          <span class="eyebrow">{t("The factory")}</span>
+          <h2 class="sec-h">{t("Built under one roof.")}</h2>
+        </div>
+        <div class="sec-intro-block">
+          <p class="sec-intro">{t("Design, machining, joinery, finishing, assembly and QC — all in our own building in Suzhou. Audits and visits welcome.")}</p>
+          <a href={localizedPath("/factory", locale)} class="btn btn-coral btn-sm intro-btn">{t("Take the factory tour")}</a>
+        </div>
+      </div>
+
+      {/* TODO: add workshop photos (static images) */}
+      <div class="workshop">
+        {workshop.map((w) => (
+          <figure class="shot ph">
+            <span class="ph-i" aria-hidden="true"><Icon name="factory" size={26} /></span>
+            <figcaption class="caption">{w}</figcaption>
+          </figure>
+        ))}
+      </div>
+
+      {factoryStats.length > 0 && (
+        <ul class="mini-stats">
+          {factoryStats.map((stat) => (
+            <li>
+              <span class="mini-n">{stat.value}</span>
+              <span class="mini-d">{stat.label}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </section>
+
+  {milestones.length > 0 && (
+    <section class="band section on-paper">
+      <div class="container">
+        <div class="sec-head">
+          <div>
+            <span class="eyebrow">{t("Milestones")}</span>
+            <h2 class="sec-h">{t("Key moments.")}</h2>
+          </div>
+          <p class="sec-intro">{t("The verified milestones behind Coral Pilates.")}</p>
+        </div>
+        <ol class="timeline">
+          {milestones.map((milestone) => (
+            <li class="milestone">
+              <span class="ms-dot"></span>
+              <span class="ms-y nums">{milestone.y}</span>
+              <h4 class="ms-t">{milestone.t}</h4>
+              {milestone.d && <p class="ms-d">{milestone.d}</p>}
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  )}
+
+  {countriesServed && (
+    <section class="section">
+      <div class="container">
+        <div class="clients-head">
+          <span class="eyebrow">{t("International experience")}</span>
+          <h2 class="sec-h">{t("Serving clients across {countries}.").replace("{countries}", countriesServed)}</h2>
+          <p class="body-l sec-sub">
+            {t("Talk to us about destination-specific documentation, packing and delivery requirements.")}
+          </p>
+        </div>
+      </div>
+    </section>
+  )}
+
+  <!-- CLOSING BAND -->
+  <section class="band section on-navy">
+    <div class="container">
+      <div class="final-row">
+        <div class="final-copy">
+          <span class="eyebrow">{t("Work with us")}</span>
+          <h2 class="band-h">{t("Build with a factory that picks up the phone.")}</h2>
+          <p class="body-l band-sub">{t("Tell us what you're equipping and a real person replies — usually within one business day.")}</p>
+        </div>
+        <div class="final-cta">
+          <a href={localizedPath("/contact", locale)} class="btn btn-coral">{t("Get a quote")}</a>
+          <a href={localizedPath("/factory", locale)} class="btn btn-ghost">{t("Visit our factory")} <Icon name="arrow" size={18} /></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {pageBlocks.length > 0 && <PageBuilder blocks={pageBlocks} />}
+</BaseLayout>
+
+<style>
+  /* ---- grounds / dark text ---- */
+  .on-navy { background: var(--color-navy); }
+  .on-paper { background: var(--color-paper-2, #ece7dd); }
+  .on-dark { color: var(--color-white); }
+  .on-dark-sub { color: var(--color-ink-200); }
+
+  /* ---- hero (left + media) ---- */
+  .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--space-8); align-items: center; margin-top: var(--space-5); }
+  @media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: var(--space-6); } }
+  .hero-h { font-size: var(--text-h1); font-weight: 600; line-height: var(--lh-tight); letter-spacing: var(--tracking-tight); }
+  .hero-sub { margin-top: var(--space-4); color: var(--color-ink-600); max-width: 46ch; }
+  .hero-cta { display: flex; gap: var(--space-3); margin-top: var(--space-6); flex-wrap: wrap; }
+  .hero-media { border-radius: var(--radius-md); overflow: hidden; }
+  .hero-media img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border-radius: var(--radius-md); }
+  .hero-media figcaption { margin-top: var(--space-2); }
+
+  /* ---- section heads (left, optional right intro) ---- */
+  .sec-head { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--space-7); align-items: end; }
+  @media (max-width: 900px) { .sec-head { grid-template-columns: 1fr; gap: var(--space-4); align-items: start; } }
+  .sec-h { margin-top: var(--space-3); }
+  .sec-sub { margin-top: var(--space-4); color: var(--color-ink-600); max-width: 52ch; }
+  .sec-intro { color: var(--color-ink-600); }
+  .sec-intro-block { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-4); }
+  .intro-btn { align-self: flex-start; }
+
+  /* ---- scale stats (navy) ---- */
+  .stat-row { list-style: none; margin: var(--space-7) 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-5); }
+  @media (max-width: 767px) { .stat-row { grid-template-columns: 1fr 1fr; } }
+  .stat { display: flex; flex-direction: column; gap: var(--space-2); }
+  .stat-rule { width: 28px; height: 2px; background: var(--color-coral); }
+  .stat-n { font-size: var(--text-h1); font-weight: 600; color: var(--color-white); line-height: 1; }
+  .stat-d { font-size: var(--text-body-s); color: var(--color-ink-400); }
+
+  /* ---- principles ---- */
+  .principles { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-6); margin-top: var(--space-7); }
+  @media (max-width: 900px) { .principles { grid-template-columns: 1fr; } }
+  .principle { border-top: 1px solid var(--color-ink-300); padding-top: var(--space-4); }
+  .principle-top { display: flex; align-items: center; justify-content: space-between; }
+  .principle-n { color: var(--color-coral); font-weight: 600; }
+  .principle-top :global(svg) { color: var(--color-ink-700); }
+  .principle-t { margin-top: var(--space-4); }
+  .principle-d { margin-top: var(--space-3); color: var(--color-ink-600); }
+
+  /* ---- founder ---- */
+  .founder { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: var(--space-7); margin-top: var(--space-6); align-items: end; }
+  @media (max-width: 900px) { .founder { grid-template-columns: 1fr; } }
+  .founder-photo { aspect-ratio: 3 / 4; border-radius: var(--radius-md); }
+  .founder-quote { font-size: var(--text-h3); font-weight: 600; color: var(--color-ink-900); line-height: 1.3; letter-spacing: -0.01em; }
+  .founder-copy { margin-top: var(--space-4); color: var(--color-ink-600); }
+  .founder-name { margin-top: var(--space-5); font-weight: 600; color: var(--color-ink-900); }
+
+  /* ---- checklist ---- */
+  .checklist { list-style: none; margin: var(--space-5) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+  .checklist li { display: flex; align-items: flex-start; gap: var(--space-2); color: var(--color-ink-800); }
+  .checklist :global(svg) { color: var(--color-coral); flex: none; margin-top: 3px; }
+
+  /* ---- workshop ---- */
+  .workshop { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); margin-top: var(--space-7); }
+  @media (max-width: 767px) { .workshop { grid-template-columns: 1fr; } }
+  .shot { aspect-ratio: 4 / 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--space-3); border-radius: var(--radius-md); }
+  .shot figcaption { position: absolute; }
+
+  .mini-stats { list-style: none; margin: var(--space-7) 0 0; padding: var(--space-6) 0 0; border-top: 1px solid var(--color-ink-200); display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-5); }
+  @media (max-width: 767px) { .mini-stats { grid-template-columns: 1fr 1fr; } }
+  .mini-stats li { display: flex; flex-direction: column; gap: var(--space-1); }
+  .mini-n { font-size: var(--text-h3); font-weight: 600; color: var(--color-ink-900); }
+  .mini-d { font-size: var(--text-body-s); color: var(--color-ink-500); }
+
+  /* ---- timeline ---- */
+  .timeline { list-style: none; margin: var(--space-7) 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--space-5); }
+  @media (max-width: 900px) { .timeline { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .timeline { grid-template-columns: 1fr; } }
+  .milestone { border-top: 1px solid var(--color-ink-300); padding-top: var(--space-4); }
+  .ms-dot { width: 9px; height: 9px; border-radius: var(--radius-pill); background: var(--color-coral); display: block; margin-top: calc(-1 * var(--space-4) - 5px); margin-bottom: var(--space-4); }
+  .ms-y { color: var(--color-coral); font-weight: 600; font-size: var(--text-body-s); }
+  .ms-t { margin-top: var(--space-2); }
+  .ms-d { margin-top: var(--space-2); color: var(--color-ink-600); font-size: var(--text-body-s); }
+
+  /* ---- placeholders (data-driven, neutral grey skeletons) ---- */
+  .ph { background: var(--color-ink-150); border: 1px solid var(--color-ink-200); color: var(--color-ink-400); position: relative; }
+  .ph-i { color: var(--color-ink-400); }
+  .clients-head { max-width: 760px; }
+
+  .grid-ph { display: grid; gap: var(--space-5); margin-top: var(--space-7); }
+  .team-ph { grid-template-columns: repeat(4, 1fr); }
+  .exhibit-ph { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 900px) { .team-ph { grid-template-columns: 1fr 1fr; } .exhibit-ph { grid-template-columns: 1fr; } }
+  .skel-card { background: var(--color-ink-150); border: 1px solid var(--color-ink-200); border-radius: var(--radius-md); padding: var(--space-5); display: flex; flex-direction: column; gap: var(--space-3); }
+  .skel-card.tall { min-height: 180px; }
+  .skel-avatar { width: 48px; height: 48px; border-radius: var(--radius-pill); background: var(--color-ink-200); }
+  .skel-line { height: 10px; border-radius: var(--radius-xs); background: var(--color-ink-200); }
+  .w30 { width: 30%; } .w40 { width: 40%; } .w50 { width: 50%; } .w60 { width: 60%; } .w70 { width: 70%; }
+  .logos-ph { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--space-5); margin-top: var(--space-7); }
+  @media (max-width: 767px) { .logos-ph { grid-template-columns: repeat(3, 1fr); } }
+  .skel-logo { height: 56px; border-radius: var(--radius-sm); background: var(--color-ink-150); border: 1px solid var(--color-ink-200); }
+
+  /* ---- closing band ---- */
+  .band-h { margin-top: var(--space-3); color: var(--color-white); }
+  .band-sub { margin-top: var(--space-4); color: var(--color-ink-200); }
+  .final-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-7); flex-wrap: wrap; }
+  .final-copy { max-width: 620px; }
+  .final-cta { display: flex; gap: var(--space-3); flex-wrap: wrap; flex: none; }
+
+  /* ---- dark-ground text legibility (2-class selectors outrank the base rules) ---- */
+  .on-navy .sec-intro,
+  .on-navy .band-sub { color: var(--color-ink-100); }
+  .on-navy .stat-d { color: var(--color-ink-200); }
+</style>

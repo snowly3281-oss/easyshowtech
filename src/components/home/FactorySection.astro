@@ -1,0 +1,127 @@
+---
+import type { HomeData } from '../../sanity/content'
+import MediaBox from '../product/MediaBox.astro'
+import { resolveHref } from '../../sanity/links'
+import {localizedPath, resolveLocale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  data?: HomeData['factory']
+}
+
+const { data } = Astro.props
+const locale = resolveLocale(undefined, Astro.url.pathname)
+const t = (english: string) => staticUi(locale, english)
+const steps = data?.steps ?? []
+const ctaHref = resolveHref(data?.cta?.internal, data?.cta?.external) ?? '/factory'
+const ctaLabel = data?.cta?.label ?? t('Tour the factory')
+const localizedCtaHref = ctaHref.startsWith('/') ? localizedPath(ctaHref, locale) : ctaHref
+---
+
+{
+  data && (
+    <section class="section">
+      <div class="container fac">
+        <div class="fac__media">
+          <MediaBox
+            source={data.image}
+            alt={data.image?.alt ?? data.heading}
+            ratio="4 / 3"
+            width={900}
+            fallback="/factory/home-realfactory-01.webp"
+          />
+        </div>
+        <div class="fac__body">
+          {data.eyebrow && <p class="eyebrow">{data.eyebrow}</p>}
+          {data.heading && <h2 class="fac__title">{data.heading}</h2>}
+          {data.body && <p class="fac__intro">{data.body}</p>}
+          {steps.length > 0 && (
+            <ol class="fac__steps">
+              {steps.map((s, i) => (
+                <li class="fac__step">
+                  <span class="fac__step-num nums">{String(i + 1).padStart(2, '0')}</span>
+                  <span class="fac__step-label">{s.label}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+          <a class="btn btn-link fac__cta" href={localizedCtaHref}>{ctaLabel} <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .fac {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-7);
+    align-items: center;
+  }
+  .fac__media :global(.media) {
+    border-radius: var(--radius-md, 6px);
+  }
+  .fac__title {
+    margin: var(--space-2) 0 0;
+  }
+  .fac__intro {
+    margin: var(--space-3) 0 0;
+    max-width: 46ch;
+    color: var(--color-ink-600, #555);
+  }
+  /* Numbered process strip — own the spacing here (scoped beats utilities). */
+  .fac__steps {
+    list-style: none;
+    margin: var(--space-6) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--color-ink-200, #e2ddd3);
+  }
+  .fac__step {
+    padding: var(--space-3) var(--space-4) 0;
+    border-left: 1px solid var(--color-ink-200, #e2ddd3);
+  }
+  .fac__step:first-child {
+    padding-left: 0;
+    border-left: none;
+  }
+  .fac__step-num {
+    display: block;
+    font-size: var(--text-body-s);
+    font-weight: 600;
+    color: var(--color-coral);
+  }
+  .fac__step-label {
+    display: block;
+    margin-top: var(--space-2);
+  }
+  .fac__cta {
+    margin-top: var(--space-6);
+  }
+  @media (max-width: 767px) {
+    .fac {
+      grid-template-columns: 1fr;
+    }
+    /* 2×2 grid: give every row its own top rule and a single center divider.
+       The container border-top alone left row 2 (03/04) with no line above it
+       and a stray left border on 03. */
+    .fac__steps {
+      grid-template-columns: 1fr 1fr;
+      border-top: none;
+      gap: 0;
+    }
+    .fac__step {
+      border-top: 1px solid var(--color-ink-200, #e2ddd3);
+      border-left: none;
+      padding: var(--space-4);
+    }
+    .fac__step:nth-child(odd) {
+      padding-left: 0;
+    }
+    .fac__step:nth-child(even) {
+      border-left: 1px solid var(--color-ink-200, #e2ddd3);
+    }
+  }
+</style>

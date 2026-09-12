@@ -1,0 +1,207 @@
+---
+import { urlFor } from '../../sanity/image'
+import { localizedPath, type Locale } from '../../i18n/config'
+import { staticUi } from '../../i18n/static'
+
+interface Props {
+  items: any[]
+  showItemQuantities: boolean
+  locale: Locale
+}
+
+const { items, showItemQuantities, locale } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const visibleItems = (items ?? []).filter(
+  (item) => item?.product?.title || item?.customName,
+)
+---
+
+{
+  visibleItems.length > 0 && (
+    <div class="package-products">
+      <div class="package-products__head">
+        <p>{t('Equipment in this package')}</p>
+        <span>
+          {showItemQuantities
+            ? t('Approved baseline quantities')
+            : t('Final quantities confirmed after plan review')}
+        </span>
+      </div>
+      <ul>
+        {visibleItems.map((item) => {
+          const product = item?.product
+          const imageAsset = product?.mainImage?.asset
+          const imageUrl = imageAsset
+            ? urlFor(imageAsset).width(160).height(160).auto('format').url()
+            : null
+          const quantity = Math.max(1, item?.quantity ?? 1)
+          return (
+            <li>
+              {product?.slug && product.status === 'published' ? (
+                <a href={localizedPath(`/products/${product.slug}`, locale)}>
+                  <span class="package-products__thumb">
+                    {imageUrl ? (
+                      <img
+                        src={imageUrl}
+                        alt=""
+                        width="72"
+                        height="72"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <span aria-hidden="true">CP</span>
+                    )}
+                  </span>
+                  <span class="package-products__copy">
+                    <strong>{product.title}</strong>
+                    <small>{product.sku || item?.variantNote || t('View specifications')}</small>
+                  </span>
+                  <span class="package-products__actions">
+                    {showItemQuantities && (
+                      <span class="package-products__quantity nums">
+                        × {quantity}
+                      </span>
+                    )}
+                    <span class="package-products__link">
+                      {t('View product')} <span aria-hidden="true">↗</span>
+                    </span>
+                  </span>
+                </a>
+              ) : (
+                <div class="package-products__custom-item">
+                  <span class="package-products__thumb"><span aria-hidden="true">CP</span></span>
+                  <span class="package-products__copy">
+                    <strong>{product?.title || item?.customName}</strong>
+                    <small>
+                      {product?.status && product.status !== 'published'
+                        ? t('Specifications available on request')
+                        : item?.variantNote || t('Package accessory')}
+                    </small>
+                  </span>
+                  <span class="package-products__actions">
+                    {showItemQuantities && (
+                      <span class="package-products__quantity nums">× {quantity}</span>
+                    )}
+                    <span class="package-products__link">{t('Included')}</span>
+                  </span>
+                </div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+<style>
+  .package-products {
+    margin: var(--space-5) 0 0;
+  }
+  .package-products__head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    align-items: end;
+  }
+  .package-products__head p {
+    margin: 0;
+    color: var(--color-ink-900);
+    font-weight: 650;
+  }
+  .package-products__head > span {
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .package-products ul {
+    list-style: none;
+    margin: var(--space-3) 0 0;
+    padding: 0;
+    border-top: 1px solid var(--color-ink-200);
+  }
+  .package-products li {
+    border-bottom: 1px solid var(--color-ink-200);
+  }
+  .package-products a,
+  .package-products__custom-item {
+    min-height: 78px;
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-2) 0;
+    color: inherit;
+    font-size: var(--text-body-s);
+  }
+  .package-products a:hover .package-products__copy strong,
+  .package-products a:hover .package-products__link {
+    color: var(--color-coral);
+  }
+  .package-products__thumb {
+    width: 56px;
+    height: 56px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: var(--color-ink-100);
+    color: var(--color-ink-400);
+    font-size: var(--text-micro);
+    font-weight: 700;
+    letter-spacing: var(--tracking-wide);
+  }
+  .package-products__thumb img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+  }
+  .package-products__copy {
+    min-width: 0;
+  }
+  .package-products__copy strong,
+  .package-products__copy small {
+    display: block;
+  }
+  .package-products__copy strong {
+    color: var(--color-ink-900);
+    font-weight: 600;
+  }
+  .package-products__copy small {
+    margin: var(--space-1) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .package-products__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    min-width: max-content;
+  }
+  .package-products__quantity {
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .package-products__link {
+    color: var(--color-coral);
+    font-size: var(--text-caption);
+    white-space: nowrap;
+  }
+  @media (max-width: 767px) {
+    .package-products__head {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+    .package-products a,
+    .package-products__custom-item {
+      grid-template-columns: 52px minmax(0, 1fr);
+    }
+    .package-products__actions {
+      grid-column: 2;
+      justify-content: flex-start;
+    }
+  }
+</style>

@@ -1,0 +1,15 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "coral-site-www-redirect",
+	"main": "./workers/www-redirect.mjs",
+	"compatibility_date": "2026-07-26",
+	"routes": [
+		{
+			"pattern": "www.coralpilates.com",
+			"custom_domain": true
+		}
+	],
+	"observability": {
+		"enabled": true
+	}
+}

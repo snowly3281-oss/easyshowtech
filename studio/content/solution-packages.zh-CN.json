@@ -1,0 +1,255 @@
+{
+  "source": "Client-provided solution configuration copy",
+  "receivedAt": "2026-07-24",
+  "locale": "zh-CN",
+  "status": "client-draft-not-published",
+  "notes": [
+    "This file preserves the client's wording and a normalized equipment breakdown.",
+    "It is a content source only. It is not imported into Sanity automatically.",
+    "Product references remain unresolved until exact Sanity product documents are selected."
+  ],
+  "solutions": [
+    {
+      "number": "01",
+      "slug": "boutique-studio",
+      "title": "精品独立工作室",
+      "area": {
+        "metric": "74–186㎡",
+        "imperial": "800–2000 sq ft"
+      },
+      "equipmentTotalClaimed": "8–16台",
+      "configuredCountCalculated": 11,
+      "standardConfigurationRaw": "6台枫木核心床 + 2台枫木半高架床 + 1台凯迪拉克床 + 1个梯桶 + 1个稳踏椅",
+      "equipment": [
+        {
+          "name": "枫木核心床",
+          "quantity": 6,
+          "unit": "台"
+        },
+        {
+          "name": "枫木半高架床",
+          "quantity": 2,
+          "unit": "台"
+        },
+        {
+          "name": "凯迪拉克床",
+          "quantity": 1,
+          "unit": "台"
+        },
+        {
+          "name": "梯桶",
+          "quantity": 1,
+          "unit": "个"
+        },
+        {
+          "name": "稳踏椅",
+          "quantity": 1,
+          "unit": "个"
+        }
+      ],
+      "description": "主打高端精品小班、一对一私教，枫木材质质感高级、适配工作室轻奢定位。小面积74㎡紧凑舒适、无拥挤感；大面积186㎡动线开阔，可同时开展多组小班课，设备配比均衡，完全适配精品工作室日常运营。"
+    },
+    {
+      "number": "02",
+      "slug": "franchise",
+      "title": "连锁加盟门店",
+      "area": {
+        "metric": "139–186㎡",
+        "imperial": "1500–2000 sq ft"
+      },
+      "equipmentTotalClaimed": "10–14台",
+      "configuredCountCalculated": 15,
+      "reviewStatus": "needs-client-confirmation",
+      "reviewNote": "The listed configuration totals 15 pieces, which exceeds the claimed 10–14 range.",
+      "standardConfigurationRaw": "8台铝合金核心床 + 2台铝合金半高架床 + 1台凯迪拉克床 + 2个梯桶 + 2个稳踏椅",
+      "equipment": [
+        {
+          "name": "铝合金核心床",
+          "quantity": 8,
+          "unit": "台"
+        },
+        {
+          "name": "铝合金半高架床",
+          "quantity": 2,
+          "unit": "台"
+        },
+        {
+          "name": "凯迪拉克床",
+          "quantity": 1,
+          "unit": "台"
+        },
+        {
+          "name": "梯桶",
+          "quantity": 2,
+          "unit": "个"
+        },
+        {
+          "name": "稳踏椅",
+          "quantity": 2,
+          "unit": "个"
+        }
+      ],
+      "description": "优化原过载配置，适配连锁门店高频团课、大批量客流需求。铝合金设备耐用抗造、性价比高，适合标准化连锁运营。删减冗余大型设备，139㎡小面积不拥挤，186㎡大面积充足富余，兼顾营收效率与客户体验，为连锁门店最优标配。"
+    },
+    {
+      "number": "03",
+      "slug": "rehab-clinic",
+      "title": "康复诊所 / 物理治疗中心",
+      "area": {
+        "metric": "93–372㎡",
+        "imperial": "1000–4000 sq ft"
+      },
+      "equipmentTotalClaimed": "4–8台",
+      "configuredCountCalculated": 6,
+      "standardConfigurationRaw": "2台古典核心床 + 1台古典凯迪拉克床 + 1个梯桶 + 1个稳踏椅 + 1根体态矫正杆（Pedi Pole）",
+      "equipment": [
+        {
+          "name": "古典核心床",
+          "quantity": 2,
+          "unit": "台"
+        },
+        {
+          "name": "古典凯迪拉克床",
+          "quantity": 1,
+          "unit": "台"
+        },
+        {
+          "name": "梯桶",
+          "quantity": 1,
+          "unit": "个"
+        },
+        {
+          "name": "稳踏椅",
+          "quantity": 1,
+          "unit": "个"
+        },
+        {
+          "name": "体态矫正杆（Pedi Pole）",
+          "quantity": 1,
+          "unit": "根"
+        }
+      ],
+      "description": "康复场景主打一对一精准矫正、术后恢复、体态修复，无需密集设备。全套古典专业器械，搭配体态矫正杆适配康复理疗需求，场地留白充足，保障训练私密性与操作安全性，大小面积均可完美适配，是专业康复机构通用标准配置。"
+    },
+    {
+      "number": "04",
+      "slug": "hotel-spa",
+      "title": "酒店 / 度假村 / SPA会所",
+      "area": {
+        "metric": "93–280㎡",
+        "imperial": "1000–3000 sq ft"
+      },
+      "equipmentTotalClaimed": "6–12台",
+      "configuredCountCalculated": 9,
+      "standardConfigurationRaw": "4台枫木核心床 + 2台枫木半高架床 + 1台凯迪拉克床 + 1个梯桶 + 1个稳踏椅",
+      "equipment": [
+        {
+          "name": "枫木核心床",
+          "quantity": 4,
+          "unit": "台"
+        },
+        {
+          "name": "枫木半高架床",
+          "quantity": 2,
+          "unit": "台"
+        },
+        {
+          "name": "凯迪拉克床",
+          "quantity": 1,
+          "unit": "台"
+        },
+        {
+          "name": "梯桶",
+          "quantity": 1,
+          "unit": "个"
+        },
+        {
+          "name": "稳踏椅",
+          "quantity": 1,
+          "unit": "个"
+        }
+      ],
+      "description": "修正原错误极小面积，适配酒店、会所配套健身空间。选用高端枫木全系设备，质感适配高端休闲场景，设备数量精简精致，不占用过多公共空间，可满足住客轻训练、塑形拉伸需求，兼顾美观与实用性。"
+    },
+    {
+      "number": "05",
+      "slug": "home-pt",
+      "title": "私人家庭 / 专属私教空间",
+      "area": {
+        "metric": "18–28㎡",
+        "imperial": "200–300 sq ft"
+      },
+      "equipmentTotalClaimed": "2–4台",
+      "configuredCountCalculated": 3,
+      "standardConfigurationRaw": "1台枫木三合一普拉提床 + 1个梯桶 + 1个稳踏椅",
+      "equipment": [
+        {
+          "name": "枫木三合一普拉提床",
+          "quantity": 1,
+          "unit": "台"
+        },
+        {
+          "name": "梯桶",
+          "quantity": 1,
+          "unit": "个"
+        },
+        {
+          "name": "稳踏椅",
+          "quantity": 1,
+          "unit": "个"
+        }
+      ],
+      "description": "适配家用、小私教工作室极小空间。用三合一床替代传统核心床+凯迪拉克，一机多用、极致省空间，彻底解决小场地拥挤问题。配置精简齐全，可满足全身塑形、核心训练、拉伸康复全需求，是家用场景最高性价比搭配。"
+    },
+    {
+      "number": "06",
+      "slug": "training-academy",
+      "title": "普拉提培训学院",
+      "area": {
+        "metric": "140–280㎡",
+        "imperial": "1500–3000 sq ft"
+      },
+      "equipmentTotalClaimed": "6–10台",
+      "configuredCountCalculated": 9,
+      "standardConfigurationRaw": "全套古典专业器械（古典核心床+半高架床+三合一床+凯迪拉克床）+ 配套梯桶、稳踏椅全套教具",
+      "equipment": [
+        {
+          "name": "古典核心床",
+          "quantity": 2,
+          "unit": "台"
+        },
+        {
+          "name": "古典半高架床",
+          "quantity": 2,
+          "unit": "台"
+        },
+        {
+          "name": "古典三合一床",
+          "quantity": 1,
+          "unit": "台"
+        },
+        {
+          "name": "古典凯迪拉克床",
+          "quantity": 1,
+          "unit": "台"
+        },
+        {
+          "name": "梯桶",
+          "quantity": 1,
+          "unit": "个"
+        },
+        {
+          "name": "稳踏椅",
+          "quantity": 1,
+          "unit": "个"
+        },
+        {
+          "name": "Spine Corrector + Arc + Small Barrel",
+          "quantity": 1,
+          "unit": "套"
+        }
+      ],
+      "description": "针对教练培训、考证教学、系统授课设计，设备品类最全，覆盖零基础进修、高阶进阶、康复教学所有课程体系。场地开阔、设备标准化统一，可满足多人同步教学、动作对比实操、学员考核实训需求，是专业普拉提教学学院标准配置。"
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+---
+import type { ProductSolutionPlacement } from '../../sanity/content'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  productId: string
+  placements?: ProductSolutionPlacement[] | null
+  locale?: Locale
+}
+
+const { productId, placements, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const rows = (placements ?? [])
+  .map((solution) => {
+    const packages = (solution.packages ?? [])
+      .filter((pkg) => (pkg?.productIds ?? []).includes(productId))
+      .map((pkg) => ({
+        key: pkg?._key,
+        title: pkg?.title,
+        recommended: pkg?.isRecommended || pkg?.tier === 'recommended',
+      }))
+    return { solution, packages }
+  })
+  .filter(({ solution }) => solution?.slug && solution?.title)
+---
+
+{
+  rows.length > 0 && (
+    <section class="section product-solutions">
+      <div class="container">
+        <div class="product-solutions__head">
+          <div>
+            <p class="eyebrow">{t('Used in complete solutions')}</p>
+            <h2>{t('See this product in a working equipment plan.')}</h2>
+          </div>
+          <p>
+            Solution packages connect this model to room size, class capacity and the rest of the equipment schedule.
+          </p>
+        </div>
+        <ul class="product-solutions__list">
+          {rows.map(({ solution, packages }) => (
+            <li>
+              <div>
+                <a href={localizedPath(`/solutions/${solution.slug}`, locale)}>{solution.title}</a>
+                <p>
+                  {packages.length
+                    ? packages
+                        .map((pkg) => `${pkg.title ?? t('Package')}${pkg.recommended ? ` — ${t('recommended')}` : ''}`)
+                        .join(' · ')
+                    : t('Featured in this solution')}
+                </p>
+              </div>
+              <a class="btn btn-link" href={`${localizedPath(`/solutions/${solution.slug}`, locale)}#packages`}>
+                {t('Compare packages')} <span aria-hidden="true">→</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .product-solutions {
+    background: var(--color-paper-2);
+  }
+  .product-solutions__head {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: var(--space-8);
+    align-items: end;
+  }
+  .product-solutions__head h2 {
+    margin: var(--space-2) 0 0;
+  }
+  .product-solutions__head > p {
+    margin: 0;
+    color: var(--color-ink-600);
+  }
+  .product-solutions__list {
+    list-style: none;
+    margin: var(--space-7) 0 0;
+    padding: 0;
+    border-top: 1px solid var(--color-ink-300);
+  }
+  .product-solutions__list li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-5);
+    align-items: center;
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--color-ink-300);
+  }
+  .product-solutions__list li > div > a {
+    font-size: var(--text-h4);
+    font-weight: 600;
+  }
+  .product-solutions__list li > div > a:hover {
+    color: var(--color-coral);
+  }
+  .product-solutions__list p {
+    margin: var(--space-1) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+  @media (max-width: 767px) {
+    .product-solutions__head,
+    .product-solutions__list li {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

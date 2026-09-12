@@ -1,0 +1,474 @@
+---
+export const prerender = false
+
+import { env } from 'cloudflare:workers'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import {
+  localizedPath,
+  resolveLocale,
+  type Locale,
+} from '../../i18n/config'
+import { staticUi } from '../../i18n/static'
+import {
+  sha256Hex,
+  type ConfigurationSnapshot,
+} from '../../lib/server/inquiries'
+
+interface Props {
+  locale?: Locale
+  id?: string
+}
+
+interface ConfigurationRow {
+  package_snapshot_json: string | null
+  access_expires_at: string | null
+}
+
+function parseSnapshot(raw: string | null): ConfigurationSnapshot | null {
+  if (!raw) return null
+  try {
+    const value: unknown = JSON.parse(raw)
+    if (!value || typeof value !== 'object') return null
+    const candidate = value as Partial<ConfigurationSnapshot>
+    if (
+      typeof candidate.solutionId !== 'string' ||
+      typeof candidate.solutionTitle !== 'string' ||
+      typeof candidate.packageKey !== 'string' ||
+      typeof candidate.packageTitle !== 'string' ||
+      !Array.isArray(candidate.items)
+    ) {
+      return null
+    }
+    const items = candidate.items.filter(
+      (item) =>
+        item &&
+        typeof item === 'object' &&
+        typeof item.title === 'string' &&
+        typeof item.quantity === 'number' &&
+        typeof item.unit === 'string',
+    )
+    if (!items.length || items.length !== candidate.items.length) return null
+    return {
+      solutionId: candidate.solutionId,
+      solutionSlug:
+        typeof candidate.solutionSlug === 'string' ? candidate.solutionSlug : '',
+      solutionTitle: candidate.solutionTitle,
+      packageKey: candidate.packageKey,
+      packageTitle: candidate.packageTitle,
+      tier:
+        candidate.tier === 'compact' ||
+        candidate.tier === 'recommended' ||
+        candidate.tier === 'expanded'
+          ? candidate.tier
+          : null,
+      summary: typeof candidate.summary === 'string' ? candidate.summary : null,
+      areaMinSqm:
+        typeof candidate.areaMinSqm === 'number' ? candidate.areaMinSqm : null,
+      areaMaxSqm:
+        typeof candidate.areaMaxSqm === 'number' ? candidate.areaMaxSqm : null,
+      areaMinSqFt:
+        typeof candidate.areaMinSqFt === 'number'
+          ? candidate.areaMinSqFt
+          : null,
+      areaMaxSqFt:
+        typeof candidate.areaMaxSqFt === 'number'
+          ? candidate.areaMaxSqFt
+          : null,
+      equipmentTotalMin:
+        typeof candidate.equipmentTotalMin === 'number'
+          ? candidate.equipmentTotalMin
+          : null,
+      equipmentTotalMax:
+        typeof candidate.equipmentTotalMax === 'number'
+          ? candidate.equipmentTotalMax
+          : null,
+      leadTime:
+        typeof candidate.leadTime === 'string' ? candidate.leadTime : null,
+      layoutImageUrl:
+        typeof candidate.layoutImageUrl === 'string'
+          ? candidate.layoutImageUrl
+          : null,
+      configurationPdfUrl:
+        typeof candidate.configurationPdfUrl === 'string'
+          ? candidate.configurationPdfUrl
+          : null,
+      items: items.map((item) => ({
+        productId:
+          'productId' in item && typeof item.productId === 'string'
+            ? item.productId
+            : null,
+        slug:
+          'slug' in item && typeof item.slug === 'string' ? item.slug : null,
+        title: item.title,
+        sku: 'sku' in item && typeof item.sku === 'string' ? item.sku : null,
+        quantity: item.quantity,
+        unit: item.unit,
+        variantNote:
+          'variantNote' in item && typeof item.variantNote === 'string'
+            ? item.variantNote
+            : null,
+      })),
+    }
+  } catch {
+    return null
+  }
+}
+
+const { locale: explicitLocale, id: explicitId } = Astro.props
+const locale = resolveLocale(
+  explicitLocale,
+  Astro.originPathname || Astro.url.pathname,
+)
+const t = (english: string) => staticUi(locale, english)
+const inquiryId = explicitId ?? Astro.params.id ?? ''
+const token = Astro.url.searchParams.get('token') ?? ''
+const validInput =
+  /^[0-9a-f-]{36}$/i.test(inquiryId) && /^[0-9a-f]{64}$/i.test(token)
+
+let snapshot: ConfigurationSnapshot | null = null
+let expired = false
+
+if (validInput) {
+  const tokenHash = await sha256Hex(token)
+  const row = await env.INQUIRIES_DB.prepare(`
+    SELECT package_snapshot_json, access_expires_at
+    FROM inquiries
+    WHERE id = ?1
+      AND access_token_hash = ?2
+      AND kind = 'configuration'
+    LIMIT 1
+  `)
+    .bind(inquiryId, tokenHash)
+    .first<ConfigurationRow>()
+
+  if (row?.access_expires_at) {
+    expired = Date.parse(row.access_expires_at) <= Date.now()
+    if (!expired) snapshot = parseSnapshot(row.package_snapshot_json)
+  }
+}
+
+if (!snapshot) Astro.response.status = expired ? 410 : 404
+Astro.response.headers.set('Cache-Control', 'private, no-store, max-age=0')
+Astro.response.headers.set('Referrer-Policy', 'no-referrer')
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
+
+const area = snapshot
+  ? [
+      snapshot.areaMinSqm != null || snapshot.areaMaxSqm != null
+        ? `${snapshot.areaMinSqm ?? '—'}–${snapshot.areaMaxSqm ?? '—'} ㎡`
+        : null,
+      snapshot.areaMinSqFt != null || snapshot.areaMaxSqFt != null
+        ? `${snapshot.areaMinSqFt ?? '—'}–${snapshot.areaMaxSqFt ?? '—'} sq ft`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(' / ')
+  : null
+const equipmentCount = snapshot
+  ? snapshot.equipmentTotalMin === snapshot.equipmentTotalMax &&
+    snapshot.equipmentTotalMin != null
+    ? String(snapshot.equipmentTotalMin)
+    : snapshot.equipmentTotalMin != null || snapshot.equipmentTotalMax != null
+      ? `${snapshot.equipmentTotalMin ?? '—'}–${snapshot.equipmentTotalMax ?? '—'}`
+      : null
+  : null
+
+const rfqPackage = snapshot
+  ? {
+      source: {
+        solutionSlug: snapshot.solutionSlug,
+        packageKey: snapshot.packageKey,
+        packageTitle: snapshot.packageTitle,
+      },
+      items: snapshot.items
+        .filter((item) => item.productId || item.slug)
+        .map((item) => ({
+          productId: item.productId,
+          slug: item.slug,
+          title: item.title,
+          sku: item.sku,
+          quantity: item.quantity,
+          options: item.variantNote
+            ? { [t('Package specification')]: item.variantNote }
+            : {},
+        })),
+    }
+  : null
+---
+
+<BaseLayout
+  locale={locale}
+  title={snapshot
+    ? `${snapshot.packageTitle} — ${t('Private configuration')}`
+    : `${t('Configuration unavailable')} — Coral Pilates`}
+  description={t('A private Coral Pilates equipment configuration.')}
+  noIndex
+  referrerPolicy="no-referrer"
+>
+  {
+    snapshot ? (
+      <>
+        <section class="section cfg-hero">
+          <div class="container cfg-hero__inner">
+            <div>
+              <p class="eyebrow">{t('Verified configuration')}</p>
+              <h1>{snapshot.packageTitle}</h1>
+              <p class="cfg-hero__solution">{snapshot.solutionTitle}</p>
+              {snapshot.summary && <p class="body-l cfg-hero__summary">{snapshot.summary}</p>}
+            </div>
+            <dl class="cfg-meta">
+              {area && (
+                <div>
+                  <dt>{t('Recommended area')}</dt>
+                  <dd class="nums">{area}</dd>
+                </div>
+              )}
+              {equipmentCount && (
+                <div>
+                  <dt>{t('Equipment count')}</dt>
+                  <dd class="nums">{equipmentCount}</dd>
+                </div>
+              )}
+              {snapshot.leadTime && (
+                <div>
+                  <dt>{t('Estimated lead time')}</dt>
+                  <dd>{snapshot.leadTime}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        </section>
+
+        <section class="section cfg-bom">
+          <div class="container">
+            <div class="cfg-bom__head">
+              <div>
+                <p class="eyebrow">{t('Equipment schedule')}</p>
+                <h2>{t('Recommended bill of materials.')}</h2>
+                <p>
+                  {t('Open any linked product to review its dimensions, materials and detailed specifications.')}
+                </p>
+              </div>
+              <button type="button" class="btn btn-coral" onclick="window.print()">
+                {t('Print / save PDF')}
+              </button>
+            </div>
+
+            <ol class="cfg-list">
+              {snapshot.items.map((item) => (
+                <li class="cfg-item">
+                  <span class="cfg-item__qty nums">{item.quantity}</span>
+                  <div class="cfg-item__copy">
+                    {item.slug ? (
+                      <a href={localizedPath(`/products/${item.slug}`, locale)}>{item.title}</a>
+                    ) : (
+                      <span>{item.title}</span>
+                    )}
+                    <p>
+                      {[item.sku, item.variantNote].filter(Boolean).join(' · ') ||
+                        `${item.unit}${item.quantity === 1 ? '' : 's'}`}
+                    </p>
+                  </div>
+                  {item.slug && (
+                    <a class="cfg-item__details" href={localizedPath(`/products/${item.slug}`, locale)}>
+                      {t('View details')} <span aria-hidden="true">→</span>
+                    </a>
+                  )}
+                </li>
+              ))}
+            </ol>
+
+            <div class="cfg-actions">
+              {rfqPackage && rfqPackage.items.length > 0 && (
+                <button
+                  type="button"
+                  class="btn btn-coral"
+                  data-rfq-package={JSON.stringify(rfqPackage)}
+                >
+                  {t('Add complete package to RFQ')}
+                </button>
+              )}
+              {snapshot.configurationPdfUrl && (
+                <a
+                  class="btn btn-outline"
+                  href={`/configurations/${inquiryId}/file?token=${encodeURIComponent(token)}`}
+                  data-no-localize
+                >
+                  {t('Download supplied PDF')}
+                </a>
+              )}
+              <a class="btn btn-link" href={localizedPath(`/solutions/${snapshot.solutionSlug}`, locale)}>
+                {t('Return to solution')}
+              </a>
+            </div>
+          </div>
+        </section>
+      </>
+    ) : (
+      <section class="section cfg-missing">
+        <div class="container">
+          <p class="eyebrow">
+            {expired ? t('Link expired') : t('Private configuration')}
+          </p>
+          <h1>
+            {
+              expired
+                ? t('This configuration link has expired.')
+                : t('This configuration is unavailable.')
+            }
+          </h1>
+          <p class="body-l">
+            {t('Request a fresh verified link and we will send the current configuration to your email.')}
+          </p>
+          <a class="btn btn-coral" href={`${localizedPath('/contact', locale)}?project=floorplan`}>
+            {t('Request a tailored plan')}
+          </a>
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .cfg-hero {
+    background: var(--color-paper-2);
+    border-bottom: 1px solid var(--color-ink-200);
+  }
+  .cfg-hero__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.75fr);
+    gap: var(--space-8);
+    align-items: end;
+  }
+  .cfg-hero h1 {
+    margin: var(--space-3) 0 0;
+  }
+  .cfg-hero__solution {
+    margin: var(--space-2) 0 0;
+    color: var(--color-coral);
+    font-weight: 600;
+  }
+  .cfg-hero__summary {
+    margin: var(--space-5) 0 0;
+    max-width: 64ch;
+    color: var(--color-ink-600);
+  }
+  .cfg-meta {
+    margin: 0;
+    border-top: 1px solid var(--color-ink-300);
+  }
+  .cfg-meta div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--color-ink-300);
+  }
+  .cfg-meta dt {
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+  .cfg-meta dd {
+    margin: 0;
+    text-align: right;
+    font-weight: 600;
+  }
+  .cfg-bom__head {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-6);
+    align-items: end;
+  }
+  .cfg-bom__head h2 {
+    margin: var(--space-2) 0 0;
+  }
+  .cfg-bom__head p:not(.eyebrow) {
+    margin: var(--space-3) 0 0;
+    color: var(--color-ink-600);
+  }
+  .cfg-list {
+    list-style: none;
+    margin: var(--space-7) 0 0;
+    padding: 0;
+    border-top: 1px solid var(--color-ink-300);
+  }
+  .cfg-item {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    gap: var(--space-4);
+    align-items: center;
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--color-ink-200);
+  }
+  .cfg-item__qty {
+    font-size: var(--text-h3);
+    font-weight: 600;
+    color: var(--color-coral);
+  }
+  .cfg-item__copy > a,
+  .cfg-item__copy > span {
+    font-weight: 600;
+  }
+  .cfg-item__copy > a:hover {
+    color: var(--color-coral);
+  }
+  .cfg-item__copy p {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-500);
+  }
+  .cfg-item__details {
+    color: var(--color-coral);
+    font-size: var(--text-body-s);
+    font-weight: 500;
+  }
+  .cfg-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin: var(--space-6) 0 0;
+  }
+  .cfg-missing .container {
+    max-width: 880px;
+  }
+  .cfg-missing h1 {
+    margin: var(--space-3) 0 0;
+  }
+  .cfg-missing p {
+    margin: var(--space-4) 0 0;
+    color: var(--color-ink-600);
+  }
+  .cfg-missing .btn {
+    margin: var(--space-5) 0 0;
+  }
+  @media (max-width: 767px) {
+    .cfg-hero__inner,
+    .cfg-bom__head {
+      grid-template-columns: 1fr;
+    }
+    .cfg-meta {
+      margin: var(--space-5) 0 0;
+    }
+    .cfg-item {
+      grid-template-columns: 48px minmax(0, 1fr);
+    }
+    .cfg-item__details {
+      grid-column: 2;
+      justify-self: start;
+    }
+  }
+  @media print {
+    :global(.site-header),
+    :global(.site-footer),
+    :global([data-rfq-widget]),
+    .cfg-actions,
+    .cfg-bom__head .btn {
+      display: none !important;
+    }
+    .cfg-hero,
+    .cfg-bom {
+      padding-block: 24px;
+    }
+  }
+</style>

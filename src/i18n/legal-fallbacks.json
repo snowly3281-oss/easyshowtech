@@ -1,0 +1,374 @@
+{
+  "catalog": [
+    "Privacy Policy",
+    "How Coral Pilates collects, uses, stores and shares information submitted through its B2B equipment inquiry website.",
+    "Terms of Service",
+    "Terms governing use of the Coral Pilates B2B equipment website, quotation requests, uploaded materials and product information.",
+    "Warranty",
+    "Warranty coverage",
+    "What is not covered",
+    "Making a claim",
+    "Remedies",
+    "Returns",
+    "Return eligibility",
+    "How to start a return",
+    "Refunds and restocking",
+    "Non-returnable items",
+    "Shipping",
+    "Shipping methods and lead times",
+    "Freight, duties and taxes",
+    "Delivery and inspection",
+    "Damaged or lost shipments"
+  ],
+  "privacy": {
+    "intro": "This Privacy Policy explains how Coral Pilates (“Coral Pilates”, “we”, “us” or “our”) handles personal information when you visit coralpilates.com, request a quotation, upload a floor plan, build an RFQ list, contact us, or otherwise use our website and related inquiry services.",
+    "sections": [
+      {
+        "heading": "1. Scope of this policy",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "This website is primarily designed for business inquiries from Pilates studios, clinics, distributors, hospitality operators, trainers and other professional buyers. This policy applies to information handled through the website. A separate contract, quotation or service-specific notice may apply to an order or another business relationship."
+          }
+        ]
+      },
+      {
+        "heading": "2. Information we collect",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "Depending on how you use the website, we may collect:"
+          },
+          {
+            "type": "list",
+            "items": [
+              "<strong>Contact and business information</strong>, such as your name, business email address, telephone number, company name, country or region, and the message you submit.",
+              "<strong>Inquiry and configuration information</strong>, including products, quantities, selected options, room requirements, source page, RFQ items and other details needed to prepare a quotation or studio proposal.",
+              "<strong>Files you choose to upload</strong>, such as floor plans, equipment lists, drawings, PDFs or reference images.",
+              "<strong>Technical and security information</strong>, such as IP address, approximate country and city derived from the request, browser and device information, request data, timestamps and anti-abuse or Turnstile verification data.",
+              "<strong>Preference and local storage data</strong>, including your language preference and the RFQ items stored in your browser."
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": "Please do not send passwords, payment-card details, government identification numbers, medical records or other sensitive information through a general inquiry or upload field."
+          }
+        ]
+      },
+      {
+        "heading": "3. How we use information",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "We use information where reasonably necessary to:"
+          },
+          {
+            "type": "list",
+            "items": [
+              "respond to inquiries and prepare quotations or configurations;",
+              "communicate about products, production, delivery, support or an existing business relationship;",
+              "send transactional emails requested through the website;",
+              "operate, secure, troubleshoot and improve the website;",
+              "prevent spam, abuse, fraud and security incidents;",
+              "maintain business records and comply with applicable legal obligations; and",
+              "establish, exercise or defend legal claims."
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": "We do not add inquiry contacts to a marketing mailing list unless they separately choose to receive marketing communications."
+          }
+        ]
+      },
+      {
+        "heading": "4. How information is shared",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "We do not sell personal information. We may share information only as reasonably necessary with:"
+          },
+          {
+            "type": "list",
+            "items": [
+              "service providers that support website hosting, databases, file storage, email delivery, content management, security and customer communications;",
+              "professional advisers, auditors, insurers or authorities where required for legal, compliance or claims purposes;",
+              "a successor or relevant counterparty in connection with a reorganisation, financing, sale or transfer of all or part of the business, subject to appropriate safeguards; and",
+              "other parties when you direct us or give permission."
+            ]
+          },
+          {
+            "type": "paragraph",
+            "content": "If you choose to contact us through WhatsApp or open an embedded third-party service, that provider will handle information under its own terms and privacy notice."
+          }
+        ]
+      },
+      {
+        "heading": "5. Service providers and international processing",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "The website uses service providers for infrastructure, content, security and communications. These providers may process information in locations different from your own. Where required, we take reasonable steps to use appropriate contractual, organisational or technical safeguards for such processing. Provider locations and safeguards may change as services and account settings are updated."
+          }
+        ]
+      },
+      {
+        "heading": "6. Cookies and browser storage",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "We use functional browser storage to remember language preferences and retain an RFQ list on your device. Security tools and embedded services may also use cookies or similar technologies to provide their functions. You can clear or block cookies and local storage in your browser, although doing so may affect language, RFQ, security or embedded features."
+          }
+        ]
+      },
+      {
+        "heading": "7. Data retention",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "We retain inquiry records, correspondence, uploaded files and related technical records only for as long as reasonably necessary for the purposes described in this policy. The period depends on factors such as the status of an inquiry, quotation or transaction, support needs, security requirements, record-keeping duties, dispute resolution and applicable law. When information is no longer reasonably required, we take steps to delete, anonymise or securely archive it, subject to lawful record-retention needs."
+          }
+        ]
+      },
+      {
+        "heading": "8. Your choices and rights",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "Depending on your location and applicable law, you may have rights to request access to, correction of, deletion of, restriction of or a copy of your personal information, or to object to certain processing. You may also withdraw consent where processing is based on consent."
+          },
+          {
+            "type": "paragraph",
+            "content": "To make a request, email <a href=\"mailto:chris@coralpilates.com\">chris@coralpilates.com</a>. We may need to verify your identity and may retain information where permitted or required by law. You may also have the right to complain to the data-protection authority in your jurisdiction."
+          }
+        ]
+      },
+      {
+        "heading": "9. Security",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "We use reasonable administrative, technical and organisational safeguards intended to protect information against unauthorised access, loss, misuse or alteration. No internet transmission or storage system is completely secure, so we cannot guarantee absolute security."
+          }
+        ]
+      },
+      {
+        "heading": "10. Children",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "The website is intended for business and professional users and is not directed to children under 18. We do not knowingly request personal information from children through the website."
+          }
+        ]
+      },
+      {
+        "heading": "11. Third-party links",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "The website may link to third-party sites or services. We are not responsible for their content, security or privacy practices. Review their notices before providing information."
+          }
+        ]
+      },
+      {
+        "heading": "12. Changes to this policy",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "We may update this policy to reflect changes to the website, our practices or legal requirements. The revised version will be posted on this page with an updated effective date."
+          }
+        ]
+      },
+      {
+        "heading": "13. Contact us",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "For privacy questions or requests, contact Coral Pilates at <a href=\"mailto:chris@coralpilates.com\">chris@coralpilates.com</a>, Suzhou, China."
+          }
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "intro": "These Terms of Service (“Terms”) govern your use of coralpilates.com and its inquiry, quotation, configuration, upload and RFQ features. By using the website, you agree to these Terms. If you use the website on behalf of a business or organisation, you confirm that you are authorised to do so.",
+    "sections": [
+      {
+        "heading": "1. Website purpose and business audience",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "Coral Pilates provides information about Pilates equipment, manufacturing, OEM services and studio solutions. The website is primarily intended for studios, clinics, distributors, hospitality operators, trainers and other professional or business buyers."
+          },
+          {
+            "type": "paragraph",
+            "content": "The website is not an online checkout service. Adding products to an RFQ list, requesting a quote, uploading a floor plan or sending a message does not place an order and does not oblige either party to enter into a transaction."
+          }
+        ]
+      },
+      {
+        "heading": "2. Inquiries, RFQs and configurations",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "You are responsible for providing accurate and sufficiently complete information for us to assess an inquiry. Website configurations, layouts, equipment quantities and estimated lead times are preliminary planning materials only. They must be confirmed in writing for the actual room, specifications, compliance needs and delivery location."
+          },
+          {
+            "type": "paragraph",
+            "content": "We may accept, decline, request clarification about or stop responding to an inquiry where information is incomplete, unlawful, abusive, misleading or outside our service scope."
+          }
+        ]
+      },
+      {
+        "heading": "3. Quotations and contract formation",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "Product pages, website prices, package estimates and communications before a formal quotation are invitations to inquire and do not constitute a binding offer. A transaction becomes binding only when the parties complete the acceptance process stated in the applicable written quotation, pro forma invoice, order confirmation or signed agreement."
+          },
+          {
+            "type": "paragraph",
+            "content": "The applicable commercial document will control product specifications, quantities, price, currency, tax, payment, production, delivery, inspection, warranty, returns, cancellation, risk transfer and dispute terms. If these Terms conflict with a signed transaction document, the transaction document controls for that transaction."
+          }
+        ]
+      },
+      {
+        "heading": "4. Product information, availability and pricing",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "We aim to keep website content accurate, but product photographs, colours, materials, dimensions, specifications, availability, lead times and prices may be illustrative, estimated or subject to change. Minor differences may result from screen settings, natural materials, manufacturing updates or product improvement."
+          },
+          {
+            "type": "paragraph",
+            "content": "Unless a formal quotation expressly states otherwise, website prices do not include freight, duties, import charges, local taxes, installation or other transaction-specific costs. We may correct typographical, technical or pricing errors before accepting an order."
+          }
+        ]
+      },
+      {
+        "heading": "5. Files and other materials you submit",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "You retain ownership of floor plans, drawings, images, product lists and other materials you submit. You give us a limited permission to host, copy, review and share those materials with relevant service providers or personnel only as reasonably necessary to respond to the inquiry, prepare a proposal, provide support or perform an agreed transaction."
+          },
+          {
+            "type": "paragraph",
+            "content": "You confirm that you are authorised to submit the materials and that our permitted use will not violate another person’s confidentiality, privacy or intellectual-property rights. Do not upload malicious code, unlawful content or information that is not necessary for the inquiry."
+          }
+        ]
+      },
+      {
+        "heading": "6. Acceptable use",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "You must not:"
+          },
+          {
+            "type": "list",
+            "items": [
+              "use the website for unlawful, fraudulent or abusive activity;",
+              "interfere with security, availability, access controls or other users;",
+              "introduce malware, attempt unauthorised access, scrape the website at a harmful rate or misuse forms and upload features;",
+              "impersonate another person or misrepresent your authority; or",
+              "copy or exploit website content in a way that infringes our rights or the rights of others."
+            ]
+          }
+        ]
+      },
+      {
+        "heading": "7. Intellectual property",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "The website, brand assets, product content, layouts, text, graphics and software are owned by or licensed to Coral Pilates and are protected by applicable intellectual-property laws. You may view and print reasonable portions for internal evaluation of a potential business purchase. No other licence is granted unless agreed in writing."
+          },
+          {
+            "type": "paragraph",
+            "content": "Ownership and permitted use of customer branding, drawings, prototypes or other OEM materials will be governed by the applicable written OEM or transaction agreement."
+          }
+        ]
+      },
+      {
+        "heading": "8. Third-party services and links",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "The website may use or link to third-party services, including maps, messaging, security, email and content services. Their separate terms and privacy notices apply when you use them. We do not control and are not responsible for third-party content, availability or practices."
+          }
+        ]
+      },
+      {
+        "heading": "9. Shipping, returns and warranties",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "Shipping methods, Incoterms, risk transfer, inspection, return eligibility, warranty coverage and remedies vary by product, destination and transaction. They are not created by these website Terms and will be stated in the applicable quotation, pro forma invoice, order confirmation, warranty document or signed agreement."
+          },
+          {
+            "type": "paragraph",
+            "content": "Nothing in these Terms limits any mandatory right or remedy that cannot lawfully be excluded."
+          }
+        ]
+      },
+      {
+        "heading": "10. Website availability and disclaimers",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "We may update, suspend or discontinue any part of the website without notice. To the extent permitted by law, the website and its preliminary content are provided on an “as available” basis. We do not guarantee uninterrupted access or that every description, estimate or configuration will be error-free or suitable for a particular room, programme, regulatory requirement or business result."
+          }
+        ]
+      },
+      {
+        "heading": "11. Limitation of liability",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "To the maximum extent permitted by applicable law, Coral Pilates will not be liable for indirect, incidental, special, consequential or punitive loss arising only from use of, or inability to use, the website or reliance on preliminary website content. Transaction-related liability will be governed by the applicable written quotation, confirmation or agreement."
+          },
+          {
+            "type": "paragraph",
+            "content": "Nothing in these Terms excludes or limits liability where exclusion or limitation is prohibited by law."
+          }
+        ]
+      },
+      {
+        "heading": "12. Privacy",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "Our <a href=\"/privacy\">Privacy Policy</a> explains how we handle information submitted through the website."
+          }
+        ]
+      },
+      {
+        "heading": "13. Changes to these Terms",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "We may update these Terms to reflect changes to the website, services or legal requirements. The revised Terms will be posted on this page with an updated effective date. Continued use after an update means the revised Terms apply to later website use; an existing signed transaction remains governed by its own documents."
+          }
+        ]
+      },
+      {
+        "heading": "14. General",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "If a provision of these Terms is found unenforceable, the remaining provisions remain effective. A failure to enforce a provision is not a waiver. Transaction-specific governing law, venue and dispute procedures will be stated in the applicable written transaction document. Before starting a formal dispute about website use, please contact us so the parties can try to resolve the issue in good faith."
+          }
+        ]
+      },
+      {
+        "heading": "15. Contact us",
+        "blocks": [
+          {
+            "type": "paragraph",
+            "content": "Questions about these Terms may be sent to Coral Pilates at <a href=\"mailto:chris@coralpilates.com\">chris@coralpilates.com</a>, Suzhou, China."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,109 @@
+---
+import type { RelatedProduct } from '../../sanity/content'
+import MediaBox from './MediaBox.astro'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  items?: RelatedProduct[] | null
+  locale?: Locale
+}
+
+const { items, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const products = items ?? []
+---
+
+{
+  products.length > 0 && (
+    <section class="section">
+      <div class="container">
+        <p class="eyebrow">{t('More from the series')}</p>
+        <div class="rel__head">
+          <h2 class="rel__title">{t('More from the series.')}</h2>
+          <a class="btn btn-link" href={localizedPath('/products', locale)}>{t('View all products')} <span aria-hidden="true">→</span></a>
+        </div>
+        <ul class="rel__grid">
+          {products.map((p) => (
+            <li class="rel__card">
+              <a href={localizedPath(`/products/${p.slug ?? ''}`, locale)} class="rel__link">
+                <MediaBox source={p.mainImage} alt={p.title} ratio="1 / 1" width={520} />
+                <div class="rel__body">
+                  <p class="rel__name">{p.title}</p>
+                  {p.seriesTitle && <p class="rel__series">{p.seriesTitle} {t('series')}</p>}
+                  <span class="rel__cta">{t('View')} →</span>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .rel__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-4);
+    margin: var(--space-3) 0 var(--space-6);
+  }
+  .rel__title {
+    margin: 0;
+  }
+  .rel__grid {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5);
+  }
+  /* Match the main /products ProductCard: bordered, image bleeds to the edge,
+     text sits in a padded body, coral border on hover. */
+  .rel__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+  }
+  .rel__link:hover {
+    border-color: var(--color-coral);
+  }
+  .rel__body {
+    padding: var(--space-3) var(--space-4) var(--space-4);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .rel__name {
+    margin: 0;
+    font-weight: 600;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .rel__series {
+    margin: 2px 0 0;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .rel__cta {
+    align-self: flex-start;
+    margin-top: auto;
+    padding-top: var(--space-2);
+    font-size: var(--text-body-s);
+    color: var(--color-coral);
+  }
+  @media (max-width: 767px) {
+    .rel__grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>

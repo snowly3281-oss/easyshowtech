@@ -1,0 +1,600 @@
+---
+/**
+ * Header.astro — sticky top navigation for every Coral Pilates page.
+ *
+ * Desktop dropdowns use a small pointer-intent grace period plus an invisible
+ * hover bridge, so moving from a trigger into its panel does not close it.
+ * They also support focus, ArrowDown and Escape. Mobile keeps native <details>.
+ *
+ * Styling uses the design tokens from global.css (via var(--…)); no new colour,
+ * type or spacing scales are introduced here — only layout/positioning rules.
+ */
+import {
+  productsSeries,
+  productsEquipment,
+  productsParts,
+  solutionsByCustomer,
+  companyLinks,
+} from "../../config/site";
+import {localizedPath, type Locale} from "../../i18n/config";
+import {ui} from "../../i18n/ui";
+import {staticUi} from "../../i18n/static";
+
+interface Props {
+  locale?: Locale;
+}
+
+const {locale = "en"} = Astro.props;
+const t = (english: string) => staticUi(locale, english);
+const localizeHref = (href: string) => {
+  const url = new URL(href, "https://coralpilates.com");
+  return `${localizedPath(url.pathname, locale)}${url.search}${url.hash}`;
+};
+const productPartLabel = (label: string) =>
+  label === "Parts & accessories" ? ui(locale, "partsAccessories") : t(label);
+---
+
+<header class="site-header">
+  <div class="container header-inner">
+    <!-- Left: logo lockup -->
+    <a href={localizeHref("/")} class="logo" aria-label={`Coral Pilates — ${t("home")}`}>
+      <img
+        class="logo-img"
+        src="/logo.png"
+        alt="Coral Pilates"
+        width="200"
+        height="30"
+      />
+    </a>
+
+    <!-- Center: primary nav (desktop ≥1024px) -->
+    <nav class="primary-nav" aria-label={t("Primary navigation")}>
+      <!-- Products: has its own index page, so the label links to it -->
+      <div class="nav-item" data-nav-item>
+        <a
+          href={localizeHref("/products")}
+          class="nav-link"
+          id="productsTrigger"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="productsMenu"
+          data-nav-trigger
+        >
+          {ui(locale, "products")} <span class="chev" aria-hidden="true">▾</span>
+        </a>
+        <div
+          class="dropdown mega"
+          id="productsMenu"
+          aria-labelledby="productsTrigger"
+          data-dropdown
+        >
+          <div class="mega-col">
+            <p class="mega-head">{ui(locale, "bySeries")}</p>
+            {productsSeries.map((l) => <a href={localizeHref(l.href)} class="mega-link">{t(l.label)}</a>)}
+          </div>
+          <div class="mega-col">
+            <p class="mega-head">{ui(locale, "byEquipment")}</p>
+            {productsEquipment.map((l) => <a href={localizeHref(l.href)} class="mega-link">{t(l.label)}</a>)}
+          </div>
+          <div class="mega-col">
+            <p class="mega-head">{ui(locale, "partsAccessories")}</p>
+            {productsParts.map((l) => <a href={localizeHref(l.href)} class="mega-link">{productPartLabel(l.label)}</a>)}
+          </div>
+        </div>
+      </div>
+
+      <!-- Solutions: dropdown-only (no index page) → trigger button, not a link -->
+      <div class="nav-item" data-nav-item>
+        <button
+          type="button"
+          class="nav-link nav-trigger"
+          id="solutionsTrigger"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="solutionsMenu"
+          data-nav-trigger
+        >
+          {ui(locale, "solutions")} <span class="chev" aria-hidden="true">▾</span>
+        </button>
+        <div
+          class="dropdown mega"
+          id="solutionsMenu"
+          aria-labelledby="solutionsTrigger"
+          data-dropdown
+        >
+          <div class="mega-col">
+            <p class="mega-head">{ui(locale, "byCustomer")}</p>
+            {solutionsByCustomer.map((l) => <a href={localizeHref(l.href)} class="mega-link">{t(l.label)}</a>)}
+          </div>
+        </div>
+      </div>
+
+      <!-- Company: dropdown-only (no index page) → trigger button, not a link -->
+      <div class="nav-item" data-nav-item>
+        <button
+          type="button"
+          class="nav-link nav-trigger"
+          id="companyTrigger"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="companyMenu"
+          data-nav-trigger
+        >
+          {ui(locale, "company")} <span class="chev" aria-hidden="true">▾</span>
+        </button>
+        <div
+          class="dropdown simple"
+          id="companyMenu"
+          aria-labelledby="companyTrigger"
+          data-dropdown
+        >
+          {companyLinks.map((l) => <a href={localizeHref(l.href)} class="mega-link">{t(l.label)}</a>)}
+        </div>
+      </div>
+
+      <a href={localizeHref("/resources")} class="nav-link">{ui(locale, "resources")}</a>
+      <a href={localizeHref("/contact")} class="nav-link">{ui(locale, "contact")}</a>
+    </nav>
+
+    <!-- Right: CTA (desktop only — on mobile it moves into the menu) + hamburger -->
+    <div class="header-right">
+      <a href={localizeHref("/contact")} class="btn btn-coral btn-sm header-cta">{ui(locale, "getQuote")}</a>
+      <button
+        type="button"
+        class="hamburger"
+        id="navToggle"
+        aria-label={t("Open menu")}
+        data-open-label={t("Open menu")}
+        data-close-label={t("Close menu")}
+        aria-expanded="false"
+        aria-controls="mobileMenu"
+      >
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile menu panel (tablet/mobile only); native <details> = no-JS fallback -->
+  <div class="mobile-menu" id="mobileMenu" hidden>
+    <div class="container mobile-inner">
+      <details class="m-group">
+        <summary>{ui(locale, "products")}</summary>
+        <a href={localizeHref("/products")} class="m-link">{ui(locale, "allProducts")}</a>
+        <p class="m-sub">{ui(locale, "bySeries")}</p>
+        {productsSeries.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
+        <p class="m-sub">{ui(locale, "byEquipment")}</p>
+        {productsEquipment.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
+        <p class="m-sub">{ui(locale, "partsAccessories")}</p>
+        {productsParts.map((l) => <a href={localizeHref(l.href)} class="m-link">{productPartLabel(l.label)}</a>)}
+      </details>
+      <details class="m-group">
+        <summary>{ui(locale, "solutions")}</summary>
+        {solutionsByCustomer.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
+      </details>
+      <details class="m-group">
+        <summary>{ui(locale, "company")}</summary>
+        {companyLinks.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
+      </details>
+      <a href={localizeHref("/resources")} class="m-link m-top">{ui(locale, "resources")}</a>
+      <a href={localizeHref("/contact")} class="m-link m-top">{ui(locale, "contact")}</a>
+      <a href={localizeHref("/contact")} class="btn btn-coral m-cta">{ui(locale, "getQuote")}</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  /* Layout/positioning only — all colours/type/spacing come from global.css tokens. */
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--color-white);
+    border-bottom: 1px solid var(--color-ink-200);
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 76px;
+  }
+
+  /* Logo lockup */
+  .logo {
+    display: inline-flex;
+    align-items: center;
+  }
+  .logo-img {
+    display: block;
+    height: 30px;
+    width: auto;
+  }
+
+  /* Primary nav (hidden until desktop) */
+  .primary-nav {
+    display: none;
+    align-items: center;
+    gap: var(--space-6);
+  }
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 44px;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--color-ink-800);
+    cursor: pointer;
+  }
+  .nav-item:hover > .nav-link,
+  .nav-item:focus-within > .nav-link,
+  .nav-item.is-open > .nav-link,
+  .nav-link:hover {
+    color: var(--color-coral);
+  }
+  .chev {
+    font-size: 10px;
+    transition: transform 0.16s ease;
+  }
+  .nav-item:hover > .nav-link .chev,
+  .nav-item:focus-within > .nav-link .chev,
+  .nav-item.is-open > .nav-link .chev {
+    transform: rotate(180deg);
+  }
+
+  /* Dropdowns */
+  .nav-item {
+    position: relative;
+  }
+  .dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    display: flex;
+    margin-top: 6px;
+    padding: var(--space-5);
+    background: var(--color-white);
+    border: 1px solid var(--color-ink-200);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-overlay);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition:
+      opacity 0.16s ease,
+      transform 0.16s ease,
+      visibility 0s linear 0.16s;
+  }
+  /* Fills the physical 6px gap between trigger and panel. Pointer movement
+     through this bridge still counts as hovering the dropdown. */
+  .dropdown::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    left: 0;
+    height: 7px;
+  }
+  .nav-item.is-open > .dropdown {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition-delay: 0s;
+  }
+  .dropdown.simple {
+    flex-direction: column;
+    gap: 2px;
+    min-width: 200px;
+  }
+  /* 3-column panel that can never clip: wraps to fewer columns when the
+     viewport is tight, caps its width to the viewport (minus gutters), and
+     scrolls if it ever runs taller than the space below the header. */
+  .dropdown.mega {
+    flex-wrap: wrap;
+    width: max-content;
+    max-width: min(36rem, calc(100vw - 3rem));
+    gap: var(--space-5) var(--space-5);
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+  }
+  .mega-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 0 0 auto;
+    min-width: 150px;
+    max-width: 220px;
+  }
+  .mega-head {
+    margin-bottom: var(--space-2);
+    font-size: var(--text-eyebrow);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-ink-500);
+  }
+  .mega-link {
+    padding: 6px 0;
+    font-size: 14px;
+    line-height: 1.3;
+    color: var(--color-ink-700);
+  }
+  .mega-link:hover {
+    color: var(--color-coral);
+  }
+  /* Right cluster */
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+  }
+  /* CTA lives in the header on desktop; on mobile it moves into the menu so it
+     never crowds/overlaps the logo. Shown again at ≥1024px below. */
+  .header-cta {
+    display: none;
+  }
+  .hamburger {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    padding: 11px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+  .hamburger span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--color-ink-800);
+  }
+
+  /* Mobile panel */
+  .mobile-menu {
+    border-top: 1px solid var(--color-ink-200);
+    background: var(--color-white);
+    max-height: calc(100vh - 76px);
+    overflow-y: auto;
+  }
+  .mobile-inner {
+    display: flex;
+    flex-direction: column;
+    padding-block: var(--space-4);
+  }
+  .m-group {
+    border-bottom: 1px solid var(--color-ink-150);
+    padding-block: var(--space-2);
+  }
+  .m-group summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    padding: 10px 0;
+    list-style: none;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-ink-900);
+    cursor: pointer;
+  }
+  .m-group summary::-webkit-details-marker {
+    display: none;
+  }
+  .m-group summary::after {
+    content: "+";
+    color: var(--color-ink-500);
+  }
+  .m-group[open] summary::after {
+    content: "–";
+  }
+  .m-sub {
+    margin-top: var(--space-3);
+    margin-bottom: 2px;
+    font-size: var(--text-eyebrow);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-ink-500);
+  }
+  .m-link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 4px 0;
+    font-size: 15px;
+    color: var(--color-ink-700);
+  }
+  .m-link:hover {
+    color: var(--color-coral);
+  }
+  .m-top {
+    border-bottom: 1px solid var(--color-ink-150);
+    font-weight: 600;
+    color: var(--color-ink-900);
+  }
+  /* Full-width quote CTA — last item in the mobile menu. */
+  .m-cta {
+    width: 100%;
+    margin-top: var(--space-4);
+  }
+
+  /* Desktop ≥1024px: full nav, no hamburger/panel, CTA back in the header */
+  @media (min-width: 1024px) {
+    .primary-nav {
+      display: flex;
+    }
+    .hamburger {
+      display: none;
+    }
+    .mobile-menu {
+      display: none !important;
+    }
+    .header-cta {
+      display: inline-flex;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dropdown,
+    .chev {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  declare global {
+    interface Window {
+      coralHeaderAbortController?: AbortController;
+    }
+  }
+
+  function initHeader() {
+    const header = document.querySelector<HTMLElement>(".site-header");
+    if (!header || header.dataset.initialized === "true") return;
+    header.dataset.initialized = "true";
+
+    const toggle = header.querySelector<HTMLButtonElement>("#navToggle");
+    const menu = header.querySelector<HTMLElement>("#mobileMenu");
+    if (toggle && menu) {
+      toggle.addEventListener("click", () => {
+        const isHidden = menu.hasAttribute("hidden");
+        if (isHidden) {
+          menu.removeAttribute("hidden");
+          toggle.setAttribute("aria-expanded", "true");
+          toggle.setAttribute("aria-label", toggle.dataset.closeLabel || "Close menu");
+        } else {
+          menu.setAttribute("hidden", "");
+          toggle.setAttribute("aria-expanded", "false");
+          toggle.setAttribute("aria-label", toggle.dataset.openLabel || "Open menu");
+        }
+      });
+    }
+
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    window.coralHeaderAbortController?.abort();
+    const controller = new AbortController();
+    window.coralHeaderAbortController = controller;
+
+    const navItems = Array.from(header.querySelectorAll<HTMLElement>("[data-nav-item]"));
+    const closeTimers = new WeakMap<HTMLElement, number>();
+    const CLOSE_GRACE_MS = 260;
+
+    const triggerFor = (item: HTMLElement) =>
+      item.querySelector<HTMLElement>("[data-nav-trigger]");
+
+    const cancelClose = (item: HTMLElement) => {
+      const timer = closeTimers.get(item);
+      if (timer !== undefined) window.clearTimeout(timer);
+      closeTimers.delete(item);
+    };
+
+    const closeItem = (item: HTMLElement, restoreFocus = false) => {
+      cancelClose(item);
+      item.classList.remove("is-open");
+      const trigger = triggerFor(item);
+      trigger?.setAttribute("aria-expanded", "false");
+      if (restoreFocus && trigger instanceof HTMLElement) trigger.focus();
+    };
+
+    const closeOthers = (current: HTMLElement) => {
+      navItems.forEach((item) => {
+        if (item !== current) closeItem(item);
+      });
+    };
+
+    const openItem = (item: HTMLElement) => {
+      if (!desktop.matches) return;
+      cancelClose(item);
+      closeOthers(item);
+      item.classList.add("is-open");
+      triggerFor(item)?.setAttribute("aria-expanded", "true");
+    };
+
+    const scheduleClose = (item: HTMLElement) => {
+      if (!desktop.matches) return;
+      cancelClose(item);
+      closeTimers.set(
+        item,
+        window.setTimeout(() => {
+          if (!item.matches(":hover") && !item.contains(document.activeElement)) {
+            closeItem(item);
+          }
+        }, CLOSE_GRACE_MS),
+      );
+    };
+
+    navItems.forEach((item) => {
+      const trigger = triggerFor(item);
+      const dropdown = item.querySelector<HTMLElement>("[data-dropdown]");
+
+      item.addEventListener("pointerenter", () => openItem(item));
+      item.addEventListener("pointerleave", () => scheduleClose(item));
+      item.addEventListener("focusin", () => openItem(item));
+      item.addEventListener("focusout", (event) => {
+        if (!(event.relatedTarget instanceof Node) || !item.contains(event.relatedTarget)) {
+          scheduleClose(item);
+        }
+      });
+
+      if (trigger instanceof HTMLButtonElement) {
+        trigger.addEventListener("click", () => {
+          if (!desktop.matches) return;
+          /* focusin runs before click, so toggling here would immediately close
+             a menu that was just opened. Click consistently confirms open;
+             Escape, outside click and pointer leave handle closing. */
+          openItem(item);
+        });
+      }
+
+      trigger?.addEventListener("keydown", (event) => {
+        if (!desktop.matches) return;
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+          openItem(item);
+          dropdown?.querySelector<HTMLAnchorElement>("a")?.focus();
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          closeItem(item, true);
+        }
+      });
+
+      dropdown?.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeItem(item, true);
+        }
+      });
+    });
+
+    document.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (desktop.matches && event.target instanceof Node && !header.contains(event.target)) {
+          navItems.forEach((item) => closeItem(item));
+        }
+      },
+      {signal: controller.signal},
+    );
+
+    desktop.addEventListener(
+      "change",
+      () => {
+        navItems.forEach((item) => closeItem(item));
+      },
+      {signal: controller.signal},
+    );
+  }
+
+  initHeader();
+  document.addEventListener("astro:page-load", initHeader);
+</script>

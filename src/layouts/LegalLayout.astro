@@ -1,0 +1,158 @@
+---
+/**
+ * LegalLayout.astro — shared shell for the legal / policy pages
+ * (privacy, terms, warranty, returns, shipping).
+ *
+ * Renders a page title, effective date, and a legal reading column. Published
+ * Sanity content always wins. Privacy and Terms may provide a conservative
+ * code-level fallback so the public site never exposes an empty legal page
+ * while the client-approved version is being prepared.
+ */
+import BaseLayout from "./BaseLayout.astro";
+import PortableText from "../components/PortableText.astro";
+import { getSitePage } from "../sanity/pages";
+import {resolveLocale} from "../i18n/config";
+import {staticUi} from "../i18n/static";
+
+interface Props {
+  /** Document title, e.g. "Privacy". */
+  title: string;
+  /** Fixed sitePage key, e.g. "privacy". */
+  pageKey: string;
+  /** Sentence-case section headings appropriate to the document. */
+  sections?: string[];
+  /** Search description used until Sanity supplies page SEO. */
+  description?: string;
+  /** Code fallback date used until Sanity supplies the effective date. */
+  effectiveDate?: string;
+  /** Keep incomplete/private policy routes out of search results. */
+  noIndex?: boolean;
+}
+const {
+  title: fallbackTitle,
+  pageKey,
+  sections = [],
+  description: fallbackDescription,
+  effectiveDate: fallbackEffectiveDate,
+  noIndex = false,
+} = Astro.props;
+const locale = resolveLocale(
+  undefined,
+  Astro.originPathname || Astro.url.pathname,
+);
+const t = (english: string) => staticUi(locale, english);
+const page = await getSitePage(pageKey, locale);
+const title = page?.title || t(fallbackTitle);
+const hasCmsBody = Array.isArray(page?.legalBody) && page.legalBody.length > 0;
+const hasFallbackBody = Astro.slots.has("fallback");
+const metaTitle = page?.seo?.metaTitle || `${title} — Coral Pilates`;
+const metaDescription =
+  page?.seo?.metaDescription ||
+  page?.introduction ||
+  (fallbackDescription ? t(fallbackDescription) : undefined);
+
+const PLACEHOLDER = t("[Content to be provided by client/legal counsel.]");
+const rawEffectiveDate =
+  page?.effectiveDate ||
+  fallbackEffectiveDate ||
+  t("[client/legal to provide]");
+const effectiveDate = (() => {
+  if (!rawEffectiveDate || rawEffectiveDate.startsWith("[")) return rawEffectiveDate;
+  const parsed = Date.parse(rawEffectiveDate);
+  if (Number.isNaN(parsed)) return rawEffectiveDate;
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(parsed));
+})();
+---
+<BaseLayout
+  locale={locale}
+  title={metaTitle}
+  description={metaDescription}
+  noIndex={noIndex}
+>
+  <section class="section">
+    <div class="container">
+      <div class="legal-measure">
+        <span class="eyebrow">{t("Legal")}</span>
+        <h1 class="mt-3">{title}</h1>
+        <p class="effective caption mt-3">
+          {t("Effective date:")} {effectiveDate}
+        </p>
+
+        <div class="legal-body mt-7">
+          {
+            hasCmsBody ? (
+              <PortableText value={page?.legalBody} locale={locale} />
+            ) : hasFallbackBody ? (
+              <slot name="fallback" />
+            ) : (
+              sections.map((heading) => (
+                <section class="legal-block">
+                  <h2>{t(heading)}</h2>
+                  <p class="body-l text-ink-600 mt-2">{PLACEHOLDER}</p>
+                </section>
+              ))
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .legal-measure {
+    max-width: var(--measure);
+  }
+  .effective {
+    color: var(--color-ink-500);
+  }
+  .legal-block + .legal-block {
+    margin-top: var(--space-7);
+  }
+  .legal-block h2 {
+    font-size: var(--text-h3);
+  }
+  .legal-body :global(.legal-intro) {
+    color: var(--color-ink-600);
+    font-size: var(--text-body-l);
+    line-height: 1.7;
+  }
+  .legal-body :global(.legal-block + .legal-block) {
+    margin-top: var(--space-7);
+  }
+  .legal-body :global(.legal-block h2) {
+    font-size: var(--text-h3);
+    line-height: 1.25;
+  }
+  .legal-body :global(.legal-block h3) {
+    margin-top: var(--space-5);
+    font-size: var(--text-body-l);
+  }
+  .legal-body :global(.legal-block p),
+  .legal-body :global(.legal-block li) {
+    color: var(--color-ink-600);
+    line-height: 1.75;
+  }
+  .legal-body :global(.legal-block p),
+  .legal-body :global(.legal-block ul),
+  .legal-body :global(.legal-block ol) {
+    margin-top: var(--space-3);
+  }
+  .legal-body :global(.legal-block ul),
+  .legal-body :global(.legal-block ol) {
+    padding-left: var(--space-5);
+  }
+  .legal-body :global(.legal-block li + li) {
+    margin-top: var(--space-2);
+  }
+  .legal-body :global(.legal-block a) {
+    color: var(--color-red-500);
+    text-decoration: underline;
+    text-underline-offset: 0.16em;
+  }
+</style>

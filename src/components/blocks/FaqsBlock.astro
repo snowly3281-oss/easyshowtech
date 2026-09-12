@@ -1,0 +1,50 @@
+---
+import type { FaqsBlockData } from '../../sanity/content'
+
+interface Props {
+  block: FaqsBlockData
+}
+
+const { block } = Astro.props
+const items = block.items ?? []
+
+// RENDER RULE (from the content model): hide the whole section when it has
+// fewer than 3 FAQ items.
+const show = items.length >= 3
+---
+
+{
+  show && (
+    <section class="section faqs-section">
+      <div class="container measure">
+        {block.heading && <h2 class="faqs__heading">{block.heading}</h2>}
+        <dl class="faqs">
+          {items.map((item) => (
+            <div class="faq">
+              <dt class="faq__q">{item.question}</dt>
+              <dd class="faq__a">{item.answer}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .faqs__heading {
+    margin: 0 0 var(--space-2);
+  }
+  .faqs {
+    margin: var(--space-6) 0 0;
+    display: grid;
+    gap: var(--space-5);
+  }
+  .faq__q {
+    font-weight: 600;
+  }
+  .faq__a {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600, #555);
+  }
+</style>

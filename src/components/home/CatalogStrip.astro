@@ -1,0 +1,246 @@
+---
+import type { HomeData, HomeSeries } from '../../sanity/content'
+import MediaBox from '../product/MediaBox.astro'
+import {localizedPath, resolveLocale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  intro?: HomeData['catalog']
+  series?: HomeSeries[]
+}
+
+const { intro, series } = Astro.props
+const locale = resolveLocale(undefined, Astro.url.pathname)
+const t = (english: string) => staticUi(locale, english)
+const items = series ?? []
+---
+
+{
+  items.length > 0 && (
+    <section class="section cat">
+      <div class="container">
+        <div class="cat__head">
+          <div class="cat__heading">
+            {intro?.eyebrow && <p class="eyebrow">{intro.eyebrow}</p>}
+            {intro?.heading && <h2 class="cat__title">{intro.heading}</h2>}
+            {intro?.intro && <p class="body-s cat__intro">{intro.intro}</p>}
+            <a class="btn btn-link cat__viewall" href={localizedPath('/products', locale)}>{t('View all products')} <span aria-hidden="true">→</span></a>
+          </div>
+          <div class="cat__nav">
+            <button class="cat__arrow" data-cat-prev type="button" aria-label={t('Previous')} disabled>‹</button>
+            <button class="cat__arrow" data-cat-next type="button" aria-label={t('Next')}>›</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Full-bleed carousel: the rail spans full width; padding aligns the
+          first card with the container content, and cards bleed past both edges. */}
+      <ul class="cat__rail" data-cat-rail>
+        {items.map((s) => (
+          <li class="cat__card">
+            <a href={`${localizedPath('/products', locale)}?series=${s.slug ?? ''}`} class="cat__link">
+              <MediaBox source={s.image} alt={s.title} ratio="4 / 3" width={620} />
+              <div class="cat__body">
+                <p class="cat__name">{s.title}</p>
+                {s.description && <p class="cat__desc">{s.description}</p>}
+                <div class="cat__foot">
+                  <span class="cat__sku nums">
+                    {`${s.skuCount} ${s.skuCount === 1 ? 'SKU' : 'SKUs'}`}
+                  </span>
+                  <span class="cat__arrowico" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M4.5 11.5 11.5 4.5M11.5 4.5H6M11.5 4.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+<script is:inline>
+  function initCatalogStrip() {
+    const rail = document.querySelector('[data-cat-rail]')
+    if (!rail || rail.dataset.initialized === 'true') return
+    rail.dataset.initialized = 'true'
+    const prev = document.querySelector('[data-cat-prev]')
+    const next = document.querySelector('[data-cat-next]')
+    function step(dir) {
+      // Scroll exactly one card: distance between the first two cards = card
+      // width + gap. Falls back gracefully with 0 or 1 card.
+      const cards = rail.querySelectorAll('.cat__card')
+      let w = rail.clientWidth * 0.8
+      if (cards.length >= 2) {
+        w = cards[1].getBoundingClientRect().left - cards[0].getBoundingClientRect().left
+      } else if (cards.length === 1) {
+        w = cards[0].getBoundingClientRect().width
+      }
+      rail.scrollBy({ left: w * dir, behavior: 'smooth' })
+    }
+    function sync() {
+      const max = rail.scrollWidth - rail.clientWidth - 2
+      if (prev) prev.disabled = rail.scrollLeft <= 2
+      if (next) next.disabled = rail.scrollLeft >= max || max <= 0
+    }
+    if (prev) prev.addEventListener('click', function () { step(-1) })
+    if (next) next.addEventListener('click', function () { step(1) })
+    rail.addEventListener('scroll', sync, { passive: true })
+    window.addEventListener('resize', sync)
+    // Running this while the HTML parser is still building the rest of the
+    // page forces a synchronous layout. Wait until parsing is complete so the
+    // browser can calculate the initial carousel state in its normal layout
+    // pass instead.
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', sync, { once: true })
+    } else {
+      window.requestAnimationFrame(sync)
+    }
+  }
+
+  initCatalogStrip()
+  document.addEventListener('astro:page-load', initCatalogStrip)
+</script>
+
+<style>
+  .cat__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--space-5);
+  }
+  .cat__title {
+    margin: var(--space-2) 0 0;
+  }
+  .cat__intro {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600, #555);
+    max-width: 50ch;
+  }
+  .cat__viewall {
+    margin: var(--space-3) 0 0;
+  }
+  .cat__nav {
+    display: flex;
+    gap: var(--space-2);
+    flex: none;
+  }
+  .cat__arrow {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--color-coral);
+    background: transparent;
+    color: var(--color-coral);
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .cat__arrow:hover:not(:disabled) {
+    background: var(--color-coral);
+    color: #fff;
+  }
+  .cat__arrow:disabled {
+    border-color: var(--color-ink-200, #e2ddd3);
+    color: var(--color-ink-400, #9a948a);
+    cursor: default;
+  }
+
+  /* Full-bleed rail. First card aligns with the container content; cards bleed
+     past both edges. --rail-pad matches the .container offset per breakpoint. */
+  .cat__rail {
+    --rail-gutter: var(--gutter-lg);
+    --rail-pad: max(var(--rail-gutter), calc((100% - var(--container-box)) / 2 + var(--rail-gutter)));
+    margin: var(--space-6) 0 0;
+    padding: 0 var(--rail-gutter) var(--space-3) var(--rail-pad);
+    list-style: none;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 340px;
+    gap: var(--space-5);
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline-start: var(--rail-pad);
+    scrollbar-width: none;
+  }
+  .cat__rail::-webkit-scrollbar {
+    display: none;
+  }
+  @media (max-width: 1279px) {
+    .cat__rail {
+      --rail-gutter: var(--gutter-md);
+    }
+  }
+  @media (max-width: 767px) {
+    .cat__head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    /* Push the carousel controls to the right edge — easier thumb reach. */
+    .cat__nav {
+      align-self: flex-end;
+    }
+    .cat__rail {
+      --rail-gutter: var(--gutter-sm);
+      grid-auto-columns: 80vw;
+    }
+  }
+
+  .cat__card {
+    scroll-snap-align: start;
+  }
+  .cat__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+  }
+  .cat__link:hover {
+    border-color: var(--color-coral);
+  }
+  .cat__body {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .cat__name {
+    margin: 0;
+    font-weight: 600;
+    font-size: var(--text-h4);
+  }
+  .cat__desc {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600, #555);
+    font-size: var(--text-body-s);
+    flex: 1;
+  }
+  .cat__foot {
+    margin: var(--space-4) 0 0;
+    padding: var(--space-3) 0 0;
+    border-top: 1px solid var(--color-ink-100, #efeae0);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .cat__sku {
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .cat__arrowico {
+    display: inline-flex;
+    color: var(--color-ink-900, #0e1013);
+  }
+</style>

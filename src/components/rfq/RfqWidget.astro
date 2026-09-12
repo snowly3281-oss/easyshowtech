@@ -1,0 +1,626 @@
+---
+import {
+  TURNSTILE_ACTION,
+  TURNSTILE_SITE_KEY,
+} from '../../lib/turnstileConfig'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  whatsapp: string
+  locale?: Locale
+}
+
+const { whatsapp, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const whatsappDigits = whatsapp.replace(/\D/g, '').replace(/^00/, '')
+const generalWhatsappHref = whatsappDigits
+  ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(
+      t('Hello Coral Pilates, I would like to discuss Pilates equipment for my project.'),
+    )}`
+  : localizedPath('/contact', locale)
+---
+
+<div
+  class="rfq-widget"
+  data-rfq-widget
+  data-whatsapp={whatsappDigits}
+  data-locale={locale}
+  data-label-open-empty={t('Open empty RFQ cart')}
+  data-label-open-count={t('Open RFQ cart, {count} {items}')}
+  data-label-item={t('item')}
+  data-label-items={t('items')}
+  data-label-package={t('Package')}
+  data-label-qty={t('Qty')}
+  data-label-quantity-for={t('Quantity for {product}')}
+  data-label-remove={t('Remove')}
+  data-label-added={t('Added to RFQ')}
+  data-label-product={t('Product')}
+  data-label-sending={t('Sending…')}
+  data-label-send-email={t('Send RFQ by email')}
+  data-label-error={t('Something went wrong. Please try again.')}
+  data-label-check-form={t('Please check the form and try again.')}
+  data-label-wa-heading={t('Hello Coral Pilates, I would like an RFQ for:')}
+  data-label-contact={t('Contact')}
+  data-label-notes={t('Notes')}
+  data-label-source={t('Source')}
+  data-label-wa-opened={t('WhatsApp opened. Press Send there to complete your RFQ.')}
+>
+  <div class="rfq-fab" aria-label={t('Quick contact')}>
+    <button
+      type="button"
+      class="rfq-fab__cart"
+      data-rfq-launch
+      aria-label={t('Open empty RFQ cart')}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 5h2l1.4 9.1a2 2 0 0 0 2 1.7h7.9a2 2 0 0 0 1.9-1.4L21 8H7.1M10 20h.01M18 20h.01" />
+      </svg>
+      <span class="rfq-fab__label">RFQ</span>
+      <span class="rfq-fab__count nums" data-rfq-count hidden>0</span>
+    </button>
+
+    <a
+      class="rfq-fab__whatsapp"
+      href={generalWhatsappHref}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={t('Chat with Coral Pilates on WhatsApp')}
+      title={t('Chat on WhatsApp')}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M20.5 11.7a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.4-4.7A8.5 8.5 0 1 1 20.5 11.7Z" />
+        <path d="M8.2 7.8c.2-.4.4-.4.7-.4h.5c.2 0 .3.1.4.4l.7 1.7c.1.3 0 .5-.2.7l-.5.6c-.2.2-.1.4 0 .6.5.9 1.2 1.6 2.1 2.1.2.1.4.2.6 0l.7-.8c.2-.2.4-.3.7-.2l1.7.8c.3.1.4.3.4.5 0 .4-.2 1.2-.6 1.6-.4.5-1.2.8-2 .8-.5 0-1.1-.1-1.7-.4a10.4 10.4 0 0 1-5-4.4c-.5-.9-.7-1.8-.5-2.5.2-.5.5-.9.7-1.1Z" />
+      </svg>
+    </a>
+  </div>
+
+  <dialog class="rfq" data-rfq-dialog aria-labelledby="rfq-title">
+    <div class="rfq__shell">
+      <header class="rfq__head">
+        <div>
+          <p class="eyebrow">{t('Request for quotation')}</p>
+          <h2 id="rfq-title">{t('Your RFQ cart')}</h2>
+        </div>
+        <button type="button" class="rfq__close" data-rfq-close aria-label={t('Close RFQ cart')}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="rfq__empty" data-rfq-empty>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 5h2l1.4 9.1a2 2 0 0 0 2 1.7h7.9a2 2 0 0 0 1.9-1.4L21 8H7.1M10 20h.01M18 20h.01" />
+        </svg>
+        <h3>{t('No products in your RFQ yet.')}</h3>
+        <p>{t('Add products as you browse. Quantities and selected finishes stay with each line.')}</p>
+        <a class="btn btn-coral" href={localizedPath('/products', locale)}>{t('Browse products')}</a>
+      </div>
+
+      <div data-rfq-content hidden>
+        <div class="rfq__summary">
+          <span data-rfq-total>0 {t('items')}</span>
+          <button type="button" data-rfq-clear>{t('Clear cart')}</button>
+        </div>
+        <ol class="rfq__items" data-rfq-items></ol>
+
+        <form class="rfq__form" data-rfq-email-form novalidate>
+          <input type="hidden" name="items_json" value="[]" />
+          <input type="hidden" name="source_url" value="" />
+          <input type="checkbox" name="botcheck" class="rfq__hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+          <div class="rfq__formhead">
+            <h3>{t('Where should we send the quote?')}</h3>
+            <p>{t('We use these details only to answer this RFQ.')}</p>
+          </div>
+          <div class="rfq__grid">
+            <label class="rfq__field">
+              <span>{t('Full name')}</span>
+              <input name="name" type="text" autocomplete="name" placeholder={t('Your full name')} />
+            </label>
+            <label class="rfq__field">
+              <span>{t('Email')} <em>*</em></span>
+              <input name="email" type="email" required autocomplete="email" placeholder="you@company.com" />
+            </label>
+            <label class="rfq__field">
+              <span>{t('Company')}</span>
+              <input name="company" type="text" autocomplete="organization" placeholder={t('Studio / business name')} />
+            </label>
+            <label class="rfq__field">
+              <span>{t('WhatsApp / phone')}</span>
+              <input name="phone" type="tel" autocomplete="tel" placeholder="+1 312 847 1928" />
+            </label>
+          </div>
+          <label class="rfq__field">
+            <span>{t('Project notes')} <em>*</em></span>
+            <textarea name="message" rows="3" required placeholder={t('Room size, destination, timeline, or finish requirements…')}></textarea>
+          </label>
+
+          {TURNSTILE_SITE_KEY && (
+            <div
+              class="cf-turnstile rfq__turnstile"
+              id="rfq-turnstile"
+              data-sitekey={TURNSTILE_SITE_KEY}
+              data-action={TURNSTILE_ACTION}
+              data-refresh-expired="auto"
+            ></div>
+          )}
+
+          <p class="rfq__status" data-rfq-email-status role="alert" aria-live="assertive"></p>
+
+          <div class="rfq__send">
+            <button type="submit" class="btn btn-coral" data-rfq-email-submit>
+              {t('Send RFQ by email')}
+            </button>
+            <span>{t('or')}</span>
+            <button
+              type="button"
+              class="btn rfq__wa-send"
+              data-rfq-whatsapp
+              disabled={!whatsappDigits}
+            >
+              {t('Continue in WhatsApp')}
+            </button>
+          </div>
+          <p class="rfq__wa-note" data-rfq-whatsapp-note hidden aria-live="polite"></p>
+          <p class="rfq__privacy">
+            {t('WhatsApp opens a prefilled message. Your request is complete only after you press Send in WhatsApp.')}
+          </p>
+        </form>
+      </div>
+
+      <div class="rfq__success" data-rfq-success hidden>
+        <span class="rfq__successmark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6" /></svg>
+        </span>
+        <h3>{t('RFQ sent.')}</h3>
+        <p>
+          {t('We emailed you a confirmation. Reference:')}
+          <strong class="nums" data-rfq-reference></strong>
+        </p>
+        <button type="button" class="btn btn-outline" data-rfq-close>{t('Close')}</button>
+      </div>
+    </div>
+  </dialog>
+</div>
+
+<script>
+  import { initRfqCart } from '../../lib/rfqCart'
+
+  function initRfqWidget() {
+    initRfqCart()
+  }
+
+  initRfqWidget()
+  document.addEventListener('astro:page-load', initRfqWidget)
+</script>
+
+<style>
+  .rfq-fab {
+    position: fixed;
+    right: var(--space-5);
+    bottom: var(--space-5);
+    z-index: var(--z-floating, 40);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-3);
+  }
+  .rfq-fab__cart,
+  .rfq-fab__whatsapp {
+    border: 1px solid transparent;
+    box-shadow: var(--shadow-overlay);
+    transition:
+      transform var(--dur-base) var(--ease-standard),
+      background var(--dur-base) var(--ease-standard);
+  }
+  .rfq-fab__cart:active,
+  .rfq-fab__whatsapp:active {
+    transform: scale(0.97);
+  }
+  .rfq-fab__cart {
+    min-width: 112px;
+    height: 52px;
+    padding: 0 var(--space-4);
+    border-radius: var(--radius-pill);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    background: var(--color-navy);
+    color: var(--color-white);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .rfq-fab__cart:hover {
+    background: var(--color-navy-hover);
+    transform: translateY(-1px);
+  }
+  .rfq-fab__cart svg,
+  .rfq-fab__whatsapp svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .rfq-fab__count {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: var(--radius-pill);
+    display: grid;
+    place-items: center;
+    background: var(--color-coral);
+    color: var(--color-white);
+    font-size: var(--text-micro);
+  }
+  .rfq-fab__whatsapp {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--color-whatsapp);
+    color: var(--color-white);
+  }
+  .rfq-fab__whatsapp:hover {
+    background: var(--color-whatsapp-hover);
+    transform: translateY(-1px);
+  }
+  .rfq-fab__whatsapp svg {
+    width: 27px;
+    height: 27px;
+  }
+  .rfq-fab__whatsapp svg path:last-child {
+    fill: currentColor;
+    stroke: none;
+  }
+  .rfq {
+    margin: auto 0 auto auto;
+    width: min(620px, 100vw);
+    max-width: 620px;
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 0;
+    border: 0;
+    background: var(--color-canvas);
+    color: var(--color-ink-900);
+    box-shadow: -24px 0 56px rgba(14, 16, 19, 0.18);
+  }
+  .rfq::backdrop {
+    background: rgba(14, 16, 19, 0.52);
+  }
+  .rfq[open] {
+    animation: rfq-enter var(--dur-slow) var(--ease-standard);
+  }
+  @keyframes rfq-enter {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  .rfq__shell {
+    min-height: 100%;
+    padding: var(--space-6);
+    overflow-y: auto;
+  }
+  .rfq__head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: 0 0 var(--space-5);
+    border-bottom: 1px solid var(--color-ink-200);
+  }
+  .rfq__head h2 {
+    margin: var(--space-1) 0 0;
+  }
+  .rfq__close {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--color-ink-200);
+    border-radius: 50%;
+    background: var(--color-white);
+    color: var(--color-ink-700);
+    cursor: pointer;
+  }
+  .rfq__close:hover {
+    background: var(--color-ink-100);
+  }
+  .rfq__close svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+  }
+  .rfq__empty {
+    padding: var(--space-9) var(--space-4);
+    text-align: center;
+  }
+  .rfq__empty > svg {
+    width: 42px;
+    height: 42px;
+    fill: none;
+    stroke: var(--color-ink-400);
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .rfq__empty h3 {
+    margin: var(--space-4) 0 0;
+  }
+  .rfq__empty p {
+    max-width: 42ch;
+    margin: var(--space-2) auto 0;
+    color: var(--color-ink-600);
+  }
+  .rfq__empty .btn {
+    margin: var(--space-5) 0 0;
+  }
+  .rfq__summary {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4) 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+  .rfq__summary button,
+  .rfq__remove {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--color-coral);
+    font: inherit;
+    font-size: var(--text-body-s);
+    cursor: pointer;
+  }
+  .rfq__items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--color-ink-300);
+  }
+  :global(.rfq__item) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-4);
+    padding: var(--space-4) 0;
+    border-bottom: 1px solid var(--color-ink-200);
+  }
+  :global(.rfq__itemtitle) {
+    font-weight: 600;
+  }
+  :global(a.rfq__itemtitle:hover) {
+    color: var(--color-coral);
+  }
+  :global(.rfq__itemmeta) {
+    margin: var(--space-1) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  :global(.rfq__itemcontrols) {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-3);
+  }
+  :global(.rfq__qty) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    color: var(--color-ink-500);
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+  }
+  :global(.rfq__qty input) {
+    width: 72px;
+    height: 40px;
+    padding: 0 var(--space-2);
+    border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-sm);
+    background: var(--color-white);
+    font: inherit;
+  }
+  .rfq__form {
+    margin: var(--space-6) 0 0;
+    padding: var(--space-5);
+    background: var(--color-white);
+    border: 1px solid var(--color-ink-200);
+    border-radius: var(--radius-md);
+  }
+  .rfq__formhead h3 {
+    margin: 0;
+  }
+  .rfq__formhead p {
+    margin: var(--space-1) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+  .rfq__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+    margin: var(--space-5) 0 0;
+  }
+  .rfq__field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: var(--space-4) 0 0;
+    color: var(--color-ink-700);
+    font-size: var(--text-body-s);
+    font-style: normal;
+    font-weight: 500;
+  }
+  .rfq__grid .rfq__field {
+    margin: 0;
+  }
+  .rfq__field em {
+    color: var(--color-coral);
+    font-style: normal;
+  }
+  .rfq__field input,
+  .rfq__field textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: var(--space-3);
+    border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-sm);
+    background: var(--color-white);
+    color: var(--color-ink-900);
+    font: inherit;
+    font-weight: 400;
+  }
+  .rfq__field textarea {
+    resize: vertical;
+  }
+  .rfq__turnstile {
+    margin: var(--space-4) 0 0;
+  }
+  .rfq__status,
+  .rfq__wa-note {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-body-s);
+  }
+  .rfq__status[data-state='error'] {
+    color: var(--color-error);
+  }
+  .rfq__wa-note {
+    color: var(--color-success);
+  }
+  .rfq__send {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: var(--space-3);
+    align-items: center;
+    margin: var(--space-5) 0 0;
+  }
+  .rfq__send > span {
+    color: var(--color-ink-400);
+    font-size: var(--text-body-s);
+  }
+  .rfq__wa-send {
+    background: var(--color-whatsapp);
+    border-color: var(--color-whatsapp);
+    color: var(--color-white);
+  }
+  .rfq__wa-send:hover {
+    background: var(--color-whatsapp-hover);
+    border-color: var(--color-whatsapp-hover);
+  }
+  .rfq__wa-send:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .rfq__privacy {
+    margin: var(--space-3) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .rfq__success {
+    padding: var(--space-9) var(--space-4);
+    text-align: center;
+  }
+  .rfq__successmark {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: color-mix(in srgb, var(--color-success) 12%, transparent);
+    color: var(--color-success);
+  }
+  .rfq__successmark svg {
+    width: 30px;
+    height: 30px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .rfq__success h3 {
+    margin: var(--space-4) 0 0;
+  }
+  .rfq__success p {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600);
+  }
+  .rfq__success .btn {
+    margin: var(--space-5) 0 0;
+  }
+  .rfq__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  @media (max-width: 640px) {
+    .rfq-fab {
+      right: var(--space-4);
+      bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+    }
+    .rfq-fab__label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+    .rfq-fab__cart {
+      min-width: 52px;
+      width: 52px;
+      padding: 0;
+      border-radius: 50%;
+    }
+    .rfq-fab__count {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      min-width: 20px;
+      height: 20px;
+    }
+    .rfq {
+      width: 100vw;
+    }
+    .rfq__shell {
+      padding: var(--space-5) var(--space-4)
+        calc(var(--space-6) + env(safe-area-inset-bottom));
+    }
+    :global(.rfq__item) {
+      grid-template-columns: 1fr;
+    }
+    :global(.rfq__itemcontrols) {
+      justify-content: space-between;
+    }
+    .rfq__grid,
+    .rfq__send {
+      grid-template-columns: 1fr;
+    }
+    .rfq__send > span {
+      text-align: center;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rfq[open] {
+      animation: none;
+    }
+  }
+</style>

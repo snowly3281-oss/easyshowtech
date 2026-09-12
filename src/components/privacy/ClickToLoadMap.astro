@@ -1,0 +1,195 @@
+---
+import {resolveLocale, type Locale} from "../../i18n/config";
+import {staticUi} from "../../i18n/static";
+
+interface Props {
+  title: string;
+  embedUrl: string;
+  externalUrl: string;
+  locale?: Locale;
+}
+
+const { title, embedUrl, externalUrl, locale: explicitLocale } = Astro.props;
+const locale = resolveLocale(explicitLocale, Astro.url.pathname);
+const t = (english: string) => staticUi(locale, english);
+---
+
+<div class="privacy-map" data-privacy-map>
+  <div class="privacy-map__preview">
+    <div class="privacy-map__grid" aria-hidden="true"></div>
+    <div class="privacy-map__content">
+      <div class="privacy-map__pin" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 10c0 5.4-8 11-8 11S4 15.4 4 10a8 8 0 1 1 16 0Z"></path>
+          <circle cx="12" cy="10" r="2.5"></circle>
+        </svg>
+      </div>
+      <p class="eyebrow">{t("Suzhou office")}</p>
+      <h2>{title}</h2>
+      <p>
+        {t("The interactive map is provided by Google. It will load only after you choose to view it.")}
+      </p>
+      <div class="privacy-map__actions">
+        <button class="btn btn-coral" type="button" data-load-map>
+          {t("Load interactive map")}
+        </button>
+        <a
+          class="btn btn-link"
+          href={externalUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {t("Open in Google Maps")} <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </div>
+  </div>
+  <template data-map-template>
+    <iframe
+      class="privacy-map__frame"
+      title={title}
+      src={embedUrl}
+      loading="lazy"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen
+    ></iframe>
+  </template>
+</div>
+
+<script>
+  function initPrivacyMaps() {
+    document.querySelectorAll<HTMLElement>("[data-privacy-map]").forEach((map) => {
+      if (map.dataset.initialized === "true") return;
+      map.dataset.initialized = "true";
+
+      const button = map.querySelector<HTMLButtonElement>("[data-load-map]");
+      const template = map.querySelector<HTMLTemplateElement>("[data-map-template]");
+      if (!button || !template) return;
+
+      button.addEventListener(
+        "click",
+        () => {
+          map.replaceChildren(template.content.cloneNode(true));
+        },
+        { once: true },
+      );
+    });
+  }
+
+  initPrivacyMaps();
+  document.addEventListener("astro:page-load", initPrivacyMaps);
+</script>
+
+<style>
+  .privacy-map {
+    min-height: 460px;
+    background: var(--color-paper-2, #ece7dd);
+    border-block: 1px solid var(--color-line);
+  }
+
+  .privacy-map__preview {
+    position: relative;
+    min-height: 460px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    isolation: isolate;
+  }
+
+  .privacy-map__grid {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    opacity: 0.46;
+    background-image:
+      linear-gradient(to right, var(--color-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--color-line) 1px, transparent 1px);
+    background-size: 44px 44px;
+    transform: rotate(-4deg) scale(1.08);
+  }
+
+  .privacy-map__preview::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(
+      circle at center,
+      rgba(246, 242, 235, 0.66),
+      rgba(246, 242, 235, 0.96) 72%
+    );
+  }
+
+  .privacy-map__content {
+    width: min(620px, calc(100% - 2 * var(--space-5)));
+    padding: var(--space-7);
+    text-align: center;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--color-line);
+    box-shadow: var(--shadow-card);
+  }
+
+  .privacy-map__pin {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    margin: 0 auto var(--space-4);
+    color: var(--color-coral);
+    background: var(--color-white);
+    border: 1px solid var(--color-line);
+  }
+
+  .privacy-map__pin svg {
+    width: 25px;
+    height: 25px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .privacy-map__content h2 {
+    margin-top: var(--space-2);
+  }
+
+  .privacy-map__content p:not(.eyebrow) {
+    max-width: 52ch;
+    margin: var(--space-3) auto 0;
+    color: var(--color-muted);
+  }
+
+  .privacy-map__actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    margin-top: var(--space-5);
+  }
+
+  .privacy-map__frame {
+    display: block;
+    width: 100%;
+    min-height: 460px;
+    border: 0;
+  }
+
+  @media (max-width: 640px) {
+    .privacy-map,
+    .privacy-map__preview,
+    .privacy-map__frame {
+      min-height: 420px;
+    }
+
+    .privacy-map__content {
+      padding: var(--space-6) var(--space-5);
+    }
+
+    .privacy-map__actions {
+      align-items: stretch;
+      flex-direction: column;
+    }
+  }
+</style>

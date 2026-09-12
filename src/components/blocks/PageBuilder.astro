@@ -1,0 +1,27 @@
+---
+import type { SolutionBlock } from '../../sanity/content'
+import HeroBlock from './HeroBlock.astro'
+import CtaBlock from './CtaBlock.astro'
+import TextBlock from './TextBlock.astro'
+import FaqsBlock from './FaqsBlock.astro'
+
+interface Props {
+  blocks?: SolutionBlock[] | null
+}
+
+const { blocks } = Astro.props
+---
+
+{
+  (blocks ?? []).map((block) =>
+    block._type === 'heroBlock' ? (
+      <HeroBlock block={block} />
+    ) : block._type === 'ctaBlock' ? (
+      <CtaBlock block={block} />
+    ) : block._type === 'textBlock' ? (
+      <TextBlock block={block} />
+    ) : block._type === 'faqsBlock' ? (
+      <FaqsBlock block={block} />
+    ) : null
+  )
+}

@@ -1,0 +1,659 @@
+---
+import Icon from '../Icon.astro'
+import SolutionPackages from './SolutionPackages.astro'
+import AssistedConfiguration from './AssistedConfiguration.astro'
+import SolutionHero from './SolutionHero.astro'
+import { urlFor } from '../../sanity/image'
+import type {
+  FaqsBlockData,
+  HeroBlockData,
+  SolutionData,
+  TextBlockData,
+} from '../../sanity/content'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  solution: SolutionData
+  whatsapp: string
+  showPrices: boolean
+  locale?: Locale
+}
+
+const { solution, whatsapp, showPrices, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const blocks = solution.pageBuilder ?? []
+const hero = blocks.find((block) => block._type === 'heroBlock') as
+  | HeroBlockData
+  | undefined
+const editorial = blocks.find((block) => block._type === 'textBlock') as
+  | TextBlockData
+  | undefined
+const faq = blocks.find((block) => block._type === 'faqsBlock') as
+  | FaqsBlockData
+  | undefined
+const isBoutique = solution.slug === 'boutique-studio'
+
+const firstPackageImageAsset = solution.packages
+  ?.flatMap((pkg) => pkg?.items ?? [])
+  .find((item) => item?.product?.mainImage?.asset)?.product?.mainImage?.asset
+
+const heroImage = isBoutique
+  ? '/solutions/boutique-studio-hero.webp'
+  : firstPackageImageAsset
+    ? urlFor(firstPackageImageAsset).width(1400).height(900).fit('crop').auto('format').url()
+    : '/factory/home-realfactory-01.webp'
+
+const scenarioCopy: Record<
+  string,
+  {
+    eyebrow: string
+    heading: string
+    subheading: string
+    whyHeading: string
+    whyBody: string
+    cards: { icon: string; number: string; title: string; body: string; note: string }[]
+  }
+> = {
+  'boutique-studio': {
+    eyebrow: t('For boutique studios'),
+    heading: t('Build a boutique studio worth the waitlist.'),
+    subheading:
+      t('Studio-grade maple equipment, an approved starting configuration and a floor-plan review — so opening day feels considered, not improvised.'),
+    whyHeading: t('Built for the realities of a boutique floor'),
+    whyBody:
+      t('Every square metre has to earn its keep. The plan balances class capacity, comfortable circulation and a coherent premium finish.'),
+    cards: [
+      {
+        icon: 'award',
+        number: '01',
+        title: t('A finish clients notice'),
+        body: t('Matched maple frames and coordinated upholstery create the premium room your members expect.'),
+        note: t('Up to 16 pieces across the approved range'),
+      },
+      {
+        icon: 'layers',
+        number: '02',
+        title: t('Engineered for tight floors'),
+        body: t('Compact reformers, towers and practical clearances protect capacity without turning the room into a maze.'),
+        note: t('From 74 ㎡ / 800 sq ft'),
+      },
+      {
+        icon: 'clock',
+        number: '03',
+        title: t('Open on schedule'),
+        body: t('One equipment schedule, one factory contact and a realistic production window from sign-off to shipment.'),
+        note: t('Typical production: 4–6 weeks'),
+      },
+    ],
+  },
+}
+
+const defaultCopy = {
+  eyebrow: hero?.eyebrow || t('Complete equipment solution'),
+  heading: hero?.heading || solution.title || t('A complete Pilates solution'),
+  subheading:
+    hero?.subheading ||
+    solution.summary ||
+    t('Start with a proven equipment package, then adapt it to your room and operating model.'),
+  whyHeading: editorial?.heading || t('Built around the way your space operates'),
+  whyBody:
+    solution.summary ||
+    t('Coral combines equipment, layout review and factory-direct coordination in one practical fit-out process.'),
+  cards: [
+    {
+      icon: 'grid',
+      number: '01',
+      title: t('A proven starting point'),
+      body: t('Begin with the client-approved standard package instead of building a list from scratch.'),
+      note: t('Linked directly to product specifications'),
+    },
+    {
+      icon: 'layers',
+      number: '02',
+      title: t('Designed around the room'),
+      body: t('Area, class capacity and circulation are reviewed before quantities are finalised.'),
+      note: t('Floor-plan review included'),
+    },
+    {
+      icon: 'factory',
+      number: '03',
+      title: t('One accountable factory'),
+      body: t('Equipment, custom finishes, production and freight stay coordinated through one contact.'),
+      note: t('Factory-direct project support'),
+    },
+  ],
+}
+
+const copy = structuredClone(scenarioCopy[solution.slug ?? ''] ?? defaultCopy)
+// The Sanity hero/editorial fields are the translated source of truth. The
+// bespoke English scenario copy is only a design fallback for the root locale.
+if (locale !== 'en') {
+  copy.eyebrow = hero?.eyebrow || t(copy.eyebrow)
+  copy.heading = hero?.heading || solution.title || t(copy.heading)
+  copy.subheading = hero?.subheading || solution.summary || t(copy.subheading)
+  copy.whyHeading = editorial?.heading || t(copy.whyHeading)
+  copy.whyBody = solution.summary || t(copy.whyBody)
+  copy.cards = copy.cards.map((card) => ({
+    ...card,
+    title: t(card.title),
+    body: t(card.body),
+    note: t(card.note),
+  }))
+}
+const faqItems =
+  faq?.items?.length
+    ? faq.items
+    : [
+        {
+          _key: 'size',
+          question: t('How do I know which configuration fits my room?'),
+          answer:
+            t('Start with the published area range, then upload your floor plan. Coral reviews usable floor area, circulation, class size and instructor zones before confirming quantities.'),
+        },
+        {
+          _key: 'delivery',
+          question: t('How long does production and delivery take?'),
+          answer:
+            t('Standard production is typically four to six weeks after specification and deposit. Freight time depends on destination and delivery method.'),
+        },
+        {
+          _key: 'custom',
+          question: t('Can the wood, upholstery and logo be customised?'),
+          answer:
+            t('Yes. Finish, upholstery and branding can be coordinated across the package. Final options and any minimums are confirmed in the RFQ.'),
+        },
+      ]
+
+const proofs = [
+  t('Hand-finished maple'),
+  t('Contact-grade upholstery'),
+  t('Compact footprint'),
+  t('4–6 week production'),
+  t('5-year frame warranty'),
+]
+
+const terms = [
+  {
+    value: t('1 reformer'),
+    label: t('Start with a single machine or scale the full floor.'),
+    icon: 'grid',
+  },
+  {
+    value: t('4–6 weeks'),
+    label: t('Standard production after specification sign-off.'),
+    icon: 'clock',
+  },
+  {
+    value: t('5 years'),
+    label: t('Frame and structural warranty on the core range.'),
+    icon: 'shield',
+  },
+  {
+    value: '30% / 70%',
+    label: t('Deposit to begin production; balance before shipment.'),
+    icon: 'check',
+  },
+  {
+    value: t('Flat rate'),
+    label: t('Clear freight options quoted with your destination.'),
+    icon: 'factory',
+  },
+  {
+    value: t('Up to 25%'),
+    label: t('Volume pricing scales with quantity and repeat orders.'),
+    icon: 'users',
+  },
+]
+
+const process = [
+  ['01', t('Consult & spec'), t('Share your room, program and preferred finish.')],
+  ['02', t('Plan quote & deposit'), t('Receive the BOM, linked products and terms.')],
+  ['03', t('Production'), t('Your equipment enters the production schedule.')],
+  ['04', t('QC & shipping'), t('Inspection, packing and freight are coordinated.')],
+  ['05', t('Delivery & setup'), t('Receive setup guidance and direct after-sales support.')],
+]
+---
+
+<div class="solution">
+  <SolutionHero
+    copy={copy}
+    heroImage={heroImage}
+    isBoutique={isBoutique}
+    solutionTitle={solution.title}
+    proofs={proofs}
+    locale={locale}
+  />
+
+  <SolutionPackages solution={solution} whatsapp={whatsapp} showPrices={showPrices} locale={locale} />
+
+  <AssistedConfiguration
+    solutionTitle={solution.title ?? t('your project')}
+    solutionSlug={solution.slug ?? ''}
+    heading={solution.assistedConfiguration?.heading}
+    body={solution.assistedConfiguration?.body}
+    locale={locale}
+  />
+
+  {
+    isBoutique && (
+      <section class="section case-study">
+        <div class="container">
+          <div class="case-study__intro">
+            <div>
+              <p class="eyebrow">{t('Proof on the floor')}</p>
+              <h2>{t('From empty room to a fully-booked floor')}</h2>
+            </div>
+            <p>
+              {t('A practical layout starts with real dimensions, realistic aisle space and an equipment mix matched to the teaching plan.')}
+            </p>
+          </div>
+          <div class="case-study__story">
+            <img
+              src="/solutions/boutique-studio-case.webp"
+              alt={t('Completed boutique Pilates studio fit-out with maple reformers')}
+              width="1400"
+              height="933"
+              loading="lazy"
+            />
+            <blockquote>
+              <p class="eyebrow">{t('Layout story · independent studio')}</p>
+              <q>
+                {t('We expected to lose a station to fit the layout. The circulation review gave us a room that feels open and still protects class capacity.')}
+              </q>
+              <footer>
+                <strong>{t('Studio planning example')}</strong>
+                <span>{t('Configuration adapted from the approved package')}</span>
+              </footer>
+            </blockquote>
+          </div>
+          <dl class="case-study__stats">
+            <div><dt class="nums">74–186 ㎡</dt><dd>{t('approved area range')}</dd></div>
+            <div><dt class="nums">8–16</dt><dd>{t('equipment range')}</dd></div>
+            <div><dt class="nums">{t('4–6 weeks')}</dt><dd>{t('typical production')}</dd></div>
+            <div><dt class="nums">{t('5 years')}</dt><dd>{t('frame warranty')}</dd></div>
+          </dl>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="section terms">
+    <div class="container">
+      <div class="terms__intro">
+        <div>
+          <p class="eyebrow">{t('How we work')}</p>
+          <h2>{t('Straightforward terms, built for studio budgets')}</h2>
+        </div>
+        <p>
+          {t('No hidden freight, surprise lead times or vague hand-offs. Your quote separates equipment, customisation and logistics so each decision stays visible.')}
+        </p>
+      </div>
+      <div class="terms__grid">
+        {terms.map((term) => (
+          <article>
+            <span><Icon name={term.icon} size={18} /></span>
+            <strong class="nums">{term.value}</strong>
+            <p>{term.label}</p>
+          </article>
+        ))}
+      </div>
+      <div class="terms__cta">
+        <div>
+          <p class="eyebrow">{t('Planning more than one location?')}</p>
+          <h3>{t('Outfitting more than one location?')}</h3>
+          <p>{t('Ask for a rollout schedule, standard equipment spec and consolidated freight plan.')}</p>
+        </div>
+        <a class="btn btn-coral" href={localizedPath('/contact', locale)}>{t('Request a quote')}</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section process">
+    <div class="container">
+      <div class="process__intro">
+        <p class="eyebrow">{t('Process')}</p>
+        <h2>{t('A 60-day process. Five steps.')}</h2>
+        <p>{t('From first inquiry to installed equipment — one clear path and one accountable contact.')}</p>
+      </div>
+      <ol>
+        {process.map(([number, title, body]) => (
+          <li>
+            <span class="nums">{number}</span>
+            <strong>{title}</strong>
+            <p>{body}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section solution-faq">
+    <div class="container measure">
+      <div class="solution-faq__intro">
+        <p class="eyebrow">{t('FAQ')}</p>
+        <h2>{faq?.heading ?? t('The questions buyers ask before committing')}</h2>
+      </div>
+      <div class="solution-faq__list">
+        {faqItems.map((item, index) => (
+          <details open={index === 0}>
+            <summary>
+              {item.question}
+              <span aria-hidden="true">+</span>
+            </summary>
+            <p>{item.answer}</p>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section closing">
+    <div class="container closing__inner">
+      <p class="eyebrow">{t('Get started')}</p>
+      <h2>{t('Tell us about your {project}.').replace('{project}', solution.title?.toLowerCase() ?? t('project'))}</h2>
+      <p>
+        {t('Send the room plan — or just your dimensions — and a real person will return with a practical next step.')}
+      </p>
+      <div>
+        <a class="btn btn-coral" href="#floor-plan">{t('Request a configuration')}</a>
+        <a class="btn btn-outline" href={localizedPath('/contact', locale)}>{t('Schedule a factory visit')}</a>
+      </div>
+    </div>
+  </section>
+</div>
+
+<style>
+  .solution {
+    overflow: clip;
+  }
+  .case-study__intro,
+  .terms__intro {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: var(--space-8);
+    align-items: end;
+  }
+  .case-study__intro h2,
+  .terms__intro h2 {
+    max-width: 17ch;
+    margin: var(--space-2) 0 0;
+  }
+  .case-study__intro > p,
+  .terms__intro > p {
+    max-width: 58ch;
+    margin: 0;
+    color: var(--color-ink-600);
+  }
+  .terms__grid article > span {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    background: var(--color-coral-tint);
+    color: var(--color-coral);
+  }
+  .case-study {
+    background: var(--color-paper-2);
+  }
+  .case-study__story {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    margin: var(--space-7) 0 0;
+    border: 1px solid rgba(14, 16, 19, 0.1);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--color-white);
+  }
+  .case-study__story img {
+    width: 100%;
+    min-height: 420px;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
+  .case-study__story blockquote {
+    margin: 0;
+    padding: var(--space-7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .case-study__story q {
+    margin: var(--space-4) 0 0;
+    color: var(--color-ink-900);
+    font-size: clamp(24px, 2.2vw, 36px);
+    font-weight: 650;
+    letter-spacing: var(--tracking-tight);
+    line-height: var(--lh-snug);
+  }
+  .case-study__story footer {
+    margin: var(--space-6) 0 0;
+    padding: var(--space-4) 0 0;
+    border-top: 1px solid var(--color-ink-200);
+  }
+  .case-study__story footer strong,
+  .case-study__story footer span {
+    display: block;
+  }
+  .case-study__story footer span {
+    margin: var(--space-1) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .case-study__stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    margin: var(--space-4) 0 0;
+    padding: var(--space-5);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+  }
+  .case-study__stats div {
+    text-align: center;
+    border-right: 1px solid var(--color-ink-200);
+  }
+  .case-study__stats div:last-child {
+    border-right: 0;
+  }
+  .case-study__stats dt {
+    font-size: var(--text-h3);
+    font-weight: 700;
+  }
+  .case-study__stats dd {
+    margin: var(--space-1) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .terms {
+    background: var(--color-canvas);
+  }
+  .terms__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+    margin: var(--space-7) 0 0;
+  }
+  .terms__grid article {
+    min-height: 180px;
+    padding: var(--space-5);
+    border: 1px solid var(--color-ink-200);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+  }
+  .terms__grid strong {
+    display: block;
+    margin: var(--space-5) 0 0;
+    font-size: var(--text-h3);
+  }
+  .terms__grid p {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+  .terms__cta {
+    margin: var(--space-5) 0 0;
+    padding: var(--space-5);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-6);
+    background: var(--color-navy);
+    color: var(--color-white);
+  }
+  .terms__cta h3 {
+    margin: var(--space-2) 0 0;
+  }
+  .terms__cta > div > p:last-child {
+    margin: var(--space-2) 0 0;
+    color: rgba(255, 255, 255, 0.64);
+  }
+  .terms__cta .eyebrow {
+    color: var(--color-coral-border);
+  }
+  .process {
+    background: var(--color-paper-2);
+  }
+  .process__intro {
+    max-width: 680px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .process__intro h2 {
+    margin: var(--space-2) 0 0;
+  }
+  .process__intro > p:last-child {
+    margin: var(--space-3) 0 0;
+    color: var(--color-ink-600);
+  }
+  .process ol {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--space-4);
+    margin: var(--space-8) 0 0;
+    padding: 0;
+  }
+  .process li {
+    position: relative;
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-ink-300);
+  }
+  .process li::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 0;
+    width: 7px;
+    height: 7px;
+    background: var(--color-coral);
+  }
+  .process li > span {
+    display: block;
+    color: var(--color-coral);
+    font-size: var(--text-micro);
+  }
+  .process li strong {
+    display: block;
+    margin: var(--space-2) 0 0;
+  }
+  .process li p {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .solution-faq {
+    background: var(--color-canvas);
+  }
+  .solution-faq__intro {
+    text-align: center;
+  }
+  .solution-faq__intro h2 {
+    margin: var(--space-2) 0 0;
+  }
+  .solution-faq__list {
+    margin: var(--space-7) 0 0;
+    border-top: 1px solid var(--color-ink-300);
+  }
+  .solution-faq details {
+    border-bottom: 1px solid var(--color-ink-300);
+  }
+  .solution-faq summary {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4) 0;
+    cursor: pointer;
+    font-weight: 600;
+    list-style: none;
+  }
+  .solution-faq summary::-webkit-details-marker {
+    display: none;
+  }
+  .solution-faq summary span {
+    color: var(--color-coral);
+    font-size: var(--text-h4);
+    transition: transform var(--dur-base) var(--ease-standard);
+  }
+  .solution-faq details[open] summary span {
+    transform: rotate(45deg);
+  }
+  .solution-faq details > p {
+    max-width: 76ch;
+    margin: 0;
+    padding: 0 0 var(--space-5);
+    color: var(--color-ink-600);
+  }
+  .closing {
+    background: var(--color-paper-2);
+  }
+  .closing__inner {
+    max-width: 760px;
+    text-align: center;
+  }
+  .closing__inner h2 {
+    margin: var(--space-2) 0 0;
+  }
+  .closing__inner > p:not(.eyebrow) {
+    margin: var(--space-3) auto 0;
+    color: var(--color-ink-600);
+  }
+  .closing__inner > div {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin: var(--space-5) 0 0;
+  }
+  @media (max-width: 767px) {
+    .case-study__intro,
+    .terms__intro,
+    .case-study__story {
+      grid-template-columns: 1fr;
+    }
+    .terms__grid {
+      grid-template-columns: 1fr;
+    }
+    .case-study__story blockquote {
+      padding: var(--space-5);
+    }
+    .case-study__story img {
+      min-height: 280px;
+    }
+    .case-study__stats {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-5) 0;
+    }
+    .case-study__stats div:nth-child(2) {
+      border-right: 0;
+    }
+    .terms__cta {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    .process ol {
+      grid-template-columns: 1fr;
+      gap: var(--space-5);
+    }
+  }
+</style>

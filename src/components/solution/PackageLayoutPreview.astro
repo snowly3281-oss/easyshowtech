@@ -1,0 +1,307 @@
+---
+import type { Locale } from '../../i18n/config'
+import { staticUi } from '../../i18n/static'
+
+interface Props {
+  areaMetric?: string | null
+  locale?: Locale
+  seriesTitle?: string | null
+  items?: Array<{
+    product?: { title?: string | null; sku?: string | null } | null
+    customName?: string | null
+    quantity?: number | null
+  }>
+}
+
+const { areaMetric, locale = 'en', seriesTitle, items = [] } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const visibleItems = items.filter((item) => item?.product?.title || item?.customName)
+const itemName = (item: (typeof visibleItems)[number]) =>
+  item.product?.title || item.customName || t('Equipment')
+const quantityFor = (item: (typeof visibleItems)[number]) => Math.max(1, item.quantity ?? 1)
+const isReformer = (item: (typeof visibleItems)[number]) => /reformer/i.test(itemName(item))
+const isTower = (item: (typeof visibleItems)[number]) => /tower|cadillac/i.test(itemName(item))
+const reformerItems = visibleItems.filter(isReformer)
+const towerItems = visibleItems.filter(isTower)
+const accessoryItems = visibleItems.filter((item) => !isReformer(item) && !isTower(item))
+const reformerCount = reformerItems.reduce((total, item) => total + quantityFor(item), 0)
+const towerCount = towerItems.reduce((total, item) => total + quantityFor(item), 0)
+// The drawing is intentionally illustrative, so do not repeat a package-wide
+// quantity on every physical placeholder. Exact model/quantity information is
+// shown in the changing equipment key below the drawing.
+const reformerLabel = t('Reformer')
+const towerLabel = t('Tower')
+const accessoryLabel = (index: number) => {
+  const item = accessoryItems[index]
+  return item ? `${itemName(item)} × ${quantityFor(item)}` : t('Accessory')
+}
+---
+
+<aside class="package__layout" aria-label={t('Illustrative studio layout')}>
+  <div class="package__layout-head">
+    <div>
+      <p>{t('Illustrative layout')}</p>
+      <strong>{areaMetric || t('Sized to your plan')}</strong>
+      {seriesTitle && <small>{seriesTitle}</small>}
+    </div>
+    <span>{t('Not to scale')}</span>
+  </div>
+  <div class="floor-plan" aria-hidden="true">
+    <span class="floor-plan__door"></span>
+    <span class="floor-plan__desk">{t('ENTRY')}</span>
+    <span class="floor-plan__reformer floor-plan__reformer--1">{reformerLabel}</span>
+    <span class="floor-plan__reformer floor-plan__reformer--2">{reformerLabel}</span>
+    <span class="floor-plan__reformer floor-plan__reformer--3">{reformerLabel}</span>
+    <span class="floor-plan__reformer floor-plan__reformer--4">{reformerLabel}</span>
+    <span class="floor-plan__tower">{towerLabel}</span>
+    <span class="floor-plan__accessory floor-plan__accessory--1">{accessoryLabel(0)}</span>
+    <span class="floor-plan__accessory floor-plan__accessory--2">{accessoryLabel(1)}</span>
+    <span class="floor-plan__aisle">{t('CLEAR TEACHING AISLE')}</span>
+  </div>
+  <div class="package__legend">
+    <span><i class="legend-reformer"></i>{t('Reformer zone')}</span>
+    <span><i class="legend-tower"></i>{t('Tower zone')}</span>
+    <span><i class="legend-clear"></i>{t('Circulation')}</span>
+  </div>
+  {
+    visibleItems.length > 0 && (
+      <div class="package__layout-key">
+        <p>{t('Selected equipment')}</p>
+        <ul>
+          {visibleItems.map((item) => (
+            <li>
+              <span class="nums">× {quantityFor(item)}</span>
+              <strong>{itemName(item)}</strong>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+  <p class="package__layout-note">
+    {t('This preview explains the planning logic. Upload the real room to receive dimensions, placement and confirmed quantities.')}
+  </p>
+</aside>
+
+<style>
+  .package__layout {
+    min-width: 0;
+    padding: var(--space-6);
+    background: var(--color-ink-050);
+  }
+  .package__layout-head {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+    align-items: flex-start;
+  }
+  .package__layout-head p {
+    margin: 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-micro);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+  .package__layout-head strong {
+    display: block;
+    margin: var(--space-1) 0 0;
+  }
+  .package__layout-head small {
+    display: block;
+    margin: var(--space-1) 0 0;
+    color: var(--color-coral);
+    font-size: var(--text-caption);
+    font-weight: 600;
+  }
+  .package__layout-head > span {
+    color: var(--color-ink-400);
+    font-size: var(--text-caption);
+  }
+  .floor-plan {
+    position: relative;
+    min-height: 420px;
+    margin: var(--space-5) 0 0;
+    overflow: hidden;
+    border: 1px solid var(--color-ink-300);
+    background-color: var(--color-white);
+    background-image:
+      linear-gradient(var(--color-ink-150) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-ink-150) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .floor-plan span {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--color-ink-400);
+    background: var(--color-white);
+    color: var(--color-ink-500);
+    font-size: 9px;
+    font-weight: 650;
+    letter-spacing: var(--tracking-wide);
+  }
+  .floor-plan__door {
+    left: -1px;
+    bottom: 24px;
+    width: 58px;
+    height: 64px;
+    border-left-color: transparent !important;
+    border-bottom-color: transparent !important;
+    border-radius: 0 64px 0 0;
+    background: transparent !important;
+  }
+  .floor-plan__desk {
+    left: 14%;
+    bottom: 10%;
+    width: 27%;
+    height: 11%;
+  }
+  .floor-plan__reformer {
+    width: 30%;
+    height: 12%;
+    border-color: color-mix(in srgb, var(--color-coral) 35%, var(--color-ink-300)) !important;
+    background: var(--color-coral-tint) !important;
+    padding: var(--space-1);
+    text-align: center;
+  }
+  .floor-plan__reformer::after {
+    display: none;
+  }
+  .floor-plan__reformer--1 {
+    top: 12%;
+    left: 8%;
+  }
+  .floor-plan__reformer--2 {
+    top: 12%;
+    right: 8%;
+  }
+  .floor-plan__reformer--3 {
+    top: 38%;
+    left: 8%;
+  }
+  .floor-plan__reformer--4 {
+    top: 38%;
+    right: 8%;
+  }
+  .floor-plan__tower {
+    right: 8%;
+    bottom: 9%;
+    width: 30%;
+    height: 17%;
+    border-color: var(--color-navy) !important;
+    background: color-mix(in srgb, var(--color-navy) 10%, white) !important;
+    padding: var(--space-1);
+    text-align: center;
+  }
+  .floor-plan__accessory {
+    width: 11%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    padding: 2px;
+    text-align: center;
+    overflow: hidden;
+    line-height: 1.15;
+  }
+  .floor-plan__accessory--1 {
+    right: 43%;
+    bottom: 10%;
+  }
+  .floor-plan__accessory--2 {
+    right: 43%;
+    bottom: 24%;
+  }
+  .floor-plan__aisle {
+    top: 30%;
+    left: 41%;
+    width: 18%;
+    height: 6%;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--color-ink-400) !important;
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+  }
+  .package__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin: var(--space-4) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .package__legend span {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+  .package__legend i {
+    width: 10px;
+    height: 10px;
+    display: inline-block;
+    border: 1px solid var(--color-ink-300);
+  }
+  .legend-reformer {
+    background: var(--color-coral-tint);
+  }
+  .legend-tower {
+    background: color-mix(in srgb, var(--color-navy) 10%, white);
+  }
+  .legend-clear {
+    background: var(--color-white);
+  }
+  .package__layout-note {
+    margin: var(--space-4) 0 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+  .package__layout-key {
+    margin: var(--space-4) 0 0;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--color-ink-200);
+  }
+  .package__layout-key p {
+    margin: 0;
+    color: var(--color-ink-500);
+    font-size: var(--text-micro);
+    font-weight: 600;
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+  }
+  .package__layout-key ul {
+    display: grid;
+    gap: var(--space-1);
+    list-style: none;
+    margin: var(--space-2) 0 0;
+    padding: 0;
+  }
+  .package__layout-key li {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    color: var(--color-ink-600);
+    font-size: var(--text-caption);
+  }
+  .package__layout-key li span {
+    color: var(--color-coral);
+    font-weight: 650;
+  }
+  .package__layout-key li strong {
+    color: var(--color-ink-700);
+    font-weight: 600;
+  }
+
+  @media (max-width: 1023px) {
+    .floor-plan {
+      min-height: 360px;
+    }
+  }
+  @media (max-width: 767px) {
+    .package__layout {
+      padding: var(--space-4);
+    }
+    .floor-plan {
+      min-height: 320px;
+    }
+  }
+</style>

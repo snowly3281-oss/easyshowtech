@@ -1,0 +1,34 @@
+name: Lockfile compatibility
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  npm-10-lockfile:
+    name: Node 22 / npm 10 clean install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Show pinned runtime
+        run: |
+          node --version
+          npm --version
+
+      # Mirrors Cloudflare Workers Builds. It fails before deployment if a
+      # newer local npm has written an incompatible package-lock.json.
+      - name: Verify deterministic clean install
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Verify lockfile with the exact npm version
+        run: npm run lock:check

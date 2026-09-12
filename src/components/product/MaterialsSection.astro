@@ -1,0 +1,112 @@
+---
+import type { ProductVariant } from '../../sanity/content'
+import type {Locale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  variants?: ProductVariant[] | null
+  locale?: Locale
+}
+
+const { variants, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const items = variants ?? []
+---
+
+{
+  items.length > 0 && (
+    <section class="section">
+      <div class="container">
+        <p class="eyebrow">{t('Materials & construction')}</p>
+        <div class="mat__head">
+          <h2 class="mat__title">{t('Cut, joined and finished by hand.')}</h2>
+          <p class="body-l mat__intro">
+            {t('Each frame is milled from kiln-dried hardwood, mortise-and-tenon joined, then hand-sanded through five grits and sealed with a low-VOC matte finish. Choose the species that fits your studio.')}
+          </p>
+        </div>
+        <ul class="mat__grid">
+          {items.map((v) => (
+            <li class="mat__card">
+              <span class="mat__swatch" style={v.swatchColor ? `background:${v.swatchColor}` : undefined} />
+              <div class="mat__body">
+                <p class="mat__name">
+                  {v.name}
+                  {v.isDefault && <span class="mat__badge">{t('Default')}</span>}
+                </p>
+                {v.description && <p class="mat__desc">{v.description}</p>}
+                <p class="mat__meta">{[v.janka, v.finish].filter(Boolean).join(' · ')}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .mat__head {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6);
+    align-items: end;
+    margin: var(--space-3) 0 var(--space-6);
+  }
+  .mat__title {
+    margin: 0;
+    max-width: 14ch;
+  }
+  .mat__intro {
+    margin: 0;
+    color: var(--color-ink-600, #555);
+  }
+  .mat__grid {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5);
+  }
+  .mat__swatch {
+    display: block;
+    height: 120px;
+    border-radius: var(--radius-md, 6px);
+    background: var(--color-paper-2, #ece7dd);
+  }
+  .mat__body {
+    padding: var(--space-3) 0 0;
+  }
+  .mat__name {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .mat__badge {
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-coral);
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 1px 8px;
+  }
+  .mat__desc {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600, #555);
+    font-size: var(--text-body-s);
+  }
+  .mat__meta {
+    margin: var(--space-2) 0 0;
+    font-size: var(--text-caption);
+    color: var(--color-ink-400, #9a948a);
+  }
+  @media (max-width: 767px) {
+    .mat__head,
+    .mat__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

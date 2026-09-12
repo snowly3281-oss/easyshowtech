@@ -1,0 +1,23 @@
+---
+import type { TextBlockData } from '../../sanity/content'
+import PortableText from '../PortableText.astro'
+
+interface Props {
+  block: TextBlockData
+}
+
+const { block } = Astro.props
+---
+
+<section class="section">
+  <div class="container measure">
+    {block.heading && <h2 class="text-block__heading">{block.heading}</h2>}
+    <PortableText value={block.body} />
+  </div>
+</section>
+
+<style>
+  .text-block__heading {
+    margin: 0 0 var(--space-2);
+  }
+</style>

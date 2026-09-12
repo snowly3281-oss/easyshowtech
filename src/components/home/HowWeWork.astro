@@ -1,0 +1,135 @@
+---
+import type { HomeData } from '../../sanity/content'
+import MediaBox from '../product/MediaBox.astro'
+import { resolveHref } from '../../sanity/links'
+import {localizedPath, resolveLocale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  data?: HomeData['howWeWork']
+}
+
+const { data } = Astro.props
+const locale = resolveLocale(undefined, Astro.url.pathname)
+const t = (english: string) => staticUi(locale, english)
+const cards = data?.cards ?? []
+// Fixed-route CTAs (stable site nav), matched to the two card kinds by order.
+const cardLinks = [
+  { label: t('Browse the catalog'), href: '/products' },
+  { label: t('See the OEM process'), href: '/oem-services' },
+]
+// Local stand-in photos until studio / OEM photography is uploaded to Sanity.
+const cardImages = ['/factory/home-realfactory-01.webp', '/factory/home-realfactory-02.webp']
+---
+
+{
+  data && (
+    <section class="section">
+      <div class="container hww">
+        <div class="hww__head">
+          {data.heading && <h2 class="hww__title">{data.heading}</h2>}
+          {data.intro && <p class="body-l hww__intro">{data.intro}</p>}
+        </div>
+        <div class="hww__cards">
+          {cards.map((card, i) => {
+            const ctaHref = resolveHref(card.cta?.internal, card.cta?.external) ?? cardLinks[i]?.href
+            const ctaLabel = card.cta?.label ?? cardLinks[i]?.label
+            return (
+              <article class="hww__card">
+                <MediaBox
+                  source={card.image}
+                  alt={card.image?.alt ?? card.title}
+                  ratio="16 / 9"
+                  width={760}
+                  fallback={cardImages[i]}
+                />
+                <div class="hww__body">
+                  {card.eyebrow && <p class="eyebrow">{card.eyebrow}</p>}
+                  {card.title && <h3 class="hww__cardtitle">{card.title}</h3>}
+                  {card.body && <p class="hww__desc">{card.body}</p>}
+                  <dl class="hww__terms">
+                    {(card.terms ?? []).map((t) => (
+                      <div class="hww__term">
+                        <dt>{t.label}</dt>
+                        <dd class="nums">{t.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                  {ctaHref && ctaLabel && (
+                    <a class="btn btn-link hww__cta" href={ctaHref.startsWith('/') ? localizedPath(ctaHref, locale) : ctaHref}>
+                      {ctaLabel} <span aria-hidden="true">→</span>
+                    </a>
+                  )}
+                </div>
+              </article>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .hww__head {
+    text-align: center;
+    max-width: 52ch;
+    margin: 0 auto;
+  }
+  .hww__title {
+    margin: 0;
+  }
+  .hww__intro {
+    margin: var(--space-3) 0 0;
+    color: var(--color-ink-600, #555);
+  }
+  .hww__cards {
+    margin: var(--space-7) 0 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5);
+  }
+  .hww__card {
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .hww__body {
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .hww__cardtitle {
+    margin: var(--space-2) 0 0;
+  }
+  .hww__desc {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600, #555);
+  }
+  .hww__terms {
+    margin: var(--space-4) 0 0;
+    border-top: 1px solid var(--color-ink-100, #efeae0);
+  }
+  .hww__term {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--color-ink-100, #efeae0);
+  }
+  .hww__term dt {
+    color: var(--color-ink-600, #555);
+  }
+  .hww__cta {
+    align-self: flex-start;
+    margin-top: auto;
+    padding-top: var(--space-4);
+  }
+  @media (max-width: 767px) {
+    .hww__cards {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

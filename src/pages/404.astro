@@ -1,0 +1,155 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Icon from "../components/Icon.astro";
+import {localizedPath, resolveLocale} from "../i18n/config";
+import {staticUi} from "../i18n/static";
+const locale = resolveLocale(Astro.props.locale, Astro.url.pathname);
+const t = (english: string) => staticUi(locale, english);
+
+// Popular destinations shown after an invalid route.
+const destinations = [
+  { icon: "grid", title: t("Products"), body: t("Browse the full range by series and equipment type."), href: "/products" },
+  { icon: "shield", title: t("OEM services"), body: t("Private-label the line under your own brand, in writing."), href: "/oem-services" },
+  { icon: "factory", title: t("Our factory"), body: t("See where it's built — visits and audits welcome."), href: "/factory" },
+  { icon: "book", title: t("Resources"), body: t("Buyer guides for studio owners and facility managers."), href: "/resources" },
+];
+---
+<BaseLayout locale={locale} title={t("Page not found — Coral Pilates")} noIndex={true}>
+  <!-- Hero -->
+  <section class="section hero">
+    <div class="container hero-inner">
+      <span class="eyebrow">{t("Error")} · 404</span>
+      <h1 class="mt-3">{t("This page isn't on the floor.")}</h1>
+      <p class="body-l text-ink-600 mt-4 hero-copy">
+        {t("The link may be broken, or the page may have moved. Everything we actually build is still a click away — here's where to go next.")}
+      </p>
+      <div class="actions mt-6">
+        <a href={localizedPath("/products", locale)} class="btn btn-coral">{t("Browse the catalog")}</a>
+        <a href={localizedPath("/", locale)} class="btn btn-outline">{t("Back to home")}</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Popular destinations -->
+  <section class="section ground-2">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">{t("Popular destinations")}</span>
+        <h2 class="mt-2">{t("Where most buyers are headed.")}</h2>
+      </div>
+      <ul class="card-grid">
+        {destinations.map((d) => (
+          <li class="link-card">
+            <span class="link-card-icon"><Icon name={d.icon} size={22} /></span>
+            <h3 class="mt-4">{d.title}</h3>
+            <p class="body-s text-ink-600 mt-2">{d.body}</p>
+            <a href={localizedPath(d.href, locale)} class="btn-link card-link">{t("Go")} <Icon name="arrow" size={16} /></a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- Navy "let's talk" CTA band -->
+  <section class="section bg-navy cta">
+    <div class="container cta-inner">
+      <span class="eyebrow">{t("Let's talk")}</span>
+      <h2 class="cta-title mt-2">{t("Can't find what you're looking for?")}</h2>
+      <p class="body-l cta-sub mt-3">
+        {t("Tell us what you're equipping — a real person will point you to the right product, spec sheet, or quote. Usually within one business day.")}
+      </p>
+      <div class="actions mt-6">
+        <a href={localizedPath("/contact", locale)} class="btn btn-coral">{t("Get a quote")}</a>
+        <a href={localizedPath("/contact", locale)} class="btn btn-ghost">{t("Contact us")}</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Layout only — colours/type/spacing come from global.css tokens. */
+
+  /* Alternate warm ground. NB: the `bg-paper-2` utility does not generate in
+     this Tailwind v4 setup, so we apply the design token directly. The token's
+     value is given as a fallback because the var is tree-shaken when no
+     generated utility references it. */
+  .ground-2 {
+    background: var(--color-paper-2, #ece7dd);
+  }
+  .hero-inner,
+  .section-head,
+  .cta-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .hero-copy {
+    max-width: 560px;
+  }
+  .section-head {
+    max-width: 640px;
+    margin-inline: auto;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-3);
+  }
+
+  /* Card grid (shared shape with the thank-you page) */
+  .card-grid {
+    list-style: none;
+    /* top gap below the section header — set here (not via an `mt-*` utility)
+       because this scoped rule out-specifies utilities and would reset it. */
+    margin: var(--space-7) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-5);
+  }
+  .link-card {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-6);
+    background: var(--color-white);
+    border: 1px solid var(--color-ink-200);
+    border-radius: var(--radius-md);
+  }
+  .link-card-icon {
+    display: inline-flex;
+    color: var(--color-ink-700);
+  }
+  .link-card h3 {
+    color: var(--color-ink-900);
+  }
+  .card-link {
+    margin-top: auto;
+    padding-top: var(--space-4);
+  }
+
+  /* Navy band */
+  .cta-inner {
+    max-width: 620px;
+    margin-inline: auto;
+  }
+  .cta-title {
+    color: var(--color-white);
+  }
+  .cta-sub {
+    max-width: 520px;
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  @media (max-width: 1023px) {
+    .card-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 559px) {
+    .card-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

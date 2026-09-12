@@ -1,0 +1,168 @@
+---
+import type { HomeData } from '../../sanity/content'
+import { urlFor } from '../../sanity/image'
+import {localizedPath, resolveLocale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  hero?: HomeData['hero']
+  /** The exact image preloaded by BaseLayout, kept in sync with the video poster. */
+  poster?: string | null
+  catalogStats?: {
+    publishedProducts?: number | null
+    publishedSeries?: number | null
+  } | null
+}
+
+const { hero, poster: preloadedPoster, catalogStats } = Astro.props
+const locale = resolveLocale(undefined, Astro.url.pathname)
+const t = (english: string) => staticUi(locale, english)
+const bgAsset = hero?.image?.asset
+const bg = bgAsset ? urlFor(bgAsset).width(2200).auto('format').url() : null
+const videoUrl = hero?.videoUrl ?? null
+const videoType = hero?.videoType ?? 'video/webm'
+const poster =
+  preloadedPoster ??
+  bg ??
+  (videoUrl ? '/images/home-hero-poster.webp' : null)
+const stats = (hero?.stats ?? []).map((stat) => {
+  const label = stat.label?.toLowerCase() ?? ''
+  if (
+    catalogStats?.publishedSeries != null &&
+    (stat._key === 's2' || label.includes('product series'))
+  ) {
+    return {...stat, value: String(catalogStats.publishedSeries)}
+  }
+  if (
+    catalogStats?.publishedProducts != null &&
+    (stat._key === 's3' || label.includes('sku'))
+  ) {
+    return {...stat, value: String(catalogStats.publishedProducts)}
+  }
+  return stat
+})
+const hasMedia = Boolean(videoUrl || poster)
+---
+
+{
+  hero && (
+    <section class:list={['band', 'hero', { 'hero--media': hasMedia }]} style={poster ? `--hero-bg:url('${poster}')` : undefined}>
+      {videoUrl && (
+        <video
+          class="hero__video"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="auto"
+          poster={poster ?? undefined}
+        >
+          <source src={videoUrl} type={videoType} />
+        </video>
+      )}
+      {hasMedia && <div class="hero__overlay" aria-hidden="true" />}
+      <div class="container hero__inner">
+        {hero.eyebrow && <p class="eyebrow hero__eyebrow">{hero.eyebrow}</p>}
+        {hero.heading && <h1 class="home-display hero__heading">{hero.heading}</h1>}
+        {hero.subheading && <p class="body-l hero__sub">{hero.subheading}</p>}
+        <div class="hero__ctas">
+          <a class="btn btn-coral" href={localizedPath('/contact', locale)}>{t('Request a quote')}</a>
+          <a class="btn hero__browse" href={localizedPath('/products', locale)}>{t('Browse products')}</a>
+        </div>
+        {stats.length > 0 && (
+          <dl class="hero__stats nums">
+            {stats.map((s) => (
+              <div class="hero__stat">
+                <dt class="hero__statnum">{s.value}</dt>
+                <dd class="hero__statlabel">{s.label}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding-block: var(--space-10);
+    background: var(--color-ink-900, #0e1013);
+    color: #fff;
+  }
+  /* Image-only fallback (no video): the poster image is the section background. */
+  .hero--media {
+    background-image: var(--hero-bg);
+    background-size: cover;
+    background-position: center;
+  }
+  /* Looping muted background video — covers the section, sits behind the scrim. */
+  .hero__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    pointer-events: none;
+  }
+  /* Dark scrim keeps the white hero copy legible over the media. */
+  .hero__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: rgba(14, 16, 19, 0.62);
+  }
+  .hero__inner {
+    position: relative;
+    z-index: 2;
+  }
+  .hero__eyebrow {
+    color: #fff;
+    opacity: 0.85;
+  }
+  .hero__heading {
+    margin: var(--space-3) 0 0;
+    max-width: 18ch;
+  }
+  .hero__sub {
+    margin: var(--space-4) 0 0;
+    max-width: 46ch;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .hero__ctas {
+    margin: var(--space-6) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+  .hero__browse {
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: #fff;
+    background: transparent;
+  }
+  .hero__browse:hover {
+    border-color: #fff;
+  }
+  .hero__stats {
+    margin: var(--space-9) 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-8);
+  }
+  .hero__statnum {
+    font-size: var(--text-h1);
+    font-weight: 600;
+    line-height: 1;
+  }
+  .hero__statlabel {
+    margin: var(--space-2) 0 0;
+    font-size: var(--text-body-s);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: rgba(255, 255, 255, 0.6);
+  }
+</style>

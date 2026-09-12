@@ -1,0 +1,609 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import ProductCard from '../../components/product/ProductCard.astro'
+import PageBuilder from '../../components/blocks/PageBuilder.astro'
+import { getSitePage } from '../../sanity/pages'
+import { getRawSiteSettings } from '../../sanity/settings'
+import { productListQuery } from '../../sanity/queries/products'
+import { taxonomyQuery } from '../../sanity/queries/taxonomy'
+import type {
+  ProductListQueryResult,
+  TaxonomyQueryResult,
+} from '../../sanity/sanity.types'
+import type { SolutionBlock } from '../../sanity/content'
+import {
+  fetchLocalized,
+  fetchLocalizedList,
+  localizedPath,
+  resolveLocale,
+} from '../../i18n/config'
+import { ui, uiFormat } from '../../i18n/ui'
+
+const locale = resolveLocale(
+  Astro.props.locale,
+  Astro.originPathname || Astro.url.pathname,
+)
+const [products, taxonomy, settings, page] = await Promise.all([
+  fetchLocalizedList<ProductListQueryResult[number]>(
+    productListQuery,
+    {},
+    locale,
+    (item) => item.slug,
+  ),
+  fetchLocalized<TaxonomyQueryResult>(taxonomyQuery, {}, locale),
+  getRawSiteSettings(),
+  getSitePage('products', locale),
+])
+
+let list = products ?? []
+let series = taxonomy?.series ?? []
+let equipment = taxonomy?.equipment ?? []
+
+// Keep both facets usable while translations are being rolled out. A
+// composite taxonomy query can legitimately return one translated list and
+// one empty list; in that case fill only the missing facet from English.
+if (locale !== 'en' && (series.length === 0 || equipment.length === 0)) {
+  const englishTaxonomy = await fetchLocalized<TaxonomyQueryResult>(
+    taxonomyQuery,
+    {},
+    'en',
+  )
+  if (series.length === 0) series = englishTaxonomy?.series ?? []
+  if (equipment.length === 0) equipment = englishTaxonomy?.equipment ?? []
+}
+
+// Translation documents intentionally keep references to the canonical English
+// taxonomy records. Resolve the visible labels by the stable slug instead of
+// displaying the title obtained by dereferencing that English record.
+const usedSeries = new Set(
+  list.map((product) => product.seriesSlug).filter(Boolean),
+)
+const usedEquipment = new Set(
+  list.flatMap((product) => product.equipmentSlugs ?? []).filter(Boolean),
+)
+series = series.filter((entry) => entry.slug && usedSeries.has(entry.slug))
+equipment = equipment.filter(
+  (entry) => entry.slug && usedEquipment.has(entry.slug),
+)
+const seriesTitles = new Map(series.map((entry) => [entry.slug, entry.title]))
+const equipmentTitles = new Map(
+  equipment.map((entry) => [entry.slug, entry.title]),
+)
+list = list.map((product) => ({
+  ...product,
+  seriesTitle:
+    seriesTitles.get(product.seriesSlug ?? '') ?? product.seriesTitle,
+  equipmentTitles: (product.equipmentSlugs ?? []).map(
+    (slug, index) =>
+      equipmentTitles.get(slug ?? '') ??
+      product.equipmentTitles?.[index] ??
+      slug,
+  ),
+}))
+
+// Parts & accessories share this same Products catalogue. Only show a parts
+// category when it already contains a published product, so buyers never face
+// a dead filter while the client gradually expands the range.
+const partsCategoryDefinitions = [
+  { key: 'springs', label: ui(locale, 'partsSprings') },
+  { key: 'upholstery', label: ui(locale, 'partsUpholstery') },
+  { key: 'cables_ropes', label: ui(locale, 'partsCablesRopes') },
+  { key: 'footbars_hardware', label: ui(locale, 'partsFootbarsHardware') },
+  { key: 'training_accessories', label: ui(locale, 'partsTrainingAccessories') },
+] as const
+const hasPublishedParts = list.some(
+  (product) =>
+    product.catalogType === 'accessory' || product.catalogType === 'spare_part',
+)
+const partsCategories = partsCategoryDefinitions.filter((category) =>
+  list.some(
+    (product) =>
+      (product.catalogType === 'accessory' || product.catalogType === 'spare_part') &&
+      product.partsCategory === category.key,
+  ),
+)
+
+// Global price gate. When off (current client policy) every card shows "Get
+// quote" and the price-dependent controls (PRICE RANGE, Sort) stay hidden —
+// they light up automatically once the client flips `showPrices` on.
+const showPrices = settings?.showPrices ?? false
+
+const PER_PAGE = 9
+const initialShown = Math.min(PER_PAGE, list.length)
+const pageTitle = page?.hero?.heading || page?.title || ui(locale, 'products')
+const pageIntro =
+  page?.hero?.subheading ||
+  page?.introduction ||
+  ui(locale, 'catalogIntro')
+const pageBlocks = (page?.sections ?? []) as SolutionBlock[]
+const metaTitle = page?.seo?.metaTitle || `${pageTitle} — Coral Pilates`
+const metaDescription =
+  page?.seo?.metaDescription ||
+  pageIntro
+const resultLabels = {
+  single: ui(locale, 'resultSingle'),
+  plural: ui(locale, 'resultPlural'),
+  zero: ui(locale, 'zeroProducts'),
+}
+---
+
+<BaseLayout
+  locale={locale}
+  title={metaTitle}
+  description={metaDescription}
+>
+  <section class="section">
+    <div class="container">
+      <nav class="cat__crumbs" aria-label={ui(locale, "breadcrumb")}>
+        <a href={localizedPath('/', locale)}>{ui(locale, 'home')}</a>
+        <span aria-hidden="true">/</span>
+        <span>{ui(locale, 'products')}</span>
+      </nav>
+      <h1 class="cat__title">{pageTitle}</h1>
+      <p class="cat__intro">
+        {pageIntro}
+      </p>
+
+      <div
+        class="cat"
+        data-product-catalog
+        data-per-page={PER_PAGE}
+        data-result-single={resultLabels.single}
+        data-result-plural={resultLabels.plural}
+        data-result-zero={resultLabels.zero}
+      >
+        <aside class="cat__side">
+          <div class="cat__filterhead">
+            <p class="cat__filtertitle">{ui(locale, 'filters')}</p>
+            <button
+              type="button"
+              class="cat__reset"
+              data-reset
+              disabled
+              title={ui(locale, 'clearAllFilters')}
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                width="15"
+                height="15"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.75"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path>
+                <path d="M3 3v5h5"></path>
+              </svg>
+              <span>{ui(locale, 'resetAll')}</span>
+            </button>
+          </div>
+
+          <div class="facetgroup">
+            <p class="facetgroup__label">{ui(locale, 'bySeries')}</p>
+            <div class="facetgroup__list">
+              {
+                series.map((s) => (
+                  <label class="facet">
+                    <input type="checkbox" data-facet="series" value={s.slug ?? ''} />
+                    <span>{s.title}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+
+          <div class="facetgroup">
+            <p class="facetgroup__label">{ui(locale, 'byEquipment')}</p>
+            <div class="facetgroup__list">
+              {
+                equipment.map((e) => (
+                  <label class="facet">
+                    <input type="checkbox" data-facet="equipment" value={e.slug ?? ''} />
+                    <span>{e.title}</span>
+                  </label>
+                ))
+              }
+            </div>
+          </div>
+
+          {
+            hasPublishedParts && (
+              <div class="facetgroup">
+                <p class="facetgroup__label">{ui(locale, 'partsAccessories')}</p>
+                <div class="facetgroup__list">
+                  <label class="facet">
+                    <input type="checkbox" data-facet="parts" value="all" />
+                    <span>{ui(locale, 'allPartsAccessories')}</span>
+                  </label>
+                  {
+                    partsCategories.map((category) => (
+                      <label class="facet">
+                        <input type="checkbox" data-facet="parts" value={category.key} />
+                        <span>{category.label}</span>
+                      </label>
+                    ))
+                  }
+                </div>
+              </div>
+            )
+          }
+
+          {
+            showPrices && (
+              <div class="facetgroup">
+                <p class="facetgroup__label">{ui(locale, 'priceRange')}</p>
+                <div class="cat__price">
+                  <input type="number" inputmode="numeric" min="0" data-price-min placeholder={ui(locale, 'minimum')} aria-label={ui(locale, 'minimumPrice')} />
+                  <input type="number" inputmode="numeric" min="0" data-price-max placeholder={ui(locale, 'maximum')} aria-label={ui(locale, 'maximumPrice')} />
+                </div>
+              </div>
+            )
+          }
+
+        </aside>
+
+        <div class="cat__main">
+          <div class="cat__bar">
+            <p class="cat__results nums" data-results>
+              {
+                uiFormat(
+                  locale,
+                  list.length === 1 ? 'resultSingle' : 'resultPlural',
+                  { shown: initialShown, total: list.length },
+                )
+              }
+            </p>
+            {
+              showPrices && (
+                <label class="cat__sort">
+                  <span class="cat__sortlabel">{ui(locale, 'sort')}</span>
+                  <select data-sort>
+                    <option value="featured">{ui(locale, 'featured')}</option>
+                    <option value="price-asc">{ui(locale, 'priceLowHigh')}</option>
+                    <option value="price-desc">{ui(locale, 'priceHighLow')}</option>
+                  </select>
+                </label>
+              )
+            }
+          </div>
+
+          <ul class="cat__grid" data-grid>
+            {
+              list.map((p) => (
+                <ProductCard product={p} settings={settings} locale={locale} />
+              ))
+            }
+          </ul>
+
+          <p class="cat__empty" data-empty hidden>
+            {ui(locale, 'noProductsMatch')}
+          </p>
+
+          <nav
+            class="cat__pager"
+            data-pager
+            aria-label={ui(locale, 'pagination')}
+            hidden
+          ></nav>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {pageBlocks.length > 0 && <PageBuilder blocks={pageBlocks} />}
+
+  <section class="section band cat-cta">
+    <div class="container">
+      <h2 class="cat-cta__title">{ui(locale, 'cantFindSpec')}</h2>
+      <p class="cat-cta__sub">{ui(locale, 'buildToOrder')}</p>
+      <a class="btn btn-coral" href={localizedPath('/contact', locale)}>
+        {ui(locale, 'requestCustomQuote')}
+      </a>
+    </div>
+  </section>
+
+  <script>
+    import { initProductCatalog } from '../../lib/productCatalogFilter'
+
+    function initProductCatalogPage() {
+      initProductCatalog()
+    }
+
+    initProductCatalogPage()
+    document.addEventListener('astro:page-load', initProductCatalogPage)
+  </script>
+</BaseLayout>
+
+<style>
+  .cat__crumbs {
+    display: flex;
+    gap: var(--space-2);
+    font-size: var(--text-body-s);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .cat__crumbs a:hover {
+    color: var(--color-coral);
+  }
+  .cat__title {
+    margin: var(--space-2) 0 0;
+  }
+  .cat__intro {
+    margin: var(--space-3) 0 0;
+    max-width: 60ch;
+    color: var(--color-ink-600, #555);
+  }
+
+  /* Sidebar + results layout. */
+  .cat {
+    margin: var(--space-7) 0 0;
+    display: grid;
+    grid-template-columns: 208px 1fr;
+    gap: var(--space-7);
+    align-items: start;
+  }
+  .cat__side {
+    position: sticky;
+    /* Clear the 76px sticky site header (+ gap) so the first filter
+       (Wood Maple) isn't hidden behind it when the page is scrolled. */
+    top: calc(76px + var(--space-5));
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+  .cat__filterhead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--color-ink-200, #e2ddd3);
+  }
+  .cat__filtertitle {
+    margin: 0;
+    font-size: var(--text-body-s);
+    font-weight: 650;
+    color: var(--color-ink-900, #0e1013);
+  }
+  .facetgroup__label {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .facetgroup__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+  .facet {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 3px 0;
+    font-size: var(--text-body-s);
+    cursor: pointer;
+  }
+  .facet input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--color-coral);
+    cursor: pointer;
+  }
+  .cat__price {
+    display: flex;
+    gap: var(--space-2);
+  }
+  .cat__price input {
+    width: 100%;
+    min-width: 0;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-sm, 4px);
+    padding: 7px 10px;
+    font: inherit;
+    font-size: var(--text-body-s);
+    background: var(--color-paper, #f7f4ee);
+  }
+  .cat__price input:focus-visible {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 1px;
+  }
+  .cat__reset {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-1);
+    min-height: 34px;
+    border: 1px solid var(--color-ink-300, #c7c1b7);
+    border-radius: var(--radius-sm, 4px);
+    padding: var(--space-1) var(--space-2);
+    background: var(--color-paper-2, #ece7dd);
+    color: var(--color-ink-700, #343434);
+    font: inherit;
+    font-size: var(--text-body-s);
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      border-color 0.15s ease,
+      background 0.15s ease,
+      color 0.15s ease,
+      transform 0.15s ease;
+  }
+  .cat__reset:hover:not(:disabled) {
+    border-color: var(--color-coral);
+    background: var(--color-white, #fff);
+    color: var(--color-coral);
+  }
+  .cat__reset:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .cat__reset:focus-visible {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 2px;
+  }
+  .cat__reset:disabled {
+    opacity: 0.48;
+    cursor: default;
+  }
+
+  .cat__bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-4);
+    margin: 0 0 var(--space-4);
+  }
+  .cat__results {
+    margin: 0;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .cat__sort {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex: none;
+  }
+  .cat__sortlabel {
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .cat__sort select {
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-sm, 4px);
+    padding: 6px 10px;
+    font: inherit;
+    font-size: var(--text-body-s);
+    background: var(--color-paper, #f7f4ee);
+    cursor: pointer;
+  }
+
+  .cat__grid {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-5);
+  }
+  .cat__empty {
+    margin: var(--space-6) 0;
+    color: var(--color-ink-600, #555);
+  }
+
+  .cat__pager {
+    margin: var(--space-7) 0 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .cat__page {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-sm, 4px);
+    background: var(--color-paper, #f7f4ee);
+    color: inherit;
+    font-size: var(--text-body-s);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .cat__page:hover:not(:disabled) {
+    border-color: var(--color-coral);
+  }
+  .cat__page.is-active {
+    background: var(--color-coral);
+    border-color: var(--color-coral);
+    color: #fff;
+  }
+  .cat__page:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .cat__pagegap {
+    padding: 0 2px;
+    color: var(--color-ink-400, #9a948a);
+  }
+
+  /* "Can't find your spec" band — full-bleed, second paper tone. */
+  .cat-cta {
+    background: var(--color-paper-2, #ece7dd);
+    text-align: center;
+  }
+  .cat-cta__title {
+    margin: 0;
+  }
+  .cat-cta__sub {
+    margin: var(--space-3) auto 0;
+    max-width: 48ch;
+    color: var(--color-ink-600, #555);
+  }
+  .cat-cta .btn {
+    margin: var(--space-5) 0 0;
+  }
+
+  @media (max-width: 900px) {
+    .cat {
+      grid-template-columns: 1fr;
+      gap: var(--space-6);
+    }
+    /* The sidebar collapses above the grid on mobile. Render the same filters
+       as compact toggle pills (native checkbox visually hidden) so 11 stacked
+       checkboxes don't push the products a full screen down. Multi-select
+       behaviour and the filter JS are unchanged — only the presentation. */
+    .cat__side {
+      position: static;
+      flex-direction: column;
+      gap: var(--space-5);
+    }
+    .facetgroup__list {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+    .facet {
+      gap: 0;
+      padding: 6px 14px;
+      border: 1px solid var(--color-ink-200, #e2ddd3);
+      border-radius: 999px;
+      transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+    .facet:hover {
+      border-color: var(--color-coral);
+    }
+    .facet input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .facet:has(input:checked) {
+      background: var(--color-ink-900, #0e1013);
+      border-color: var(--color-ink-900, #0e1013);
+      color: #fff;
+    }
+    .cat__grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 560px) {
+    .cat__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

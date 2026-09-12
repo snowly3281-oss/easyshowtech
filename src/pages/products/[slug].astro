@@ -1,0 +1,111 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import ProductHeader from '../../components/product/ProductHeader.astro'
+import AtAGlance from '../../components/product/AtAGlance.astro'
+import MaterialsSection from '../../components/product/MaterialsSection.astro'
+import Datasheet from '../../components/product/Datasheet.astro'
+import WholesaleOem from '../../components/product/WholesaleOem.astro'
+import RelatedProducts from '../../components/product/RelatedProducts.astro'
+import QuoteBand from '../../components/product/QuoteBand.astro'
+import ProductJsonLd from '../../components/product/ProductJsonLd.astro'
+import ProductSolutions from '../../components/product/ProductSolutions.astro'
+import PartsProductDetail from '../../components/product/PartsProductDetail.astro'
+import { sanityClient } from '../../sanity/client'
+import { getPricePresentation } from '../../lib/price'
+import { productPathsQuery, productBySlugQuery } from '../../sanity/queries/products'
+import { taxonomyQuery } from '../../sanity/queries/taxonomy'
+import { getRawSiteSettings } from '../../sanity/settings'
+import type {
+  ProductPathsQueryResult,
+  ProductBySlugQueryResult,
+  TaxonomyQueryResult,
+} from '../../sanity/sanity.types'
+import {fetchLocalized, resolveLocale} from '../../i18n/config'
+import type {Locale} from '../../i18n/config'
+
+export async function getStaticPaths() {
+  // Only the slugs here — the per-product data is fetched in the page body
+  // below. getStaticPaths reruns on EVERY request in dev, so prefetching all
+  // products (and passing them as props) made each PDP hit re-fetch the whole
+  // catalog (~30s for 32 products). Returning params only keeps it cheap.
+  const slugs = await sanityClient.fetch<ProductPathsQueryResult>(
+    productPathsQuery,
+    {language: 'en'},
+  )
+  return (slugs ?? [])
+    .filter((entry): entry is { slug: string } => typeof entry.slug === 'string')
+    .map((entry) => ({ params: { slug: entry.slug } }))
+}
+
+// Fetch just the requested product + settings. At build this runs once per
+// prerendered page; in dev it runs per request but only touches one product,
+// so PDPs open fast instead of dragging the whole catalog along.
+const props = Astro.props as {locale?: Locale; slug?: string}
+const locale = resolveLocale(
+  props.locale,
+  Astro.originPathname || Astro.url.pathname,
+)
+const slug =
+  typeof props.slug === 'string' ? props.slug : Astro.params.slug
+const [rawProduct, settings, taxonomy] = await Promise.all([
+  fetchLocalized<ProductBySlugQueryResult>(
+    productBySlugQuery,
+    {slug: slug ?? ''},
+    locale,
+  ),
+  getRawSiteSettings(),
+  fetchLocalized<TaxonomyQueryResult>(taxonomyQuery, {}, locale),
+])
+if (!rawProduct) return Astro.rewrite('/404')
+
+const seriesTitles = new Map(
+  (taxonomy?.series ?? []).map((entry) => [entry.slug, entry.title]),
+)
+const equipmentTitles = new Map(
+  (taxonomy?.equipment ?? []).map((entry) => [entry.slug, entry.title]),
+)
+const product = {
+  ...rawProduct,
+  seriesTitle:
+    seriesTitles.get(rawProduct.seriesSlug ?? '') ?? rawProduct.seriesTitle,
+  equipmentTitles: (rawProduct.equipmentSlugs ?? []).map(
+    (equipmentSlug, index) =>
+      equipmentTitles.get(equipmentSlug ?? '') ??
+      rawProduct.equipmentTitles?.[index] ??
+      equipmentSlug,
+  ),
+  related: (rawProduct.related ?? []).map((related) => ({
+    ...related,
+    seriesTitle:
+      seriesTitles.get(related.seriesSlug ?? '') ?? related.seriesTitle,
+  })),
+}
+const isPartsProduct =
+  rawProduct.catalogType === 'accessory' || rawProduct.catalogType === 'spare_part'
+
+// One shared price decision for visible content and JSON-LD.
+const price = getPricePresentation(settings, product)
+
+const metaTitle = `${product.title ?? 'Product'} — Coral Pilates`
+const metaDescription = product.summary ?? undefined
+---
+
+<BaseLayout locale={locale} title={metaTitle} description={metaDescription}>
+  {
+    isPartsProduct ? (
+      <PartsProductDetail product={product} locale={locale} />
+    ) : (
+      <>
+        <ProductHeader product={product} settings={settings} locale={locale} />
+        <AtAGlance product={product} locale={locale} />
+        <MaterialsSection variants={product.variants} locale={locale} />
+        <Datasheet product={product} locale={locale} />
+        <WholesaleOem terms={product.oemTerms} locale={locale} />
+        <ProductSolutions productId={product._id} placements={product.solutionPlacements} locale={locale} />
+        <RelatedProducts items={product.related} locale={locale} />
+        <QuoteBand settings={settings} moq={product.moq} locale={locale} />
+      </>
+    )
+  }
+  <ProductJsonLd product={product} price={price} />
+</BaseLayout>

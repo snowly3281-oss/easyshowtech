@@ -1,0 +1,169 @@
+---
+import type { PostListItem } from '../../sanity/content'
+import MediaBox from '../product/MediaBox.astro'
+import { postMeta } from '../../lib/postMeta'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+type PostCardItem =
+  Pick<PostListItem, 'title' | 'slug'> &
+  Partial<
+    Pick<
+      PostListItem,
+      'excerpt' | 'publishedAt' | '_updatedAt' | 'readingTime' | 'cover' | 'categories'
+    >
+  >
+
+interface Props {
+  post: PostCardItem
+  category?: string
+  hidden?: boolean
+  locale?: Locale
+}
+
+const { post, category, hidden = false, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const { readMins } = postMeta(post, locale)
+const categoryLabel =
+  category || post.categories?.find((item) => item?.title)?.title || t('Articles')
+---
+
+<li class="pcard" data-resource-card data-category={categoryLabel} hidden={hidden}>
+  <a href={localizedPath(`/resources/${post.slug ?? ''}`, locale)} class="pcard__link">
+    <div class="pcard__media">
+      <MediaBox source={post.cover} alt={post.cover?.alt || post.title} ratio="16 / 9" width={900} />
+    </div>
+    <div class="pcard__body">
+      <p class="pcard__meta nums">
+        <span class="pcard__category">{categoryLabel}</span>
+        <span>{readMins} {t('min read')}</span>
+      </p>
+      <h2 class="pcard__title">{post.title}</h2>
+      <p class="pcard__excerpt">
+        {post.excerpt || t('Practical guidance for planning, buying and operating Pilates equipment.')}
+      </p>
+      <span class="pcard__cta">
+        {t('Read')}
+        <span aria-hidden="true">→</span>
+      </span>
+    </div>
+  </a>
+</li>
+
+<style>
+  .pcard {
+    list-style: none;
+    min-width: 0;
+  }
+  .pcard[hidden] {
+    display: none;
+  }
+  .pcard__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    color: var(--color-ink-900);
+    background: var(--color-white);
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    transition:
+      border-color var(--dur-base) var(--ease-standard),
+      transform var(--dur-base) var(--ease-standard);
+  }
+  .pcard__link:hover {
+    border-color: var(--color-coral);
+    transform: translateY(-2px);
+  }
+  .pcard__media {
+    overflow: hidden;
+    background: var(--color-ink-100);
+  }
+  .pcard__media :global(.media) {
+    aspect-ratio: 16 / 9;
+    transition: transform var(--dur-slow) var(--ease-standard);
+  }
+  .pcard__media :global(.media--ph) {
+    color: var(--color-ink-400);
+    background: var(--color-ink-100);
+  }
+  .pcard__link:hover .pcard__media :global(.media) {
+    transform: scale(1.015);
+  }
+  .pcard__body {
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    flex: 1;
+  }
+  .pcard__meta {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-caption);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .pcard__category {
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    color: var(--color-ink-600);
+    background: var(--color-ink-100);
+    font-size: var(--text-eyebrow);
+    font-weight: 500;
+    line-height: 1.25;
+  }
+  .pcard__title {
+    margin: 0;
+    min-height: 2.6em;
+    font-size: var(--text-h4);
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .pcard__excerpt {
+    margin: 0;
+    min-height: 3.1em;
+    font-size: var(--text-body-s);
+    line-height: 1.5;
+    color: var(--color-ink-500);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .pcard__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    align-self: flex-start;
+    margin-top: auto;
+    padding-top: var(--space-1);
+    font-size: var(--text-body-s);
+    font-weight: 500;
+    color: var(--color-coral);
+  }
+
+  @media (max-width: 767px) {
+    .pcard__body {
+      padding: var(--space-4);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pcard__link,
+    .pcard__media :global(.media) {
+      transition: none;
+    }
+    .pcard__link:hover,
+    .pcard__link:hover .pcard__media :global(.media) {
+      transform: none;
+    }
+  }
+</style>

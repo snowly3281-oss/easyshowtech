@@ -1,0 +1,730 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import PortableText from '../../components/PortableText.astro'
+import MediaBox from '../../components/product/MediaBox.astro'
+import PostCard from '../../components/resources/PostCard.astro'
+import ArticleToc from '../../components/resources/ArticleToc.astro'
+import { buildArticleHeadings, estimateReadingMinutes } from '../../lib/article'
+import { postMeta } from '../../lib/postMeta'
+import { sanityClient } from '../../sanity/client'
+import { urlFor } from '../../sanity/image'
+import {
+  postListQuery,
+  postPathsQuery,
+  postBySlugQuery,
+  postTaxonomyQuery,
+} from '../../sanity/queries/posts'
+import type {
+  PostListQueryResult,
+  PostPathsQueryResult,
+  PostBySlugQueryResult,
+  PostTaxonomyQueryResult,
+} from '../../sanity/sanity.types'
+import type { PostData, PostListItem } from '../../sanity/content'
+import {
+  fetchLocalized,
+  fetchLocalizedList,
+  resolveLocale,
+  localizedPath,
+} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+export async function getStaticPaths() {
+  const [slugs, allPosts] = await Promise.all([
+    sanityClient.fetch<PostPathsQueryResult>(postPathsQuery, {language: 'en'}),
+    sanityClient.fetch<PostListQueryResult>(postListQuery, {language: 'en'}),
+  ])
+  const paths: {
+    params: { slug: string }
+    props: { post: PostData; recommendations: PostListItem[] }
+  }[] = []
+
+  for (const entry of slugs ?? []) {
+    if (!entry.slug) continue
+    const post = await sanityClient.fetch<PostBySlugQueryResult>(
+      postBySlugQuery,
+      {slug: entry.slug, language: 'en'},
+    )
+    if (!post) continue
+
+    paths.push({
+      params: { slug: entry.slug },
+      props: {
+        post,
+        recommendations: (allPosts ?? [])
+          .filter((candidate) => candidate.slug !== entry.slug)
+          .slice(0, 3),
+      },
+    })
+  }
+
+  return paths
+}
+
+type Props = {
+  post?: PostData
+  recommendations?: PostListItem[]
+  locale?: string
+  slug?: string
+}
+
+const props = Astro.props as Props
+const locale = resolveLocale(
+  props.locale,
+  Astro.originPathname || Astro.url.pathname,
+)
+const slug = props.slug ?? Astro.params.slug
+const t = (english: string) => staticUi(locale, english)
+const [localizedPost, localizedRecommendations, taxonomy] = await Promise.all([
+  props.post
+    ? Promise.resolve(props.post)
+    : fetchLocalized<PostBySlugQueryResult>(
+        postBySlugQuery,
+        {slug: slug ?? ''},
+        locale,
+      ),
+  props.recommendations
+    ? Promise.resolve(props.recommendations)
+    : fetchLocalizedList<PostListQueryResult[number]>(
+        postListQuery,
+        {},
+        locale,
+        (item) => item.slug,
+      ),
+  fetchLocalized<PostTaxonomyQueryResult>(postTaxonomyQuery, {}, locale),
+])
+if (!localizedPost) return Astro.rewrite('/404')
+const categoryTitles = new Map(
+  (taxonomy?.categories ?? [])
+    .filter((item) => item.slug && item.title)
+    .map((item) => [item.slug as string, item.title as string]),
+)
+const tagTitles = new Map(
+  (taxonomy?.tags ?? [])
+    .filter((item) => item.slug && item.title)
+    .map((item) => [item.slug as string, item.title as string]),
+)
+const localizeCategories = <T extends {slug?: string | null; title?: string | null}>(items?: T[] | null) =>
+  items?.map((item) => ({
+    ...item,
+    title: (item.slug && categoryTitles.get(item.slug)) || item.title,
+  }))
+const post = {
+  ...localizedPost,
+  categories: localizeCategories(localizedPost.categories),
+  tags: localizedPost.tags?.map((item) => ({
+    ...item,
+    title: (item.slug && tagTitles.get(item.slug)) || item.title,
+  })),
+  relatedPosts: localizedPost.relatedPosts?.map((item) => ({
+    ...item,
+    categories: localizeCategories(item.categories),
+  })),
+}
+const recommendations = localizedRecommendations.map((item) => ({
+  ...item,
+  categories: localizeCategories(item.categories),
+}))
+const headings = buildArticleHeadings(post.body)
+const calculatedReadingTime = estimateReadingMinutes(post.body)
+const { readMins, dateLabel } = postMeta({
+  publishedAt: post.publishedAt,
+  _updatedAt: post._updatedAt,
+  readingTime: post.readingTime || calculatedReadingTime,
+}, locale)
+
+const authorName = post.author?.name || t('Coral Editorial Team')
+const authorRole = post.author?.role || t('Equipment specialists')
+const categoryLabel = post.categories?.[0]?.title || t('Field guide')
+const relatedProducts = post.relatedProducts ?? []
+const relatedSolutions = post.solutions ?? []
+const tags = post.tags ?? []
+const explicitRelatedPosts = post.relatedPosts ?? []
+const relatedGuides =
+  explicitRelatedPosts.length > 0 ? explicitRelatedPosts.slice(0, 3) : recommendations.slice(0, 3)
+
+const metaTitle = post.seo?.metaTitle ?? `${post.title ?? t('Article')} — Coral Pilates`
+const metaDescription = post.seo?.metaDescription ?? post.excerpt ?? undefined
+const socialSource = post.seo?.ogImage?.asset || post.cover?.asset
+const ogImage = socialSource
+  ? urlFor(socialSource).width(1200).height(630).fit('crop').auto('format').url()
+  : undefined
+---
+
+<BaseLayout locale={locale} title={metaTitle} description={metaDescription} ogImage={ogImage}>
+  <article class="article">
+    <header class="article-hero">
+      <div class="article-hero__inner">
+        <a class="article-hero__category eyebrow" href={localizedPath('/resources', locale)}>{categoryLabel}</a>
+        <h1 class="article-hero__title">{post.title}</h1>
+        {post.excerpt && <p class="article-hero__standfirst">{post.excerpt}</p>}
+
+        <div class="article-byline">
+          {
+            post.author?.portrait?.asset ? (
+              <MediaBox
+                source={post.author.portrait}
+                alt={post.author.portrait.alt || authorName}
+                ratio="1 / 1"
+                width={96}
+                height={96}
+                class="article-byline__photo"
+              />
+            ) : (
+              <span class="article-byline__fallback" aria-hidden="true">CP</span>
+            )
+          }
+          <div class="article-byline__copy">
+            <strong>{authorName}</strong>
+            <span>{authorRole}</span>
+          </div>
+          {dateLabel && <span class="article-byline__divider" aria-hidden="true"></span>}
+          {dateLabel && <time class="article-byline__meta nums">{dateLabel}</time>}
+          <span class="article-byline__divider" aria-hidden="true"></span>
+          <span class="article-byline__meta nums">{readMins} {t('min read')}</span>
+        </div>
+      </div>
+    </header>
+
+    {
+      post.cover?.asset && (
+        <div class="article-cover">
+          <MediaBox
+            source={post.cover}
+            alt={post.cover.alt || post.title}
+            ratio="28 / 15"
+            width={1600}
+            height={858}
+            class="article-cover__image"
+          />
+        </div>
+      )
+    }
+
+    <section class="article-body">
+      <div class:list={['article-body__grid', headings.length === 0 && 'article-body__grid--centered']}>
+        {
+          headings.length > 0 && (
+            <ArticleToc
+              headings={headings}
+              label={t('Article contents')}
+              contentsLabel={t('Contents')}
+            />
+          )
+        }
+
+        <div class="article-content">
+          <PortableText value={post.body} variant="article" />
+
+          {
+            (relatedProducts.length > 0 || relatedSolutions.length > 0) && (
+              <aside class="article-references">
+                <p class="eyebrow">{t('Referenced in this guide')}</p>
+                <div class="article-references__links">
+                  {relatedProducts.map((product) => (
+                    <a href={localizedPath(`/products/${product.slug ?? ''}`, locale)}>
+                      <span>
+                        <small>{product.sku || t('Product')}</small>
+                        <strong>{product.title}</strong>
+                      </span>
+                      <span aria-hidden="true">{t('View product')} ↗</span>
+                    </a>
+                  ))}
+                  {relatedSolutions.map((solution) => (
+                    <a href={localizedPath(`/solutions/${solution.slug ?? ''}`, locale)}>
+                      <span>
+                        <small>{t('Solution')}</small>
+                        <strong>{solution.title}</strong>
+                      </span>
+                      <span aria-hidden="true">{t('View solution')} ↗</span>
+                    </a>
+                  ))}
+                </div>
+              </aside>
+            )
+          }
+
+          {
+            tags.length > 0 && (
+              <ul class="article-tags" aria-label={t('Article tags')}>
+                {tags.map((tag) => <li>{tag.title}</li>)}
+              </ul>
+            )
+          }
+
+          {
+            post.author?.bio && (
+              <aside class="article-author">
+                {
+                  post.author.portrait?.asset && (
+                    <MediaBox
+                      source={post.author.portrait}
+                      alt={post.author.portrait.alt || authorName}
+                      ratio="1 / 1"
+                      width={160}
+                      height={160}
+                    />
+                  )
+                }
+                <div>
+                  <p class="eyebrow">{t('About the author')}</p>
+                  <h2>{authorName}</h2>
+                  <p>{post.author.bio}</p>
+                </div>
+              </aside>
+            )
+          }
+        </div>
+      </div>
+    </section>
+  </article>
+
+  <section class="article-cta">
+    <div class="article-cta__inner">
+      <div>
+        <p class="eyebrow">{t('Ready when you are')}</p>
+        <h2>{t('Specifying equipment for your studio?')}</h2>
+        <p>
+          {t("Tell us your space and goals — we'll come back with a configuration and an indicative quote.")}
+        </p>
+      </div>
+      <div class="article-cta__actions">
+        <a href={localizedPath('/contact', locale)} class="btn btn-coral">{t('Get a quote')}</a>
+        <a href={localizedPath('/products', locale)} class="article-cta__link">{t('Browse products')} <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  {
+    relatedGuides.length > 0 && (
+      <section class="related-guides">
+        <div class="related-guides__inner">
+          <header class="related-guides__head">
+            <div>
+              <p class="eyebrow">{t('Keep reading')}</p>
+              <h2>{t('Related guides')}</h2>
+            </div>
+            <a class="btn-link" href={localizedPath('/resources', locale)}>{t('All guides')} <span aria-hidden="true">→</span></a>
+          </header>
+
+          <ul class="related-guides__grid">
+            {relatedGuides.map((guide) => (
+              <PostCard
+                post={guide}
+                category={guide.categories?.[0]?.title || t('Field guide')}
+                locale={locale}
+              />
+            ))}
+          </ul>
+        </div>
+      </section>
+    )
+  }
+</BaseLayout>
+
+<style>
+  .article,
+  .article-hero,
+  .article-body {
+    background: var(--color-canvas);
+  }
+
+  .article-hero {
+    padding: var(--space-9) var(--gutter-lg) var(--space-8);
+  }
+
+  .article-hero__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(100%, 1000px);
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .article-hero__category {
+    margin-bottom: var(--space-5);
+  }
+
+  .article-hero__title {
+    margin: 0;
+    max-width: 1000px;
+    color: var(--color-ink-900);
+    font-size: var(--text-h1);
+    font-weight: 600;
+    line-height: 1.03;
+    letter-spacing: -0.035em;
+    text-wrap: balance;
+  }
+
+  .article-hero__standfirst {
+    max-width: 760px;
+    margin: var(--space-5) 0 0;
+    color: var(--color-ink-600);
+    font-size: clamp(20px, 2.2vw, 28px);
+    font-style: italic;
+    line-height: 1.4;
+    text-wrap: balance;
+  }
+
+  .article-byline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2) var(--space-3);
+    margin-top: var(--space-7);
+    color: var(--color-ink-500);
+    font-size: var(--text-caption);
+  }
+
+  .article-byline :global(.article-byline__photo),
+  .article-byline__fallback {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-pill);
+  }
+
+  .article-byline__fallback {
+    display: grid;
+    place-items: center;
+    background: var(--color-coral);
+    color: var(--color-white);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .article-byline__copy {
+    display: flex;
+    gap: var(--space-2);
+    align-items: baseline;
+  }
+
+  .article-byline__copy strong {
+    color: var(--color-ink-800);
+    font-weight: 600;
+  }
+
+  .article-byline__divider {
+    width: 1px;
+    height: 14px;
+    background: var(--color-ink-300);
+  }
+
+  .article-cover {
+    width: min(calc(100% - 2 * var(--gutter-lg)), 1120px);
+    margin-inline: auto;
+  }
+
+  .article-cover :global(.article-cover__image) {
+    max-height: 600px;
+    object-fit: cover;
+  }
+
+  .article-body {
+    padding: var(--space-8) var(--gutter-lg) var(--space-8);
+  }
+
+  .article-body__grid {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 680px);
+    gap: 60px;
+    width: min(100%, 940px);
+    margin-inline: auto;
+    align-items: start;
+  }
+
+  .article-body__grid--centered {
+    grid-template-columns: minmax(0, 680px);
+    justify-content: center;
+  }
+
+  .article-content {
+    width: 100%;
+    max-width: 680px;
+    min-width: 0;
+  }
+
+  .article-references {
+    margin-top: var(--space-8);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-ink-300);
+  }
+
+  .article-references__links {
+    display: grid;
+    margin-top: var(--space-3);
+  }
+
+  .article-references__links a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-3) 0;
+    border-top: 1px solid var(--color-ink-200);
+  }
+
+  .article-references__links a > span:first-child {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .article-references__links small,
+  .article-references__links a > span:last-child {
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+
+  .article-references__links a > span:last-child {
+    color: var(--color-coral);
+  }
+
+  .article-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: var(--space-7) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .article-tags li {
+    padding: var(--space-1) var(--space-3);
+    border: 1px solid var(--color-ink-300);
+    border-radius: var(--radius-pill);
+    color: var(--color-ink-500);
+    font-size: var(--text-body-s);
+  }
+
+  .article-author {
+    display: grid;
+    grid-template-columns: 80px minmax(0, 1fr);
+    gap: var(--space-4);
+    align-items: start;
+    margin-top: var(--space-8);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--color-ink-300);
+  }
+
+  .article-author h2,
+  .article-author p {
+    margin: var(--space-2) 0 0;
+  }
+
+  .article-author .eyebrow {
+    margin-top: 0;
+  }
+
+  .article-author h2 {
+    font-size: var(--text-h4);
+  }
+
+  .article-author p:last-child {
+    color: var(--color-ink-600);
+  }
+
+  .article-cta {
+    padding: var(--space-9) var(--gutter-lg);
+    background: var(--color-navy);
+  }
+
+  .article-cta__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-7);
+    width: min(100%, 1120px);
+    margin-inline: auto;
+  }
+
+  .article-cta__inner > div:first-child {
+    max-width: 620px;
+  }
+
+  .article-cta .eyebrow {
+    letter-spacing: 0.16em;
+  }
+
+  .article-cta h2 {
+    margin: var(--space-3) 0 0;
+    color: var(--color-white);
+    font-size: clamp(30px, 3.3vw, 38px);
+  }
+
+  .article-cta p:not(.eyebrow) {
+    max-width: 540px;
+    margin: var(--space-3) 0 0;
+    color: rgba(255, 255, 255, 0.62);
+    font-size: var(--text-body);
+    line-height: var(--lh-loose);
+  }
+
+  .article-cta__actions {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: var(--space-5);
+  }
+
+  .article-cta__link {
+    color: var(--color-white);
+    font-size: 15px;
+    font-weight: 500;
+  }
+
+  .article-cta__link:hover {
+    color: var(--color-coral);
+  }
+
+  .related-guides {
+    padding: var(--space-9) var(--gutter-lg);
+    background: var(--color-paper-2);
+  }
+
+  .related-guides__inner {
+    width: min(100%, 1120px);
+    margin-inline: auto;
+  }
+
+  .related-guides__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-5);
+  }
+
+  .related-guides__head h2 {
+    margin: var(--space-2) 0 0;
+  }
+
+  .related-guides__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-5);
+    margin: var(--space-7) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (max-width: 1023px) {
+    .article-hero,
+    .article-body,
+    .article-cta,
+    .related-guides {
+      padding-right: var(--gutter-md);
+      padding-left: var(--gutter-md);
+    }
+
+    .article-cover {
+      width: calc(100% - 2 * var(--gutter-md));
+    }
+
+    .article-body__grid {
+      grid-template-columns: 170px minmax(0, 680px);
+      gap: var(--space-6);
+    }
+
+    .article-cta__inner {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .article-hero,
+    .article-body,
+    .article-cta,
+    .related-guides {
+      padding-right: var(--gutter-sm);
+      padding-left: var(--gutter-sm);
+    }
+
+    .article-hero {
+      padding-top: var(--space-8);
+      padding-bottom: var(--space-7);
+    }
+
+    .article-hero__category {
+      margin-bottom: var(--space-4);
+    }
+
+    .article-hero__standfirst {
+      font-size: 19px;
+    }
+
+    .article-byline {
+      margin-top: var(--space-6);
+    }
+
+    .article-byline__copy {
+      flex-direction: column;
+      gap: 0;
+      align-items: flex-start;
+    }
+
+    .article-byline__divider:first-of-type {
+      display: none;
+    }
+
+    .article-cover {
+      width: calc(100% - 2 * var(--gutter-sm));
+    }
+
+    .article-cover :global(.article-cover__image) {
+      aspect-ratio: 4 / 3 !important;
+    }
+
+    .article-body {
+      padding-top: var(--space-7);
+      padding-bottom: var(--space-7);
+    }
+
+    .article-body__grid,
+    .article-body__grid--centered {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-6);
+    }
+
+    .article-references__links a {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .article-cta,
+    .related-guides {
+      padding-top: var(--space-8);
+      padding-bottom: var(--space-8);
+    }
+
+    .article-cta__actions {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .related-guides__head {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .related-guides__grid {
+      grid-template-columns: 1fr;
+      margin-top: var(--space-6);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .article-byline__divider {
+      display: none;
+    }
+
+    .article-author {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

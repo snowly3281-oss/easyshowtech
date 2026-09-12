@@ -1,0 +1,66 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import SolutionExperience from '../../components/solution/SolutionExperience.astro'
+import { sanityClient } from '../../sanity/client'
+import { urlFor } from '../../sanity/image'
+import { solutionPathsQuery, solutionBySlugQuery } from '../../sanity/queries/solutions'
+import type {
+  SolutionPathsQueryResult,
+  SolutionBySlugQueryResult,
+} from '../../sanity/sanity.types'
+import type { SolutionData } from '../../sanity/content'
+import { getSiteSettings } from '../../sanity/settings'
+import {fetchLocalized, resolveLocale} from '../../i18n/config'
+
+export async function getStaticPaths() {
+  const slugs = await sanityClient.fetch<SolutionPathsQueryResult>(
+    solutionPathsQuery,
+    {language: 'en'},
+  )
+  const paths: { params: { slug: string }; props: { solution: SolutionData } }[] = []
+
+  for (const entry of slugs ?? []) {
+    if (!entry.slug) continue
+    const solution = await sanityClient.fetch<SolutionBySlugQueryResult>(
+      solutionBySlugQuery,
+      {slug: entry.slug, language: 'en'}
+    )
+    if (solution) paths.push({ params: { slug: entry.slug }, props: { solution } })
+  }
+
+  return paths
+}
+
+type Props = { solution?: SolutionData; locale?: string; slug?: string }
+const locale = resolveLocale(
+  Astro.props.locale,
+  Astro.originPathname || Astro.url.pathname,
+)
+const props = Astro.props as Props
+const slug = props.slug ?? Astro.params.slug
+const solution =
+  props.solution ??
+  (await fetchLocalized<SolutionBySlugQueryResult>(
+    solutionBySlugQuery,
+    {slug: slug ?? ''},
+    locale,
+  ))
+if (!solution) return Astro.rewrite('/404')
+
+const metaTitle = solution.seo?.metaTitle ?? `${solution.title ?? 'Solution'} — Coral Pilates`
+const metaDescription = solution.seo?.metaDescription ?? solution.summary ?? undefined
+const ogAsset = solution.seo?.ogImage?.asset
+const ogImage = ogAsset
+  ? urlFor(ogAsset).width(1200).height(630).fit('crop').url()
+  : undefined
+const siteSettings = await getSiteSettings()
+---
+
+<BaseLayout locale={locale} title={metaTitle} description={metaDescription} ogImage={ogImage}>
+  <SolutionExperience
+    solution={solution}
+    whatsapp={siteSettings.whatsapp}
+    showPrices={siteSettings.showPrices}
+    locale={locale}
+  />
+</BaseLayout>

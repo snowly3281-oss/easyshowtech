@@ -1,0 +1,454 @@
+---
+/**
+ * QuoteModal — in-context "Request a quote" pop-up for the PDP.
+ *
+ * Rendered once per product page. Progressive enhancement: the PDP CTA stays a
+ * real <a href="/contact?…"> link; this script hijacks the click to open a
+ * native <dialog> ONLY when a submission backend is configured. With no key (or
+ * no <dialog> support) the click falls through and the browser navigates to
+ * /contact — nothing breaks.
+ *
+ * Product context: SKU + title are baked in from props; frame/upholstery are
+ * read live from the on-page configurator at open time, so the quote always
+ * reflects the visitor's current selection.
+ */
+import {
+  TURNSTILE_ACTION,
+  TURNSTILE_SITE_KEY,
+} from '../../lib/turnstileConfig'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  sku?: string | null
+  title: string
+  locale?: Locale
+}
+const { sku, title, locale = 'en' } = Astro.props
+const t = (english: string) => staticUi(locale, english)
+const labels = {
+  frame: t('Frame finish'),
+  upholstery: t('Upholstery'),
+  sending: t('Sending…'),
+  send: t('Send request'),
+  failed: t('Something went wrong. Please try again or email us directly.'),
+}
+---
+
+<dialog
+  class="qm"
+  id="quoteModal"
+  data-frame-label={labels.frame}
+  data-upholstery-label={labels.upholstery}
+  data-sending-label={labels.sending}
+  data-send-label={labels.send}
+  data-failed-label={labels.failed}
+  aria-labelledby="qm-title"
+>
+  <button type="button" class="qm__close" aria-label={t('Close')} data-qm-close>
+    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">
+      <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" />
+    </svg>
+  </button>
+
+  <form class="qm__form" novalidate>
+    <p class="qm__eyebrow">{t('Request a quote')}</p>
+    <h2 class="qm__title" id="qm-title">{title}</h2>
+
+    <dl class="qm__summary" data-qm-summary hidden></dl>
+
+    <div class="qm__grid">
+      <div class="qm__field">
+        <label for="qm-name">{t('Full name')}</label>
+        <input id="qm-name" name="name" type="text" autocomplete="name" placeholder={t('Your full name')} />
+      </div>
+      <div class="qm__field">
+        <label for="qm-email">{t('Email')} <span class="qm__req">*</span></label>
+        <input id="qm-email" name="email" type="email" required autocomplete="email" placeholder="you@company.com" />
+      </div>
+      <div class="qm__field">
+        <label for="qm-company">{t('Company')}</label>
+        <input id="qm-company" name="company" type="text" autocomplete="organization" placeholder={t('Studio / business name')} />
+      </div>
+      <div class="qm__field">
+        <label for="qm-qty">{t('Quantity')}</label>
+        <input id="qm-qty" name="quantity" type="number" min="1" inputmode="numeric" placeholder="1" />
+      </div>
+    </div>
+
+    <div class="qm__field">
+      <label for="qm-message">{t('Message')} <span class="qm__req">*</span></label>
+      <textarea id="qm-message" name="message" rows="3" required placeholder={t('Anything else we should know — timeline, colour, quantities…')}></textarea>
+    </div>
+
+    <!-- Context + service meta (filled/updated by the script). -->
+    <input type="hidden" name="subject" value={`Quote request — ${title}`} />
+    <input type="hidden" name="product" value={title} />
+    <input type="hidden" name="sku" value={sku ?? ''} data-qm-sku />
+    <input type="hidden" name="frame_finish" value="" data-qm-frame />
+    <input type="hidden" name="upholstery" value="" data-qm-upholstery />
+    <input type="hidden" name="source_url" value="" data-qm-source />
+    <!-- Honeypot: hidden from humans; bots that tick it are silently dropped. -->
+    <input type="checkbox" name="botcheck" class="qm__hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+    {TURNSTILE_SITE_KEY && (
+      <div
+        class="cf-turnstile qm__turnstile"
+        id="qm-turnstile"
+        data-sitekey={TURNSTILE_SITE_KEY}
+        data-action={TURNSTILE_ACTION}
+        data-refresh-expired="auto"
+      ></div>
+    )}
+
+    <p class="qm__status" data-qm-status role="alert" aria-live="assertive"></p>
+
+    <div class="qm__actions">
+      <button type="submit" class="btn btn-coral qm__submit" data-qm-submit>{labels.send}</button>
+    </div>
+
+    <p class="qm__alt">
+      {t('Need to send a floor plan or full RFQ?')}
+      <a href={localizedPath('/contact', locale)} data-qm-fullform>{t('Open the full contact form')} →</a>
+    </p>
+  </form>
+
+  <div class="qm__done" data-qm-done hidden>
+    <p class="qm__doneicon" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 28 28"><path d="M6 14.5l5 5 11-12" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round" /></svg>
+    </p>
+    <h2>{t('Request sent')}</h2>
+    <p>{t('Thanks — a real person will reply within 24 hours.')}</p>
+    <button type="button" class="btn btn-outline" data-qm-close>{t('Close')}</button>
+  </div>
+</dialog>
+
+<script>
+  import { submitQuoteForm, thankYouUrl } from '../../lib/quoteForm'
+  import {
+    markTurnstileSpent,
+    prepareTurnstile,
+    resetTurnstile,
+  } from '../../lib/turnstileClient'
+
+  function initQuoteModal() {
+    const dialog = document.getElementById('quoteModal') as HTMLDialogElement | null
+    // Scope: ONLY the PDP header CTA carries product context. Other quote links
+    // (QuoteBand, header) stay plain /contact navigations.
+    const cta = document.querySelector('[data-quote-cta]') as HTMLAnchorElement | null
+    if (!dialog || !cta) return
+    if (dialog.dataset.initialized === 'true') return
+    dialog.dataset.initialized = 'true'
+
+    // Fallback: only if <dialog> isn't supported do we let the anchor navigate
+    // to /contact. The modal opens regardless of whether the backend keys are
+    // set yet — submission degrades gracefully until they are.
+    if (typeof dialog.showModal !== 'function') return
+
+    const form = dialog.querySelector('form') as HTMLFormElement
+    const doneEl = dialog.querySelector('[data-qm-done]') as HTMLElement
+    const statusEl = dialog.querySelector('[data-qm-status]') as HTMLElement
+    const submitBtn = dialog.querySelector('[data-qm-submit]') as HTMLButtonElement
+    const summary = dialog.querySelector('[data-qm-summary]') as HTMLElement
+    const fullForm = dialog.querySelector('[data-qm-fullform]') as HTMLAnchorElement
+    const labels = {
+      frame: dialog.dataset.frameLabel || 'Frame finish',
+      upholstery: dialog.dataset.upholsteryLabel || 'Upholstery',
+      sending: dialog.dataset.sendingLabel || 'Sending…',
+      send: dialog.dataset.sendLabel || 'Send request',
+      failed:
+        dialog.dataset.failedLabel ||
+        'Something went wrong. Please try again or email us directly.',
+    }
+
+    const readSelection = () => {
+      // Human-readable frame/upholstery straight from the live configurator.
+      const vals: Record<string, string> = {}
+      document.querySelectorAll('.ph__config').forEach((c) => {
+        const label = (c as HTMLElement).dataset.configKind
+        const val = c.querySelector('.ph__configval')?.textContent?.trim()
+        if (label && val) vals[label] = val
+      })
+      return vals
+    }
+
+    const openModal = (e: Event) => {
+      e.preventDefault()
+      // Reset to the pristine form state (in case it was left on success/error).
+      form.hidden = false
+      doneEl.hidden = true
+      statusEl.textContent = ''
+      statusEl.dataset.state = ''
+
+      const vals = readSelection()
+      const frame = vals.frame ?? ''
+      const uph = vals.upholstery ?? ''
+      ;(dialog.querySelector('[data-qm-frame]') as HTMLInputElement).value = frame
+      ;(dialog.querySelector('[data-qm-upholstery]') as HTMLInputElement).value = uph
+      ;(dialog.querySelector('[data-qm-source]') as HTMLInputElement).value = window.location.href
+
+      const skuVal = (dialog.querySelector('[data-qm-sku]') as HTMLInputElement).value
+      const rows: Array<[string, string, boolean]> = [
+        ['SKU', skuVal, true],
+        [labels.frame, frame, false],
+        [labels.upholstery, uph, false],
+      ]
+      summary.replaceChildren(
+        ...rows
+          .filter(([, v]) => v)
+          .map(([label, v, mono]) => {
+            const wrap = document.createElement('div')
+            const dt = document.createElement('dt')
+            dt.textContent = label
+            const dd = document.createElement('dd')
+            dd.textContent = v
+            if (mono) dd.className = 'nums'
+            wrap.appendChild(dt)
+            wrap.appendChild(dd)
+            return wrap
+          })
+      )
+      summary.hidden = !rows.some(([, v]) => v)
+
+      // Keep the "full form" link's prefill in sync with the CTA.
+      fullForm.href = cta.getAttribute('href') ?? '/contact'
+
+      dialog.showModal()
+      prepareTurnstile('#qm-turnstile')
+      ;(dialog.querySelector('#qm-name') as HTMLInputElement | null)?.focus()
+    }
+
+    cta.addEventListener('click', openModal)
+
+    dialog.querySelectorAll('[data-qm-close]').forEach((b) =>
+      b.addEventListener('click', () => dialog.close())
+    )
+    // Backdrop click (target is the dialog element itself, outside the card).
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close()
+    })
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      if (!form.reportValidity()) return
+      submitBtn.disabled = true
+      submitBtn.textContent = labels.sending
+      statusEl.textContent = ''
+      statusEl.dataset.state = ''
+
+      markTurnstileSpent('#qm-turnstile')
+      const result = await submitQuoteForm(form)
+      submitBtn.disabled = false
+      submitBtn.textContent = labels.send
+
+      if (result.status === 'ok') {
+        const destination = thankYouUrl(result.inquiryId)
+        if (destination) {
+          window.location.assign(destination)
+          return
+        }
+        form.hidden = true
+        doneEl.hidden = false
+      } else {
+        resetTurnstile('#qm-turnstile')
+        statusEl.dataset.state = 'error'
+        statusEl.textContent = result.message || labels.failed
+      }
+    })
+  }
+
+  initQuoteModal()
+  document.addEventListener('astro:page-load', initQuoteModal)
+</script>
+
+<style>
+  .qm {
+    /* Tailwind preflight resets dialog margin to 0, which kills the UA
+       margin:auto that centres a modal <dialog>. Restore it explicitly. */
+    margin: auto;
+    width: min(520px, calc(100vw - 2 * var(--space-4)));
+    max-width: 520px;
+    padding: 0;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-md, 8px);
+    background: var(--color-white, #fff);
+    color: var(--color-ink-900, #0e1013);
+    box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.35);
+    overflow: visible;
+  }
+  .qm::backdrop {
+    background: rgba(14, 16, 19, 0.55);
+  }
+  .qm__close {
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--color-ink-500, #6b6a63);
+    cursor: pointer;
+  }
+  .qm__close:hover {
+    background: var(--color-paper-2, #ece7dd);
+    color: var(--color-ink-900, #0e1013);
+  }
+  .qm__form,
+  .qm__done {
+    padding: var(--space-6);
+  }
+  .qm__eyebrow {
+    margin: 0;
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-coral);
+  }
+  .qm__title {
+    margin: var(--space-1) 0 0;
+    font-size: var(--text-h3, 1.4rem);
+    padding-right: var(--space-6);
+  }
+  .qm__summary {
+    margin: var(--space-4) 0 0;
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-sm, 4px);
+    background: var(--color-paper-2, #ece7dd);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+  }
+  .qm__summary div {
+    display: flex;
+    gap: var(--space-2);
+    align-items: baseline;
+  }
+  .qm__summary dt {
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-ink-400, #9a948a);
+  }
+  .qm__summary dd {
+    margin: 0;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-800, #333);
+  }
+  .qm__grid {
+    margin: var(--space-4) 0 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3) var(--space-4);
+  }
+  .qm__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: var(--space-3) 0 0;
+  }
+  .qm__grid .qm__field {
+    margin: 0;
+  }
+  .qm__field label {
+    font-size: var(--text-body-s);
+    font-weight: 500;
+    color: var(--color-ink-700, #444);
+  }
+  .qm__req {
+    color: var(--color-coral);
+  }
+  .qm__field input,
+  .qm__field textarea {
+    width: 100%;
+    padding: 0 12px;
+    height: 44px;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-sm, 4px);
+    background: var(--color-white, #fff);
+    font: inherit;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-900, #0e1013);
+  }
+  .qm__field textarea {
+    height: auto;
+    padding: 10px 12px;
+    resize: vertical;
+  }
+  .qm__field input:focus-visible,
+  .qm__field textarea:focus-visible {
+    outline: 2px solid var(--color-coral);
+    outline-offset: 1px;
+    border-color: transparent;
+  }
+  .qm__hp {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+  }
+  .qm__status {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-body-s);
+    min-height: 0;
+  }
+  .qm__status[data-state='error'] {
+    color: var(--color-coral);
+  }
+  .qm__actions {
+    margin: var(--space-4) 0 0;
+  }
+  .qm__submit {
+    width: 100%;
+  }
+  .qm__alt {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-500, #6b6a63);
+  }
+  .qm__alt a {
+    color: var(--color-coral);
+    font-weight: 500;
+  }
+  /* Success panel */
+  .qm__done {
+    text-align: center;
+  }
+  .qm__doneicon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--color-coral) 14%, transparent);
+    color: var(--color-coral);
+  }
+  .qm__done h2 {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-h3, 1.4rem);
+  }
+  .qm__done p {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600, #555);
+  }
+  .qm__done .btn {
+    margin: var(--space-5) 0 0;
+  }
+
+  @media (max-width: 520px) {
+    .qm__grid {
+      grid-template-columns: 1fr;
+    }
+    .qm__form,
+    .qm__done {
+      padding: var(--space-5);
+    }
+  }
+</style>
