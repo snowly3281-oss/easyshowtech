@@ -1,0 +1,28 @@
+# tool_name: execute_shell_command
+# created_at: 2026-09-09T23:29:36.574538
+# ---
+added 465 packages, and audited 466 packages in 1m
+
+118 packages are looking for funding
+  run `npm fund` for details
+
+6 high severity vulnerabilities
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+[stderr]
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'coral@0.0.1',
+npm warn EBADENGINE   required: { node: '>=22.16.0 <23', npm: '>=10.9.2 <11' },
+npm warn EBADENGINE   current: { node: 'v24.20.0', npm: '11.19.0' }
+npm warn EBADENGINE }
+npm warn install-scripts 5 packages have install scripts not yet covered by allowScripts:
+npm warn install-scripts   workerd@1.20260908.1 (postinstall: node install.js)
+npm warn install-scripts   esbuild@0.28.2 (postinstall: node install.js)
+npm warn install-scripts   esbuild@0.28.1 (postinstall: node install.js)
+npm warn install-scripts   workerd@1.20260722.1 (postinstall: node install.js)
+npm warn install-scripts   esbuild@0.28.1 (postinstall: node install.js)
+npm warn install-scripts
+npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.

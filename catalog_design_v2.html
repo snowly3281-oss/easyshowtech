@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpoPro Product Catalog - Design Concept</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #0D0D0D;
+            --accent: #FF4D00;
+            --accent-blue: #0066FF;
+            --light: #FAFAFA;
+            --gray: #888888;
+            --gray-light: #E5E5E5;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            color: var(--primary);
+            background: #fff;
+        }
+        
+        .page {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Cover Page */
+        .cover-page {
+            background: linear-gradient(145deg, #0D0D0D 0%, #1a1a1a 50%, #0D0D0D 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 60px;
+            position: relative;
+        }
+        
+        .cover-bg-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 20% 80%, rgba(255, 77, 0, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 102, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        
+        .cover-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+        
+        .cover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 4px;
+        }
+        
+        .logo-text span {
+            color: var(--accent);
+        }
+        
+        .cover-year {
+            font-size: 14px;
+            color: var(--gray);
+            letter-spacing: 2px;
+        }
+        
+        .cover-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .cover-title-group {
+            text-align: center;
+        }
+        
+        .cover-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 80px;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+        }
+        
+        .cover-subtitle {
+            font-size: 18px;
+            color: var(--gray);
+            letter-spacing: 8px;
+            text-transform: uppercase;
+        }
+        
+        .cover-products-visual {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 60px;
+        }
+        
+        .cover-product-item {
+            width: 120px;
+            height: 120px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            background: rgba(255,255,255,0.02);
+            transition: all 0.3s ease;
+        }
+        
+        .cover-product-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+        }
+        
+        .cover-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .cover-tagline {
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        .cover-page-num {
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        /* Steel Tents Page */
+        .steel-tents-page {
+            background: #fff;
+            padding: 50px 60px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 50px;
+        }
+        
+        .page-number {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        .page-title-group {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .page-category {
+            font-size: 12px;
+            color: var(--accent);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .page-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 48px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+        
+        .section-intro {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            margin-bottom: 50px;
+        }
+        
+        .intro-text {
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--gray);
+        }
+        
+        .intro-features {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .feature-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: var(--light);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .feature-tag::before {
+            content: '✓';
+            color: var(--accent);
+            font-weight: 700;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            flex: 1;
+        }
+        
+        .product-card-full {
+            background: var(--light);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .product-visual {
+            height: 200px;
+            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            position: relative;
+        }
+        
+        .product-size-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--primary);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .product-details {
+            padding: 24px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .product-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .specs-table {
+            flex: 1;
+        }
+        
+        .spec-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-light);
+            font-size: 13px;
+        }
+        
+        .spec-label {
+            color: var(--gray);
+        }
+        
+        .spec-value {
+            font-weight: 600;
+        }
+        
+        .product-price {
+            margin-top: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        /* Aluminum Tents Page */
+        .aluminum-page {
+            background: #0a0a0a;
+            color: white;
+            padding: 50px 60px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .aluminum-page .page-category {
+            color: var(--accent-blue);
+        }
+        
+        .material-comparison {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            margin-bottom: 50px;
+        }
+        
+        .material-card {
+            border-radius: 20px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .material-card.steel-mat {
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+            border: 1px solid #333;
+        }
+        
+        .material-card.alum-mat {
+            background: linear-gradient(135deg, #1a3a5c 0%, #0d1f33 100%);
+            border: 1px solid #0066FF33;
+        }
+        
+        .material-card h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+        
+        .material-card p {
+            color: rgba(255,255,255,0.6);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .material-props {
+            margin-top: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .prop-chip {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        /* Comparison Table Page */
+        .comparison-page {
+            background: #fff;
+            padding: 50px 60px;
+        }
+        
+        .comparison-table-full {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+        
+        .comparison-table-full th,
+        .comparison-table-full td {
+            padding: 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        .comparison-table-full th {
+            background: var(--light);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray);
+        }
+        
+        .comparison-table-full tr:hover {
+            background: #fafafa;
+        }
+        
+        .highlight-row {
+            background: rgba(255, 77, 0, 0.05);
+        }
+        
+        .highlight-row td {
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        /* Accessories Page */
+        .accessories-page {
+            background: var(--light);
+            padding: 50px 60px;
+        }
+        
+        .accessories-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 25px;
+        }
+        
+        .accessory-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .accessory-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .accessory-visual {
+            height: 160px;
+            background: linear-gradient(135deg, #f8f8f8 0%, #eee 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        
+        .accessory-info {
+            padding: 20px;
+        }
+        
+        .accessory-name {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+        
+        .accessory-spec {
+            font-size: 12px;
+            color: var(--gray);
+        }
+        
+        /* Back Cover */
+        .back-cover {
+            background: var(--primary);
+            color: white;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            text-align: center;
+        }
+        
+        .back-logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 48px;
+            font-weight: 700;
+            letter-spacing: 6px;
+        }
+        
+        .back-contact {
+            display: flex;
+            justify-content: center;
+            gap: 80px;
+            margin: 40px 0;
+        }
+        
+        .contact-block h4 {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .contact-block p {
+            font-size: 16px;
+        }
+        
+        .back-footer {
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        /* Print info */
+        .print-info {
+            position: absolute;
+            bottom: 20px;
+            left: 60px;
+            font-size: 10px;
+            color: var(--gray);
+        }
+    </style>
+</head>
+<body>
+    <!-- Page 1: Cover -->
+    <div class="page cover-page">
+        <div class="cover-bg-pattern"></div>
+        <div class="cover-grid"></div>
+        
+        <div class="cover-header">
+            <div class="logo-text">EXPO<span>PRO</span></div>
+            <div class="cover-year">2024 CATALOG</div>
+        </div>
+        
+        <div class="cover-main">
+            <div class="cover-title-group">
+                <h1 class="cover-title">Exhibition<br>& Event Solutions</h1>
+                <p class="cover-subtitle">Premium Quality Products</p>
+                
+                <div class="cover-products-visual">
+                    <div class="cover-product-item">⛺</div>
+                    <div class="cover-product-item">🪑</div>
+                    <div class="cover-product-item">🖼️</div>
+                    <div class="cover-product-item">🏖️</div>
+                    <div class="cover-product-item">💡</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="cover-footer">
+            <div class="cover-tagline">Your Trusted Partner for Trade Shows Worldwide</div>
+            <div class="cover-page-num">01</div>
+        </div>
+    </div>
+
+    <!-- Page 2: Steel Tents -->
+    <div class="page steel-tents-page">
+        <div class="page-header">
+            <div class="page-number">02</div>
+            <div class="page-title-group">
+                <div>
+                    <div class="page-category">Series 01</div>
+                    <h2 class="page-title">Steel Tents</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section-intro">
+            <div class="intro-text">
+                Our steel exhibition tents are engineered for durability and cost-effectiveness. 
+                Featuring galvanized steel frames with powder coating, these tents are built to 
+                withstand prolonged outdoor use while maintaining structural integrity.
+            </div>
+            <div class="intro-features">
+                <div class="feature-tag">Heavy-duty Construction</div>
+                <div class="feature-tag">Anti-rust Coating</div>
+                <div class="feature-tag">Weather Resistant</div>
+                <div class="feature-tag">Easy Assembly</div>
+            </div>
+        </div>
+        
+        <div class="products-grid">
+            <div class="product-card-full">
+                <div class="product-visual">
+                    ⛺
+                    <span class="product-size-badge">3×3m</span>
+                </div>
+                <div class="product-details">
+                    <div class="product-name">Steel Tent 3×3</div>
+                    <div class="specs-table">
+                        <div class="spec-row">
+                            <span class="spec-label">Frame</span>
+                            <span class="spec-value">Steel 32mm</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Weight</span>
+                            <span class="spec-value">28 kg</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Fabric</span>
+                            <span class="spec-value">450g PVC</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Wind Rating</span>
+                            <span class="spec-value">40 km/h</span>
+                        </div>
+                    </div>
+                    <div class="product-price">$198</div>
+                </div>
+            </div>
+            
+            <div class="product-card-full">
+                <div class="product-visual">
+                    ⛺
+                    <span class="product-size-badge">4×4m</span>
+                </div>
+                <div class="product-details">
+                    <div class="product-name">Steel Tent 4×4</div>
+                    <div class="specs-table">
+                        <div class="spec-row">
+                            <span class="spec-label">Frame</span>
+                            <span class="spec-value">Steel 38mm</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Weight</span>
+                            <span class="spec-value">42 kg</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Fabric</span>
+                            <span class="spec-value">450g PVC</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Wind Rating</span>
+                            <span class="spec-value">40 km/h</span>
+                        </div>
+                    </div>
+                    <div class="product-price">$298</div>
+                </div>
+            </div>
+            
+            <div class="product-card-full">
+                <div class="product-visual">
+                    ⛺
+                    <span class="product-size-badge">6×6m</span>
+                </div>
+                <div class="product-details">
+                    <div class="product-name">Steel Tent 6×6</div>
+                    <div class="specs-table">
+                        <div class="spec-row">
+                            <span class="spec-label">Frame</span>
+                            <span class="spec-value">Steel 42mm</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Weight</span>
+                            <span class="spec-value">85 kg</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Fabric</span>
+                            <span class="spec-value">650g PVC</span>
+                        </div>
+                        <div class="spec-row">
+                            <span class="spec-label">Wind Rating</span>
+                            <span class="spec-value">50 km/h</span>
+                        </div>
+                    </div>
+                    <div class="product-price">$580</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="print-info">Steel Tents • Heavy-duty Series</div>
+    </div>
+
+    <!-- Page 3: Aluminum Tents -->
+    <div class="page aluminum-page">
+        <div class="page-header">
+            <div class="page-number" style="color: rgba(255,255,255,0.5)">03</div>
+            <div class="page-title-group">
+                <div>
+                    <div class="page-category">Series 02</div>
+                    <h2 class="page-title">Aluminum Tents</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="material-comparison">
+            <div class="material-card alum-mat">
+                <h3>Aluminum</h3>
+                <p>Premium extruded aluminum alloy 6063 with anodized finish. 40% lighter than steel while maintaining excellent structural strength.</p>
+                <div class="material-props">
+                    <span class="prop-chip">Lightweight</span>
+                    <span class="prop-chip">Anti-corrosion</span>
+                    <span class="prop-chip">Quick Fold</span>
+                    <span class="prop-chip">Premium Look</span>
+                </div>
+            </div>
+            <div class="material-card steel-mat">
+                <h3>Steel</h3>
+                <p>Heavy-duty galvanized steel with powder coating. Superior stability and load capacity at a cost-effective price point.</p>
+                <div class="material-props">
+                    <span class="prop-chip">Cost-effective</span>
+                    <span class="prop-chip">High Stability</span>
+                    <span class="prop-chip">Long Life</span>
+                    <span class="prop-chip">Easy Repair</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="products-grid">
+            <div class="product-card-full" style="background: #1a1a1a; border: 1px solid #333;">
+                <div class="product-visual" style="background: linear-gradient(135deg, #1a2030 0%, #0d1219 100%);">
+                    🏕️
+                    <span class="product-size-badge" style="background: var(--accent-blue);">2×2m</span>
+                </div>
+                <div class="product-details" style="color: white;">
+                    <div class="product-name">Aluminum Tent 2×2</div>
+                    <div class="specs-table">
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Frame</span>
+                            <span class="spec-value">Aluminum 30mm</span>
+                        </div>
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Weight</span>
+                            <span class="spec-value">8.5 kg</span>
+                        </div>
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Fabric</span>
+                            <span class="spec-value">300g Polyester</span>
+                        </div>
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Wind Rating</span>
+                            <span class="spec-value">30 km/h</span>
+                        </div>
+                    </div>
+                    <div class="product-price" style="color: var(--accent-blue);">$248</div>
+                </div>
+            </div>
+            
+            <div class="product-card-full" style="background: #1a1a1a; border: 1px solid #333;">
+                <div class="product-visual" style="background: linear-gradient(135deg, #1a2030 0%, #0d1219 100%);">
+                    🏕️
+                    <span class="product-size-badge" style="background: var(--accent-blue);">3×3m</span>
+                </div>
+                <div class="product-details" style="color: white;">
+                    <div class="product-name">Aluminum Tent 3×3</div>
+                    <div class="specs-table">
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Frame</span>
+                            <span class="spec-value">Aluminum 40mm</span>
+                        </div>
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Weight</span>
+                            <span class="spec-value">15 kg</span>
+                        </div>
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Fabric</span>
+                            <span class="spec-value">300g Polyester</span>
+                        </div>
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Wind Rating</span>
+                            <span class="spec-value">30 km/h</span>
+                        </div>
+                    </div>
+                    <div class="product-price" style="color: var(--accent-blue);">$328</div>
+                </div>
+            </div>
+            
+            <div class="product-card-full" style="background: #1a1a1a; border: 1px solid #333;">
+                <div class="product-visual" style="background: linear-gradient(135deg, #1a2030 0%, #0d1219 100%);">
+                    🏕️
+                    <span class="product-size-badge" style="background: var(--accent-blue);">3×4.5m</span>
+                </div>
+                <div class="product-details" style="color: white;">
+                    <div class="product-name">Aluminum Tent 3×4.5</div>
+                    <div class="specs-table">
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Frame</span>
+                            <span class="spec-value">Aluminum 40mm</span>
+                        </div>
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Weight</span>
+                            <span class="spec-value">22 kg</span>
+                        </div>
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Fabric</span>
+                            <span class="spec-value">300g Polyester</span>
+                        </div>
+                        <div class="spec-row" style="border-color: #333;">
+                            <span class="spec-label" style="color: #888;">Wind Rating</span>
+                            <span class="spec-value">35 km/h</span>
+                        </div>
+                    </div>
+                    <div class="product-price" style="color: var(--accent-blue);">$458</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 4: Comparison -->
+    <div class="page comparison-page">
+        <div class="page-header">
+            <div class="page-number">04</div>
+            <div class="page-title-group">
+                <div>
+                    <div class="page-category">Technical</div>
+                    <h2 class="page-title">Steel vs Aluminum</h2>
+                </div>
+            </div>
+        </div>
+        
+        <table class="comparison-table-full">
+            <thead>
+                <tr>
+                    <th>Specification</th>
+                    <th>Steel 3×3</th>
+                    <th>Aluminum 3×3</th>
+                    <th>Difference</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Frame Material</td>
+                    <td>Galvanized Steel</td>
+                    <td>Aluminum Alloy 6063</td>
+                    <td>—</td>
+                </tr>
+                <tr>
+                    <td>Frame Thickness</td>
+                    <td>1.2mm</td>
+                    <td>1.5mm</td>
+                    <td>+25%</td>
+                </tr>
+                <tr>
+                    <td>Total Weight</td>
+                    <td>28 kg</td>
+                    <td>15 kg</td>
+                    <td style="color: var(--accent); font-weight: 700;">-46%</td>
+                </tr>
+                <tr>
+                    <td>Setup Time</td>
+                    <td>10-15 min</td>
+                    <td>5-8 min</td>
+                    <td>-40%</td>
+                </tr>
+                <tr>
+                    <td>Wind Resistance</td>
+                    <td>40 km/h</td>
+                    <td>30 km/h</td>
+                    <td>-25%</td>
+                </tr>
+                <tr class="highlight-row">
+                    <td>Best For</td>
+                    <td>Long-term events</td>
+                    <td>Frequent travel</td>
+                   <td>—</td>
+                </tr>
+                <tr>
+                    <td>Price Range</td>
+                    <td>$180-220</td>
+                    <td>$280-350</td>
+                    <td>+55%</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 50px; padding: 30px; background: var(--light); border-radius: 12px;">
+            <h4 style="margin-bottom: 15px; font-size: 16px;">Selection Guide</h4>
+            <p style="color: var(--gray); line-height: 1.8;">
+                <strong>Choose Steel</strong> if you need a tent for long-term installations, frequent reuse, or in windy conditions. 
+                The cost-effectiveness and durability make it ideal for permanent or semi-permanent setups.<br><br>
+                <strong>Choose Aluminum</strong> if portability is priority, you travel frequently to different events, or you need quick setup times. 
+                The lightweight design reduces shipping costs and makes one-person setup possible.
+            </p>
+        </div>
+    </div>
+
+    <!-- Page 5: Accessories -->
+    <div class="page accessories-page">
+        <div class="page-header">
+            <div class="page-number">05</div>
+            <div class="page-title-group">
+                <div>
+                    <div class="page-category">Complete Solutions</div>
+                    <h2 class="page-title">Accessories</h2>
+                </div>
+            </div>
+        </div>
+        
+        <div class="accessories-grid">
+            <div class="accessory-card">
+                <div class="accessory-visual">🪑</div>
+                <div class="accessory-info">
+                    <div class="accessory-name">Director Chair</div>
+                    <div class="accessory-spec">Steel/Aluminum • 4-6 kg • 150kg load</div>
+                </div>
+            </div>
+            
+            <div class="accessory-card">
+                <div class="accessory-visual">🖼️</div>
+                <div class="accessory-info">
+                    <div class="accessory-name">Rollup Display</div>
+                    <div class="accessory-spec">80×200cm • 3-4 kg • Aluminum</div>
+                </div>
+            </div>
+            
+            <div class="accessory-card">
+                <div class="accessory-visual">🏖️</div>
+                <div class="accessory-info">
+                    <div class="accessory-name">Beach Umbrella</div>
+                    <div class="accessory-spec">1.8-2.5m diameter • UPF 50+</div>
+                </div>
+            </div>
+            
+            <div class="accessory-card">
+                <div class="accessory-visual">💡</div>
+                <div class="accessory-info">
+                    <div class="accessory-name">LED Light Box</div>
+                    <div class="accessory-spec">A1/A0 • Edge-lit LED • 50k hrs</div>
+                </div>
+            </div>
+            
+            <div class="accessory-card">
+                <div class="accessory-visual">📦</div>
+                <div class="accessory-info">
+                    <div class="accessory-name">Pop-up Wall</div>
+                    <div class="accessory-spec">3×3m / 4×3m • 12-18 kg</div>
+                </div>
+            </div>
+            
+            <div class="accessory-card">
+                <div class="accessory-visual">🔗</div>
+                <div class="accessory-info">
+                    <div class="accessory-name">Display Frame</div>
+                    <div class="accessory-spec">X-banner/L-banner • 1.5 kg</div>
+                </div>
+            </div>
+            
+            <div class="accessory-card">
+                <div class="accessory-visual">🎪</div>
+                <div class="accessory-info">
+                    <div class="accessory-name">Canopy Tent</div>
+                    <div class="accessory-spec">Pop-up • 2×2m to 3×6m</div>
+                </div>
+            </div>
+            
+            <div class="accessory-card">
+                <div class="accessory-visual">🪜</div>
+                <div class="accessory-info">
+                    <div class="accessory-name">Display Stand</div>
+                    <div class="accessory-spec">Aluminum • Multiple sizes</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 6: Back Cover -->
+    <div class="page back-cover">
+        <div class="back-logo">EXPOPRO</div>
+        
+        <div class="back-contact">
+            <div class="contact-block">
+                <h4>Email</h4>
+                <p>sales@expopro.com</p>
+            </div>
+            <div class="contact-block">
+                <h4>Website</h4>
+                <p>www.expopro.com</p>
+            </div>
+            <div class="contact-block">
+                <h4>Phone</h4>
+                <p>+86 123 4567 8900</p>
+            </div>
+        </div>
+        
+        <div class="back-footer">
+            © 2024 ExpoPro • All Rights Reserved • Made in China
+        </div>
+    </div>
+</body>
+</html>
