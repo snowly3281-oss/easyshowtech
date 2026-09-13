@@ -19,6 +19,8 @@ export default defineCliConfig({
     schema: './schema.json',
     generates: '../src/sanity/sanity.types.ts',
   },
+  // 添加 studioHost 配置
+  studioHost: 'easyshowtech',
   /**
    * Keep the deployed editor on the version verified with these custom
    * components. Upgrade Sanity deliberately after a local build/check instead
