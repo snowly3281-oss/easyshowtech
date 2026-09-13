@@ -1,4 +1,3 @@
-import {useToast} from "@sanity/ui";
 import {
   type DocumentActionComponent,
   type DocumentActionProps,
@@ -16,7 +15,6 @@ import {
 export const PublishAndTranslateAction: DocumentActionComponent = (
   props: DocumentActionProps,
 ) => {
-  const toast = useToast();
   const {publish} = useDocumentOperation(props.id, props.type);
   const currentDocument = props.draft ?? props.published;
   const isEnglish = (currentDocument?.language ?? "en") === "en";
@@ -28,12 +26,8 @@ export const PublishAndTranslateAction: DocumentActionComponent = (
     onHandle: () => {
       publish.execute();
       if (isEnglish) {
-        toast.push({
-          status: "success",
-          title: "英文已提交发布",
-          description:
-            "DeepSeek 会在后台同步 ES / FR / DE / IT；无需停留在本页面等待。",
-        });
+        window.alert("英文已提交发布，DeepSeek 会在后台同步 ES / FR / DE / IT");
+        console.log("英文已提交发布，DeepSeek 会在后台同步 ES / FR / DE / IT");
       }
       props.onComplete();
     },
