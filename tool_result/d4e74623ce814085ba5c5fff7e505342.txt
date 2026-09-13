@@ -1,0 +1,38 @@
+# tool_name: execute_shell_command
+# created_at: 2026-09-13T10:40:24.557987
+# ---
+ 驱动器 E 中的卷没有标签。
+ 卷的序列号是 DAD5-620A
+
+ E:\easyshow\studio 的目录
+
+2026/09/09  23:37    <DIR>          .
+2026/09/12  23:10    <DIR>          ..
+2026/09/09  23:37    <DIR>          .sanity
+2026/09/09  23:23    <DIR>          actions
+2026/09/09  23:23    <DIR>          components
+2026/09/09  23:23    <DIR>          config
+2026/09/09  23:23    <DIR>          content
+2026/07/25  19:08               135 env.d.ts
+2026/07/24  02:37             4,306 fix-seed.mjs
+2026/07/26  18:23             2,629 IMAGES.md
+2026/07/26  18:23             8,605 import-images.mjs
+2026/09/09  23:23    <DIR>          lib
+2026/09/09  23:37    <DIR>          node_modules
+2026/09/09  23:29           521,562 package-lock.json
+2026/09/12  19:52             2,812 package.json
+2026/06/25  11:13             1,288 README.md
+2026/07/26  18:51               958 sanity.cli.ts
+2026/09/12  19:54             6,032 sanity.config.ts
+2026/07/24  03:24            15,645 sanity.types.ts
+2026/07/29  22:41           236,873 schema.json
+2026/09/09  23:23    <DIR>          schemaTypes
+2026/09/09  23:23    <DIR>          scripts
+2026/06/29  14:15             5,068 seed-boutique.mjs
+2026/07/26  12:24             5,308 seed-home.mjs
+2026/06/29  19:53             3,012 seed-series.mjs
+2026/06/29  17:09             5,783 seed-solutions.mjs
+2026/09/09  23:23    <DIR>          structure
+2026/06/25  11:12               414 tsconfig.json
+              16 个文件        820,430 字节
+              12 个目录 108,248,846,336 可用字节

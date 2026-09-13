@@ -1,0 +1,41 @@
+# tool_name: execute_shell_command
+# created_at: 2026-09-13T10:40:14.277786
+# ---
+ 驱动器 E 中的卷没有标签。
+ 卷的序列号是 DAD5-620A
+
+ E:\easyshow 的目录
+
+2026/09/12  23:10    <DIR>          .
+2026/09/12  19:55    <DIR>          .astro
+2026/07/26  15:04             2,541 .env
+2026/07/26  15:04             2,541 .env.example
+2026/09/09  23:23    <DIR>          .github
+2026/09/12  20:04               162 .gitignore
+2026/07/29  08:36                 8 .nvmrc
+2026/09/09  23:29    <DIR>          .wrangler
+2026/09/09  23:36             7,089 astro.config.mjs
+2026/07/26  16:22            16,976 catalog-reconciliation.csv
+2026/06/30  19:37            12,533 CATALOG_RECONCILIATION.md
+2026/09/09  23:23    <DIR>          design-file
+2026/09/09  23:32             3,052 dev.log
+2026/09/09  23:23    <DIR>          functions
+2026/09/09  23:23    <DIR>          migrations
+2026/09/09  23:58    <DIR>          node_modules
+2026/09/09  23:58           323,864 package-lock.json
+2026/09/12  19:50             2,141 package.json
+2026/09/09  23:23    <DIR>          public
+2026/09/12  23:10             1,090 push_github.bat
+2026/07/29  08:36             2,427 README.md
+2026/07/27  19:04               743 sanity.blueprint.ts
+2026/07/26  18:25             9,030 SCHEMA_product_v2.md
+2026/09/09  23:23    <DIR>          scripts
+2026/09/09  23:23    <DIR>          src
+2026/09/09  23:37    <DIR>          studio
+2026/07/24  12:08               147 tsconfig.json
+2026/09/09  23:23    <DIR>          workers
+2026/07/26  14:56               523 wrangler.jsonc
+2026/07/26  14:56               303 wrangler.www-redirect.jsonc
+2026/08/12  09:47             6,920 备份astro.config.mjs
+              18 个文件        392,090 字节
+              13 个目录 101,114,085,376 可用字节
