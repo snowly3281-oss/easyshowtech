@@ -1,6 +1,6 @@
 {
 	"$schema": "./node_modules/wrangler/config-schema.json",
-	"name": "coral-site",
+	"name": "easyshowtech",
 	"compatibility_date": "2026-07-07",
 	"compatibility_flags": [
 		"nodejs_compat",
@@ -8,14 +8,14 @@
 	],
 	"routes": [
 		{
-			"pattern": "coralpilates.com",
+			"pattern": "easyshowtech.com",
 			"custom_domain": true
 		}
 	],
 	"d1_databases": [
 		{
 			"binding": "INQUIRIES_DB",
-			"database_name": "coral-inquiries",
+			"database_name": "easyshowtech-inquiries",
 			"migrations_dir": "./migrations",
 			"database_id": "7faaaae1-371d-4382-bfa8-8ccec4e97c24"
 		}
