@@ -24,8 +24,8 @@ export default defineCliConfig({
    * components. Upgrade Sanity deliberately after a local build/check instead
    * of allowing an unreviewed weekly runtime change.
    */
-  deployment: {
-    appId: 'obzl4tu9ezahp0hq5mf22uap',
-    autoUpdates: false,
-  },
+  //deployment: {
+    //appId: 'obzl4tu9ezahp0hq5mf22uap',
+    //autoUpdates: false,
+  //},
 })
