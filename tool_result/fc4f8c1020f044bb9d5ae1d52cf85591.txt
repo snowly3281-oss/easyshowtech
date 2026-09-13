@@ -1,8 +1,8 @@
 # tool_name: read_file
-# created_at: 2026-09-09T23:32:00.222775
+# created_at: 2026-09-13T10:40:16.608137
 # ---
 {
-  "name": "coral",
+  "name": "easyshowtech",
   "type": "module",
   "version": "0.0.1",
   "packageManager": "npm@10.9.2",
@@ -31,7 +31,7 @@
     "db:migrate:remote": "wrangler d1 migrations apply coral-inquiries --remote"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.1.4",
+    "@astrojs/cloudflare": "^14.3.1",
     "@astrojs/react": "^6.0.2",
     "@astrojs/sitemap": "^3.7.3",
     "@fontsource-variable/inter": "^5.3.0",
@@ -46,6 +46,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "resend": "^6.16.0",
+    "styled-components": "^6.5.3",
     "tailwindcss": "^4.3.1"
   },
   "overrides": {
@@ -56,6 +57,6 @@
     "@sanity/blueprints": "^0.23.0",
     "@sanity/functions": "^1.4.0",
     "typescript": "^6.0.3",
-    "wrangler": "4.114.0"
+    "wrangler": "^4.130.0"
   }
 }

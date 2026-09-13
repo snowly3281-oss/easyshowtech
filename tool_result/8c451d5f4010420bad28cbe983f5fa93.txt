@@ -1,0 +1,184 @@
+# tool_name: read_file
+# created_at: 2026-09-13T10:59:41.452354
+# ---
+import { defineConfig } from "sanity";
+import { presentationTool } from "sanity/presentation";
+import { structureTool } from "sanity/structure";
+import { visionTool } from "@sanity/vision";
+import { media } from "sanity-plugin-media";
+import { zhHansLocale } from "@sanity/locale-zh-hans";
+import {assist} from "@sanity/assist";
+
+import { schemaTypes } from "./schemaTypes";
+import { getDefaultDocumentNode, structure } from "./structure";
+import { OperatorDocumentInput } from "./components/OperatorDocumentInput";
+import { SITE_PAGES } from "./config/sitePages";
+import {
+  DEFAULT_TRANSLATION_STYLE_GUIDE,
+  LOCALIZED_DOCUMENT_TYPES,
+  LOCALIZED_DOCUMENT_TYPE_SET,
+} from "./config/i18n";
+import {PublishAndTranslateAction} from "./actions/PublishAndTranslateAction";
+import {DeletePostWithTranslationsAction} from "./actions/DeletePostWithTranslationsAction";
+import {UnpublishPostWithTranslationsAction} from "./actions/UnpublishPostWithTranslationsAction";
+import {presentationResolve} from "./config/presentation";
+
+/**
+ * Singleton document types — exactly one instance each. They are pinned in the
+ * desk structure (./structure) and must NOT be creatable from the global
+ * "New document" menu.
+ */
+const SINGLETON_TYPES = new Set([
+  "siteSettings",
+  "oem",
+  "home",
+  "sitePage",
+  "translationSettings",
+]);
+
+/**
+ * Standalone Sanity Studio for Coral Pilates.
+ *
+ * This Studio is NOT embedded in the Astro app — it is deployed separately to a
+ * <hostname>.sanity.studio URL via `sanity deploy`. projectId/dataset are
+ * hardcoded here (projectId is public/safe). No tokens live in this repo.
+ */
+export default defineConfig({
+  name: "easyshowtech",
+  title: "easyshowtech display",
+
+  projectId: "w8rk6k6z",
+  dataset: "production",
+
+  plugins: [
+    presentationTool({
+      title: "前台可视化编辑 / Presentation",
+      previewUrl: {
+        initial:
+          (import.meta.env.SANITY_STUDIO_PREVIEW_ORIGIN as string | undefined) ||
+          "http://localhost:4321",
+      },
+      allowOrigins: [
+        (import.meta.env.SANITY_STUDIO_PREVIEW_ORIGIN as string | undefined) ||
+          "http://localhost:4321",
+      ],
+      resolve: presentationResolve,
+    }),
+    zhHansLocale(),
+    assist({
+      translate: {
+        styleguide: async ({client}) =>
+          (await client.fetch<string | null>(
+            '*[_type == "translationSettings" && _id == "translationSettings"][0].styleGuide',
+          )) || DEFAULT_TRANSLATION_STYLE_GUIDE,
+        document: {
+          languageField: "language",
+          documentTypes: [...LOCALIZED_DOCUMENT_TYPES],
+        },
+      },
+    }),
+    structureTool({ structure, defaultDocumentNode: getDefaultDocumentNode }),
+    visionTool(),
+    media({
+      // Tags are seeded and maintained by the controlled Coral vocabulary.
+      // Field-level auto-tagging may use existing tags but cannot create
+      // free-form variants such as "Oak", "oak wood" and "wood-oak".
+      createTagsOnUpload: false,
+    }),
+  ],
+
+  // Vision is a developer query tool. Keep it available to administrators,
+  // while operators see only the content and media tools they need day to day.
+  tools: (prev, { currentUser }) => {
+    const isAdministrator = currentUser?.roles.some(
+      (role) => role.name === "administrator",
+    );
+    const visibleTools = isAdministrator
+      ? prev
+      : prev.filter((tool) => tool.name !== "vision");
+
+    // Keep Studio navigation limited to production-stable tools. The
+    // standalone article-writing workspace remains disabled until its editor
+    // runtime has been validated against this Studio version.
+    return visibleTools;
+  },
+
+  schema: {
+    types: schemaTypes,
+    templates: (prev) => [
+      ...prev,
+      ...SITE_PAGES.map((page) => ({
+        id: `sitePage-${page.key}`,
+        title: page.title,
+        description: page.description,
+        schemaType: "sitePage",
+        value: {
+          pageKey: page.key,
+          route: page.route,
+          title: page.title,
+        },
+      })),
+      {
+        id: "product-accessory",
+        title: "新建训练附件 / Accessory",
+        description: "用于箱、垫、跳板等非整机产品；会显示在产品中心的 Parts & Accessories 筛选中。",
+        schemaType: "product",
+        value: {
+          catalogType: "accessory",
+          status: "draft",
+          priceDisplay: "quote",
+        },
+      },
+      {
+        id: "product-spare-part",
+        title: "新建维修与替换零件 / Spare part",
+        description: "用于弹簧、绳索、皮革等替换件；请填写可适配产品。",
+        schemaType: "product",
+        value: {
+          catalogType: "spare_part",
+          status: "draft",
+          priceDisplay: "quote",
+        },
+      },
+    ],
+  },
+
+  form: {
+    components: {
+      input: OperatorDocumentInput,
+    },
+  },
+
+  document: {
+    // Hide singletons from the global "New document" menu (principle 7).
+    newDocumentOptions: (prev) =>
+      prev.filter(
+        (templateItem) =>
+          !SINGLETON_TYPES.has(templateItem.templateId) &&
+          !templateItem.templateId.startsWith("sitePage-"),
+      ),
+    actions: (prev, context) => {
+      const withAutomaticTranslations = LOCALIZED_DOCUMENT_TYPE_SET.has(
+        context.schemaType,
+      )
+        ? prev.map((action) => {
+            if (action.action === "publish") return PublishAndTranslateAction;
+            if (context.schemaType === "post" && action.action === "unpublish") {
+              return UnpublishPostWithTranslationsAction;
+            }
+            if (context.schemaType === "post" && action.action === "delete") {
+              return DeletePostWithTranslationsAction;
+            }
+            return action;
+          })
+        : prev;
+
+      return SINGLETON_TYPES.has(context.schemaType)
+        ? withAutomaticTranslations.filter(
+            (action) =>
+              action.action !== "delete" && action.action !== "duplicate",
+          )
+        : withAutomaticTranslations;
+    },
+  },
+});

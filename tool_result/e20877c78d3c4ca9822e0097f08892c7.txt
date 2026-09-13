@@ -1,5 +1,5 @@
 # tool_name: read_file
-# created_at: 2026-09-09T23:27:56.525594
+# created_at: 2026-09-13T10:40:21.358202
 # ---
 # Sanity — read-only, build-time (SSG). projectId is public/safe.
 PUBLIC_SANITY_PROJECT_ID=p3d22f8w
