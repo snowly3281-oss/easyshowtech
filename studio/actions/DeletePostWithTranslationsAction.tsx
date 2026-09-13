@@ -1,5 +1,4 @@
 import {useCallback} from "react";
-import {useToast} from "@sanity/ui";
 import {type DocumentActionComponent, useClient} from "sanity";
 import {getTranslationGroup, draftId} from "./translationGroup";
 
@@ -13,7 +12,6 @@ export const DeletePostWithTranslationsAction: DocumentActionComponent = (
   props,
 ) => {
   const client = useClient({apiVersion: "2026-07-24"});
-  const toast = useToast();
   const canDelete = Boolean(props.draft ?? props.published);
 
   const handle = useCallback(async () => {
@@ -22,7 +20,7 @@ export const DeletePostWithTranslationsAction: DocumentActionComponent = (
     const currentTitle = String(
       (props.draft ?? props.published)?.title ?? "这篇文章",
     );
-    if (!globalThis.confirm(`永久删除“${currentTitle}”及其自动译文吗？此操作不可恢复。`)) {
+    if (!globalThis.confirm(`永久删除"${currentTitle}"及其自动译文吗？此操作不可恢复。`)) {
       return;
     }
 
@@ -40,20 +38,14 @@ export const DeletePostWithTranslationsAction: DocumentActionComponent = (
       }
 
       await transaction.commit();
-      toast.push({
-        status: "success",
-        title: "文章已删除",
-        description: `已同时清理 ${Math.max(0, group.documentIds.length - 1)} 个译文。`,
-      });
+      window.alert(`文章已删除，已同时清理 ${Math.max(0, group.documentIds.length - 1)} 个译文。`);
+      console.log(`文章已删除，已同时清理 ${Math.max(0, group.documentIds.length - 1)} 个译文。`);
       props.onComplete();
     } catch (error) {
-      toast.push({
-        status: "error",
-        title: "删除失败",
-        description: error instanceof Error ? error.message : String(error),
-      });
+      window.alert(`删除失败: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("删除失败:", error);
     }
-  }, [canDelete, client, props, toast]);
+  }, [canDelete, client, props]);
 
   return {
     label: "永久删除（含译文）",

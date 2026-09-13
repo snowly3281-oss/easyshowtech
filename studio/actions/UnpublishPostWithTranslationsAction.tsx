@@ -1,5 +1,4 @@
 import {useCallback} from "react";
-import {useToast} from "@sanity/ui";
 import {
   type DocumentActionComponent,
   type SanityDocumentLike,
@@ -16,7 +15,6 @@ export const UnpublishPostWithTranslationsAction: DocumentActionComponent = (
   props,
 ) => {
   const client = useClient({apiVersion: "2026-07-24"});
-  const toast = useToast();
   const isPublished = Boolean(props.published);
 
   const handle = useCallback(async () => {
@@ -25,7 +23,7 @@ export const UnpublishPostWithTranslationsAction: DocumentActionComponent = (
     const currentTitle = String(
       (props.draft ?? props.published)?.title ?? "这篇文章",
     );
-    if (!globalThis.confirm(`确定取消发布“${currentTitle}”及其自动译文吗？所有内容会保留为草稿。`)) {
+    if (!globalThis.confirm(`确定取消发布"${currentTitle}"及其自动译文吗？所有内容会保留为草稿。`)) {
       return;
     }
 
@@ -49,20 +47,14 @@ export const UnpublishPostWithTranslationsAction: DocumentActionComponent = (
       }
 
       await transaction.commit();
-      toast.push({
-        status: "success",
-        title: "已取消发布",
-        description: `文章及 ${Math.max(0, ids.length - 1)} 个译文已保留为草稿。`,
-      });
+      window.alert(`已取消发布，文章及 ${Math.max(0, ids.length - 1)} 个译文已保留为草稿。`);
+      console.log(`已取消发布，文章及 ${Math.max(0, ids.length - 1)} 个译文已保留为草稿。`);
       props.onComplete();
     } catch (error) {
-      toast.push({
-        status: "error",
-        title: "取消发布失败",
-        description: error instanceof Error ? error.message : String(error),
-      });
+      window.alert(`取消发布失败: ${error instanceof Error ? error.message : String(error)}`);
+      console.error("取消发布失败:", error);
     }
-  }, [client, isPublished, props, toast]);
+  }, [client, isPublished, props]);
 
   return {
     label: "取消发布（含译文）",
