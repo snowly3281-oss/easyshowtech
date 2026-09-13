@@ -1,5 +1,5 @@
 {
-  "extends": "@sanity/tsconfig/strict.json",
+  "extends": "./node_modules/@sanity/tsconfig/strict.tsconfig.json",
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
