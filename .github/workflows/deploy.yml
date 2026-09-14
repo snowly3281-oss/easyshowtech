@@ -93,8 +93,16 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
+      - name: Verify Wrangler
+        run: |
+          which wrangler
+          wrangler --version
+
       - name: Deploy Workers
-        run: wrangler deploy
+        run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
