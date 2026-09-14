@@ -56,18 +56,8 @@ jobs:
       - name: Build Astro
         run: npm run build
 
-      - name: Create Cloudflare Pages project if not exists
-        uses: cloudflare/wrangler-action@v4
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages project create easyshowtech --production-branch=main || true
-        env:
-          NODE_OPTIONS: '--no-warnings'
-        continue-on-error: true
-
       - name: Deploy to Cloudflare
-        uses: cloudflare/wrangler-action@v4
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
