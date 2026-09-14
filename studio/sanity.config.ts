@@ -58,6 +58,8 @@ export default defineConfig({
       allowOrigins: [
         (import.meta.env.SANITY_STUDIO_PREVIEW_ORIGIN as string | undefined) ||
           "http://localhost:4321",
+        "https://easyshowtech.pages.dev",
+        "https://*.easyshowtech.pages.dev",
       ],
       resolve: presentationResolve,
     }),
