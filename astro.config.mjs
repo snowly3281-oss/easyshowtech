@@ -78,6 +78,15 @@ export default defineConfig({
   // server is still running) instead of silently grabbing the next port.
   server: { port: 4321 },
   vite: {
+    // SSR: force @sanity/visual-editing to be bundled (avoid ESM/CJS interop issues)
+    ssr: {
+      noExternal: ['@sanity/visual-editing', '@sanity/visual-editing/react'],
+    },
+    build: {
+      manualChunks: {
+        'sanity-vendor': ['@sanity/client', '@sanity/image-url', '@sanity/visual-editing'],
+      },
+    },
     plugins: [
       tailwindcss(),
       {
@@ -168,6 +177,11 @@ export default defineConfig({
         '@sanity/image-url',
         'groq',
         '@portabletext/to-html',
+      ],
+      // Include @sanity/visual-editing to fix lodash ESM/CJS interop issues
+      include: [
+        '@sanity/visual-editing',
+        '@sanity/visual-editing/react',
       ],
     },
   }
