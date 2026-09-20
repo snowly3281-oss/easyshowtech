@@ -1,6 +1,6 @@
 ---
 /**
- * Footer.astro — site-wide footer band for every Coral Pilates page.
+ * Footer.astro — site-wide footer band for every page.
  *
  * Near-black band, full-width; inner content capped by .container. Brand block
  * + three link columns + a legal bar with an auto year.
@@ -10,6 +10,7 @@
  * Styling uses global.css tokens via var(--…); no new style scales introduced.
  */
 import {
+  siteSettings as configSiteSettings,
   footerProducts,
   footerSolutions,
   footerCompany,
@@ -23,14 +24,20 @@ import {ui} from "../../i18n/ui";
 import {staticUi} from "../../i18n/static";
 
 const year = new Date().getFullYear();
-const siteSettings = await getSiteSettings();
+const sanitySettings = await getSiteSettings();
+const siteSettings = {
+  ...configSiteSettings,
+  ...sanitySettings,
+  socialLinks: sanitySettings.socialLinks || [],
+};
 interface Props {
   locale?: Locale;
 }
 const {locale = "en"} = Astro.props;
 const t = (english: string) => staticUi(locale, english);
 const localizeHref = (href: string) => {
-  const url = new URL(href, "https://coralpilates.com");
+  const baseUrl = configSiteSettings.url || "https://easyshowtech.com";
+  const url = new URL(href, baseUrl);
   return `${localizedPath(url.pathname, locale)}${url.search}${url.hash}`;
 };
 const companyLabel = (href: string, fallback: string) => {
@@ -41,17 +48,18 @@ const companyLabel = (href: string, fallback: string) => {
   return fallback;
 };
 const socialLinks = siteSettings.socialLinks;
+const brand = siteSettings.brand;
 ---
 
 <footer class="site-footer">
   <div class="container footer-inner">
     <!-- Brand block -->
     <div class="footer-brand">
-      <a href={localizeHref("/")} class="logo" aria-label={`Coral Pilates — ${t("home")}`}>
+      <a href={localizeHref("/")} class="logo" aria-label={`${brand} — ${t("home")}`}>
         <img
           class="logo-img"
           src="/logo.png"
-          alt="Coral Pilates"
+          alt={brand}
           width="200"
           height="30"
         />
@@ -61,14 +69,14 @@ const socialLinks = siteSettings.socialLinks;
       </p>
       {
         socialLinks.length > 0 && (
-          <nav class="footer-social" aria-label="Coral Pilates social links">
+          <nav class="footer-social" aria-label={`${brand} social links`}>
             {socialLinks.map((link) => (
               <a
                 class="footer-social__link"
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`${link.label || link.platform} — Coral Pilates`}
+                aria-label={`${link.label || link.platform} — ${brand}`}
                 title={link.label || link.platform}
               >
                 <SocialIcon platform={link.platform} />

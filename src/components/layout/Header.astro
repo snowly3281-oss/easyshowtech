@@ -1,6 +1,6 @@
 ---
 /**
- * Header.astro — sticky top navigation for every Coral Pilates page.
+ * Header.astro — sticky top navigation for every page.
  *
  * Desktop dropdowns use a small pointer-intent grace period plus an invisible
  * hover bridge, so moving from a trigger into its panel does not close it.
@@ -10,6 +10,7 @@
  * type or spacing scales are introduced here — only layout/positioning rules.
  */
 import {
+  siteSettings,
   productsSeries,
   productsEquipment,
   productsParts,
@@ -27,7 +28,9 @@ interface Props {
 const {locale = "en"} = Astro.props;
 const t = (english: string) => staticUi(locale, english);
 const localizeHref = (href: string) => {
-  const url = new URL(href, "https://coralpilates.com");
+  // Use site URL from settings, fallback to production domain
+  const baseUrl = siteSettings.url || "https://easyshowtech.com";
+  const url = new URL(href, baseUrl);
   return `${localizedPath(url.pathname, locale)}${url.search}${url.hash}`;
 };
 const productPartLabel = (label: string) =>
@@ -37,11 +40,11 @@ const productPartLabel = (label: string) =>
 <header class="site-header">
   <div class="container header-inner">
     <!-- Left: logo lockup -->
-    <a href={localizeHref("/")} class="logo" aria-label={`Coral Pilates — ${t("home")}`}>
+    <a href={localizeHref("/")} class="logo" aria-label={`${siteSettings.brand} — ${t("home")}`}>
       <img
         class="logo-img"
         src="/logo.png"
-        alt="Coral Pilates"
+        alt={siteSettings.brand}
         width="200"
         height="30"
       />

@@ -126,6 +126,7 @@ const english: Record<UiKey, string> = {
 
 const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
   es: {
+    brand: "Coral Pilates",
     home: "Inicio",
     products: "Productos",
     allProducts: "Todos los productos",
@@ -190,6 +191,7 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     addedProductToRfq: "{product} añadido a la solicitud",
   },
   fr: {
+    brand: "Coral Pilates",
     home: "Accueil",
     products: "Produits",
     allProducts: "Tous les produits",
@@ -254,6 +256,7 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     addedProductToRfq: "{product} ajouté à la demande",
   },
   de: {
+    brand: "Coral Pilates",
     home: "Startseite",
     products: "Produkte",
     allProducts: "Alle Produkte",
@@ -318,6 +321,7 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     addedProductToRfq: "{product} zur Anfrage hinzugefügt",
   },
   it: {
+    brand: "Coral Pilates",
     home: "Home",
     products: "Prodotti",
     allProducts: "Tutti i prodotti",

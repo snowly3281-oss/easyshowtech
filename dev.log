@@ -1,53 +1,13 @@
-[2m23:31:57[22m [34m[@astrojs/cloudflare][39m Enabling image processing with Cloudflare Images for production with the "IMAGES" Images binding.
-[2m23:31:57[22m [34m[@astrojs/cloudflare][39m Enabling sessions with Cloudflare KV with the "SESSION" KV binding.
+[2m13:53:23[22m [34m[@astrojs/cloudflare][39m Enabling image processing with Cloudflare Images for production with the "IMAGES" Images binding.
+[2m13:53:23[22m [34m[@astrojs/cloudflare][39m Enabling sessions with Cloudflare KV with the "SESSION" KV binding.
 Using secrets defined in .env
-[2m23:31:57[22m [34m[vite][39m connected.
-[2m23:31:59[22m [34m[types][39m Generated [2m1ms[22m
-[42m[1m astro [22m[49m [32mv7.3.2[39m [2mready in[22m 2940 [2mms[22m
+[2m13:53:24[22m [34m[vite][39m connected.
+[2m13:53:26[22m [34m[types][39m Generated [2m3ms[22m
+[42m[1m astro [22m[49m [32mv7.3.2[39m [2mready in[22m 2674 [2mms[22m
 [2m┃[22m Local    [36mhttp://localhost:4321/[39m
 [2m┃[22m Network  [2muse --host to expose[22m
-[2m23:31:59[22m [32mwatching for file changes...[39m
-[2m23:32:06[22m [34m[vite][39m [vite] program reload
-[2m23:32:07[22m [34m[vite][39m [vite] program reload
-[2m23:32:08[22m [34m[vite][39m [vite] program reload
-[2m23:32:09[22m [34m[vite][39m [vite] program reload
-[2m23:32:09[22m [34m[vite][39m [vite] program reload
-[2m23:32:10[22m [34m[vite][39m [vite] program reload
-[2m23:32:11[22m [34m[vite][39m [vite] program reload
-[2m23:32:12[22m [34m[vite][39m [vite] program reload
-[2m23:32:12[22m [34m[vite][39m [vite] program reload
-[2m23:32:13[22m [34m[vite][39m [vite] program reload
-[2m23:32:14[22m [34m[vite][39m [vite] program reload
-[2m23:32:15[22m [34m[vite][39m [vite] program reload
-[2m23:32:16[22m [34m[vite][39m [vite] program reload
-[2m23:32:17[22m [34m[vite][39m [vite] program reload
-[2m23:32:18[22m [34m[vite][39m [vite] program reload
-[2m23:32:19[22m [34m[vite][39m [vite] program reload
-[2m23:32:19[22m [34m[vite][39m [vite] program reload
-[2m23:32:20[22m [34m[vite][39m [vite] program reload
-[2m23:32:21[22m [34m[vite][39m [vite] program reload
-[2m23:32:22[22m [34m[vite][39m [vite] program reload
-[2m23:32:23[22m [34m[vite][39m [vite] program reload
-[2m23:32:24[22m [34m[vite][39m [vite] program reload
-[2m23:32:25[22m [34m[vite][39m [vite] program reload
-[2m23:32:26[22m [34m[vite][39m [vite] program reload
-[2m23:32:26[22m [34m[vite][39m [vite] program reload
-[2m23:32:27[22m [34m[vite][39m [vite] program reload
-[2m23:32:28[22m [34m[vite][39m [vite] program reload
-[2m23:32:29[22m [34m[vite][39m [vite] program reload
-[2m23:32:30[22m [34m[vite][39m [vite] program reload
-[2m23:32:31[22m [34m[vite][39m [vite] program reload
-[2m23:32:31[22m [34m[vite][39m [vite] program reload
-[2m23:32:32[22m [34m[vite][39m [vite] program reload
-[2m23:32:33[22m [34m[vite][39m [vite] program reload
-[2m23:32:34[22m [34m[vite][39m [vite] program reload
-[2m23:32:35[22m [34m[vite][39m [vite] program reload
-[2m23:32:35[22m [34m[vite][39m [vite] program reload
-[2m23:32:36[22m [34m[vite][39m [vite] program reload
-[2m23:32:37[22m [34m[vite][39m [vite] program reload
-[2m23:32:38[22m [34m[vite][39m [vite] program reload
-[2m23:32:39[22m [34m[vite][39m [vite] program reload
-[2m23:32:40[22m [34m[vite][39m [vite] program reload
-[2m23:32:41[22m [34m[vite][39m [vite] program reload
-
-E:\easyshow>
+[2m13:53:26[22m [32mwatching for file changes...[39m
+[2m13:53:33[22m [34m[vite][39m 13:53:33 [200] / 1316ms
+[2m14:00:50[22m [34m[vite][39m 14:00:50 [200] / 129ms
+[2m20:53:09[22m [34m[watch][39m studio/.sanity/runtime/index.html
+[2m20:53:09[22m [34m[vite][39m [vite] program reload

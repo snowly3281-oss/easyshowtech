@@ -14,12 +14,11 @@
  */
 
 export const siteSettings = {
-  brand: "EASY SHOW",
-  url: "https://easyshowtech.com",
-  location: "Suzhou, China",
-  salesEmail: "chris@easyshowtech.com", // {{sales_email}}
-  phone: "+86 139 2197 4459", // {{phone}}
-  whatsapp: "+86 139 2197 4459", // {{whatsapp}} — same number
+  brand: "Easy Show Tech",
+  location: "Shenzhen, China",
+  salesEmail: "sales@easyshowtech.com", // {{sales_email}}
+  phone: "+86 755 1234 5678", // {{phone}}
+  whatsapp: "+86 755 1234 5678", // {{whatsapp}} — same number
   responseTime: "one business day", // {{response_time}}
 } as const;
 

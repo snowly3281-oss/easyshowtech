@@ -21,6 +21,7 @@ import type {
   TaxonomyQueryResult,
 } from '../../sanity/sanity.types'
 import {fetchLocalized, resolveLocale} from '../../i18n/config'
+import {siteSettings} from '../../config/site'
 import type {Locale} from '../../i18n/config'
 
 export async function getStaticPaths() {
@@ -86,7 +87,7 @@ const isPartsProduct =
 // One shared price decision for visible content and JSON-LD.
 const price = getPricePresentation(settings, product)
 
-const metaTitle = `${product.title ?? 'Product'} — Coral Pilates`
+const metaTitle = `${product.title ?? 'Product'} — ${siteSettings.brand}`
 const metaDescription = product.summary ?? undefined
 ---
 

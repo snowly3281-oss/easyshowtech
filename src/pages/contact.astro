@@ -18,6 +18,7 @@ import {
 } from "../lib/turnstileConfig";
 import {localizedPath, resolveLocale} from "../i18n/config";
 import {staticUi} from "../i18n/static";
+import {siteSettings} from "../config/site";
 const locale = resolveLocale(
   Astro.props.locale,
   Astro.originPathname || Astro.url.pathname,
@@ -35,7 +36,7 @@ const pageIntro =
   page?.introduction ||
   t("Send us your product list or floor plan and a real person will reply with a tailored quote and lead time — usually within two business days.");
 const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
-const metaTitle = page?.seo?.metaTitle || t("Contact — Coral Pilates");
+const metaTitle = page?.seo?.metaTitle || t("Contact — {brand}").replace("{brand}", siteSettings.brand);
 const metaDescription = page?.seo?.metaDescription || pageIntro;
 ---
 
@@ -126,7 +127,7 @@ const metaDescription = page?.seo?.metaDescription || pageIntro;
             </p>
 
             <!-- Context (set from the PDP prefill) + service meta + honeypot. -->
-            <input type="hidden" name="subject" value="Website inquiry — Coral Pilates" data-inq-subject />
+            <input type="hidden" name="subject" value={`Website inquiry — ${siteSettings.brand}`} data-inq-subject />
             <input type="hidden" name="product" value="" data-inq-product />
             <input type="hidden" name="frame_finish" value="" data-inq-frame />
             <input type="hidden" name="upholstery" value="" data-inq-upholstery />
@@ -277,7 +278,7 @@ const metaDescription = page?.seo?.metaDescription || pageIntro;
           <div class="card">
             <span class="eyebrow">{t("Talk to us directly")}</span>
             <p class="lead-name">Chris Qian</p>
-            <p class="caption">{t("Your contact at Coral Pilates")}</p>
+            <p class="caption">{t("Your contact at {brand}").replace("{brand}", siteSettings.brand)}</p>
             <hr class="rule" />
             <a class="line line-coral" href={`mailto:${siteSettings.salesEmail}`}>
               <Icon name="mail" size={18} /><span>{siteSettings.salesEmail}</span>
@@ -315,7 +316,7 @@ const metaDescription = page?.seo?.metaDescription || pageIntro;
     <div class="map">
       <iframe
         class="map__frame"
-        title={`${t("Suzhou office")} — Coral Pilates`}
+        title={`${t("Suzhou office")} — ${siteSettings.brand}`}
         src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d40000!2d120.3830647252851!3d31.22957807806323!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x35b3713cfcb56fad%3A0xed1eb1a014def43d!2sTaihu%20Resort%2C%20Wuzhong%20District%2C%20Suzhou%2C%20Jiangsu%2C%20China%2C%20215105!5e0!3m2!1sen!2sus!4v1782529791948!5m2!1sen!2sus"
         loading="lazy"
         referrerpolicy="strict-origin-when-cross-origin"
