@@ -728,7 +728,7 @@ export const structure: StructureResolver = async (S, context) => {
 
   return S.list()
     .id("coral-operations-root")
-    .title("Coral 运营工作台")
+    .title("Easyshow 运营工作台")
     .items(items);
 };
 

@@ -13,6 +13,7 @@ import {urlFor} from "../sanity/image";
 import type {SolutionBlock} from "../sanity/content";
 import {localizedPath, resolveLocale} from "../i18n/config";
 import {staticUi} from "../i18n/static";
+import {siteSettings} from "../config/site";
 
 const locale = resolveLocale(
   Astro.props.locale,
@@ -20,7 +21,7 @@ const locale = resolveLocale(
 );
 const t = (english: string) => staticUi(locale, english);
 const page = await getSitePage("about", locale);
-const eyebrow = page?.hero?.eyebrow || t("Coral Pilates");
+const eyebrow = page?.hero?.eyebrow || siteSettings.brand;
 const pageTitle =
   page?.hero?.heading ||
   page?.title ||
@@ -30,7 +31,7 @@ const pageIntro =
   page?.introduction ||
   t("We design and build Pilates equipment in Suzhou for studios, clinics and distributors.");
 const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
-const metaTitle = page?.seo?.metaTitle || t("About — Coral Pilates");
+const metaTitle = page?.seo?.metaTitle || t("About — {brand}").replace("{brand}", siteSettings.brand);
 const metaDescription = page?.seo?.metaDescription || pageIntro;
 const heroBackgroundImage = page?.hero?.backgroundImage as
   | {asset?: unknown; alt?: string}
@@ -181,7 +182,7 @@ const workshop = [t("Machining floor"), t("Joinery & finishing"), t("Final assem
       <div class="sec-head">
         <div>
           <span class="eyebrow">{t("The founder")}</span>
-          <h2 class="sec-h">{t("Founder of Coral – Chris")}</h2>
+          <h2 class="sec-h">{t("Founder of {brand} – Chris").replace("{brand}", siteSettings.brand)}</h2>
         </div>
         <p class="sec-intro">
           {t("Chris started Coral and still walks the factory floor every morning — so you deal with the people who actually build your equipment.")}
@@ -199,7 +200,7 @@ const workshop = [t("Machining floor"), t("Joinery & finishing"), t("Final assem
             {t("We build everything ourselves, in Suzhou: I walk the line every morning — I know who cut the wood and who wrapped the upholstery. Whether you buy one reformer or private-label a full range, you deal with the people who actually make it. That's the company I wanted to build.")}
           </p>
           <p class="founder-name">Chris</p>
-          <p class="caption">{t("Founder, Coral Pilates")}</p>
+          <p class="caption">{t("Founder, {brand}").replace("{brand}", siteSettings.brand)}</p>
           {founderExp.length > 0 && (
             <ul class="checklist">
               {founderExp.map((experience) => (

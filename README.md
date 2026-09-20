@@ -1,7 +1,7 @@
-# Coral Pilates
+# Easy Show Tech
 
-B2B Pilates equipment website and content-management system for
-[coralpilates.com](https://coralpilates.com).
+B2B LED Display solutions website and content-management system for
+[easyshowtech.com](https://easyshowtech.com).
 
 ## Architecture
 

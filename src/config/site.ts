@@ -1,5 +1,5 @@
-/**
- * site.ts — central configuration for the Coral Pilates scaffold.
+﻿/**
+ * site.ts — central configuration for the Easy Show Tech scaffold.
  *
  * Two jobs:
  *  1. Editable values (email/phone/etc.) render real samples now and map to
@@ -14,9 +14,10 @@
  */
 
 export const siteSettings = {
-  brand: "Coral Pilates",
+  brand: "EASY SHOW",
+  url: "https://easyshowtech.com",
   location: "Suzhou, China",
-  salesEmail: "chris@coralpilates.com", // {{sales_email}}
+  salesEmail: "chris@easyshowtech.com", // {{sales_email}}
   phone: "+86 139 2197 4459", // {{phone}}
   whatsapp: "+86 139 2197 4459", // {{whatsapp}} — same number
   responseTime: "one business day", // {{response_time}}
@@ -94,3 +95,4 @@ export const legalLinks: NavLink[] = [
   { label: "Privacy", href: "/privacy" },
   { label: "Terms", href: "/terms" },
 ];
+

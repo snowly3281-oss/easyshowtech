@@ -1,4 +1,4 @@
-import { defineAction, ActionError } from 'astro:actions'
+﻿import { defineAction, ActionError } from 'astro:actions'
 import { z } from 'astro/zod'
 import {
   RESEND_API_KEY,
@@ -137,7 +137,7 @@ function requireEmailService(): {
   }
   return {
     apiKey: RESEND_API_KEY,
-    from: QUOTE_FROM_EMAIL || 'Coral Pilates <onboarding@resend.dev>',
+    from: QUOTE_FROM_EMAIL || 'Easy Show Tech <onboarding@resend.dev>',
     to: QUOTE_TO_EMAIL,
   }
 }
@@ -353,8 +353,8 @@ async function deliverInquiry(
         replyTo: emailService.to,
         subject:
           input.kind === 'configuration'
-            ? `Your Coral Pilates configuration — ${configuration?.packageTitle ?? 'requested package'}`
-            : `We received your Coral Pilates ${input.kind === 'rfq' ? 'RFQ' : 'request'}`,
+            ? `Your Easy Show Tech configuration — ${configuration?.packageTitle ?? 'requested package'}`
+            : `We received your Easy Show Tech ${input.kind === 'rfq' ? 'RFQ' : 'request'}`,
         text: buildCustomerEmail(record, configurationUrl),
       },
       { idempotencyKey: `coral-${id}-customer` },
@@ -515,3 +515,4 @@ export const server = {
     },
   }),
 }
+

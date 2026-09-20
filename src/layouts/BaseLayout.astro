@@ -1,6 +1,6 @@
 ---
 /**
- * BaseLayout.astro — the shared page shell for every Coral Pilates page.
+ * BaseLayout.astro — the shared page shell for every Easy Show Tech page.
  *
  * Responsibilities:
  *  - import the design system (global.css) once, site-wide
@@ -16,7 +16,7 @@
  *   ---
  *   import BaseLayout from "../layouts/BaseLayout.astro";
  *   ---
- *   <BaseLayout title="Coral Pilates — Pilates equipment manufacturer">
+ *   <BaseLayout title="Easy Show  — Display equipment manufacturer">
  *     <section class="section">
  *       <div class="container"> ...page content... </div>
  *     </section>
@@ -76,11 +76,11 @@ const documentLocale = resolveLocale(
 const t = (english: string) => staticUi(documentLocale, english);
 const title =
   explicitTitle ||
-  t("Coral Pilates — Pilates equipment manufacturer");
+  t("Easy Show — Display equipment manufacturer");
 const description =
   explicitDescription ||
   t(
-    "Factory-direct Pilates equipment and OEM, built in our own Suzhou factory for studios, clinics and hospitality worldwide.",
+    "Factory-direct Display equipment and OEM, built in our own Suzhou factory for studios, clinics and hospitality worldwide.",
   );
 // Canonical URL (uses `site` from astro.config when set).
 const canonical = Astro.url?.pathname

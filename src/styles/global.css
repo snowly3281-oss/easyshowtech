@@ -1,5 +1,5 @@
-/* ==========================================================================
-   Coral Pilates — global.css
+﻿/* ==========================================================================
+   Easy Show Tech — global.css
    Tailwind v4 + design tokens + responsive container.
    Single typeface (Inter). Flat. Confident. Industrial. No serifs.
    Drop this in at  src/styles/global.css  and import it once in a shared
@@ -445,3 +445,4 @@ html.footer-legal-visible .rfq-fab {
     color: var(--color-coral-hover);
   }
 }
+

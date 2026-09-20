@@ -10,7 +10,7 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   // Production origin — makes <link rel="canonical"> / og:url absolute
   // (BaseLayout uses Astro.site). Filtered catalog URLs canonicalize to
-  // https://coralpilates.com/products.
+  // https://easyshowtech.com/products.
   site: 'https://easyshowtech.pages.dev',
 
   // English remains at the root; the four approved additional languages use
@@ -106,7 +106,7 @@ export default defineConfig({
 	      watch: {
         ignored: [
           '**/.wrangler/**',
-          '**/.astro/**',
+        //  '**/.astro/**',
           '**/dist/**',
           '**/node_modules/**',
         ],
