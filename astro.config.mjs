@@ -11,8 +11,8 @@ export default defineConfig({
   // Production origin — makes <link rel="canonical"> / og:url absolute
   // (BaseLayout uses Astro.site). Filtered catalog URLs canonicalize to
   // https://easyshowtech.com/products.
-  // site: 'https://easyshowtech.pages.dev',
-  site: 'https://www.easyshowtech.com',
+site: 'https://easyshowtech.pages.dev',
+
   // English remains at the root; the four approved additional languages use
   // path prefixes. Missing translated routes temporarily rewrite to English,
   // keeping /es, /fr, /de and /it valid while the client adds translations.
@@ -28,10 +28,8 @@ export default defineConfig({
   // Cloudflare Pages adapter. Content pages stay prerendered (SSG); only the
   // quote/contact Action endpoint renders on-demand as a Worker. Required
   // because Astro Actions need a server runtime.
-  // adapter: cloudflare(),
-  adapter: cloudflare({
-    mode: 'pages'
-  }),
+  adapter: cloudflare(),
+
   integrations: [
     react(),
     sitemap({
