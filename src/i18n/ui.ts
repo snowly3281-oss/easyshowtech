@@ -90,9 +90,9 @@ const english: Record<UiKey, string> = {
   privacy: "Privacy",
   terms: "Terms",
   footerTagline:
-    "Professional Pilates equipment manufacturer. Factory-direct supply and OEM for studios, clinics and hospitality worldwide.",
+    "Professional Display equipment manufacturer. Factory-direct supply and OEM laboratory.",
   catalogIntro:
-    "Factory-direct Pilates equipment built to spec — browse the full range by series and equipment type.",
+    "Factory-direct Display equipment built to spec — browse the full range by series and equipment type.",
   filters: "Filters",
   resetAll: "Reset all",
   clearAllFilters: "Clear all active filters",

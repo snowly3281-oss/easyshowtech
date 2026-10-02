@@ -37,40 +37,40 @@ export interface NavLink {
  * Kept in sync with the production dataset. (Making this data-driven from
  * Sanity is the eventual fix.) */
 export const productsSeries: NavLink[] = [
-  { label: "Wood Maple", href: "/products?series=wood-maple" },
-  { label: "Wood Oak", href: "/products?series=wood-oak" },
-  { label: "Aluminum", href: "/products?series=aluminum" },
-  { label: "Professional", href: "/products?series=professional" },
-  { label: "Modular", href: "/products?series=modular" },
-  { label: "Classical", href: "/products?series=classical" },
-  { label: "Folding", href: "/products?series=folding" },
-  { label: "Spiral Pulley", href: "/products?series=spiral-pulley" },
+  { label: "Backdrop Stands", href: "/products?series=backdrop-stand" },
+  { label: "Printed Backdrops", href: "/products?series=wood-oak" },
+  { label: "Photo Booths", href: "/products?series=aluminum" },
+  { label: "Event Tents", href: "/products?series=professional" },
+  { label: "Floral Walls", href: "/products?series=modular" },
+  { label: "Pop Up Displays", href: "/products?series=classical" },
+  // { label: "Replacement Fabric & Parts", href: "/products?series=folding" },
+  // { label: "Sublimation Printer", href: "/products?series=spiral-pulley" },
 ];
 
 export const productsEquipment: NavLink[] = [
-  { label: "Reformer", href: "/products?equipment=reformer" },
-  { label: "Chair", href: "/products?equipment=chair" },
-  { label: "Cadillac", href: "/products?equipment=cadillac" },
-  { label: "Barrel", href: "/products?equipment=barrel" },
-  { label: "Spine Corrector", href: "/products?equipment=spine-corrector" },
+  { label: "Stand", href: "/products?equipment=reformer" },
+  { label: "Booth", href: "/products?equipment=chair" },
+  { label: "Tent", href: "/products?equipment=cadillac" },
+  { label: "Roll Up", href: "/products?equipment=barrel" },
+  { label: "Printer", href: "/products?equipment=spine-corrector" },
 ];
 
 export const productsParts: NavLink[] = [
-  { label: "Springs", href: "/products?parts=springs" },
-  { label: "Upholstery", href: "/products?parts=upholstery" },
-  { label: "Cables & ropes", href: "/products?parts=cables_ropes" },
-  { label: "Footbars", href: "/products?parts=footbars_hardware" },
-  { label: "Boxes & mats", href: "/products?parts=training_accessories" },
-];
+  { label: "Fabrics", href: "/products?parts=springs" },
+  { label: "Carry Bags", href: "/products?parts=upholstery" },
+  { label: "Connectors", href: "/products?parts=cables_ropes" },
+  { label: "Weights", href: "/products?parts=footbars_hardware" },
+  { label: "Tools", href: "/products?parts=training_accessories" },
+]; 
 
 /* ---- Solutions menu ------------------------------------------------------ */
 export const solutionsByCustomer: NavLink[] = [
-  { label: "Boutique studio", href: "/solutions/boutique-studio" },
-  { label: "Franchise", href: "/solutions/franchise" },
-  { label: "Rehab clinic", href: "/solutions/rehab-clinic" },
-  { label: "Hotel spa", href: "/solutions/hotel-spa" },
-  { label: "Home / PT", href: "/solutions/home-pt" },
-  { label: "Training academy", href: "/solutions/training-academy" },
+  { label: "Wedding & Party", href: "/solutions/boutique-studio" },
+  { label: "Events & Trade Shows", href: "/solutions/franchise" },
+  { label: "Photography & Film", href: "/solutions/rehab-clinic" },
+  { label: "Retail & Pop-Up Stores", href: "/solutions/hotel-spa" },
+  { label: "Religious & Community", href: "/solutions/home-pt" },
+  { label: "Education & Training", href: "/solutions/training-academy" },
 ];
 
 /* ---- Company dropdown --------------------------------------------------- */
