@@ -12,23 +12,12 @@
 			"custom_domain": true
 		}
 	],
-	"kv_namespaces": [
-		{
-			"binding": "SESSION",
-			"id": "b9933c3d2e8f47aab643a53cb3d33e69"
-		}
-	],
 	"d1_databases": [
 		{
 			"binding": "INQUIRIES_DB",
 			"database_name": "easyshowtech-inquiries",
 			"migrations_dir": "./migrations",
 			"database_id": "7faaaae1-371d-4382-bfa8-8ccec4e97c24"
-		},
-		{
-			"binding": "easyshowtech_inquiries",
-			"database_name": "easyshowtech-inquiries",
-			"database_id": "26fb8393-40da-44aa-b0eb-cdc74fa4dc86"
 		}
 	],
 	"observability": {
