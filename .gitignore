@@ -13,3 +13,10 @@ studio/dist
 
 # 系统文件
 .DS_Store
+
+# wrangler / cloudflare local cache
+.wrangler/
+# 其他不需要提交的
+node_modules/
+dist/
+.astro/
