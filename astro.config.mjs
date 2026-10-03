@@ -13,6 +13,7 @@ export default defineConfig({
   // https://easyshowtech.com/products.
   site: 'https://easyshowtech.pages.dev',
 
+
   // English remains at the root; the four approved additional languages use
   // path prefixes. Missing translated routes temporarily rewrite to English,
   // keeping /es, /fr, /de and /it valid while the client adds translations.
@@ -29,6 +30,7 @@ export default defineConfig({
   // quote/contact Action endpoint renders on-demand as a Worker. Required
   // because Astro Actions need a server runtime.
   adapter: cloudflare(),
+  
   integrations: [
     react(),
     sitemap({
