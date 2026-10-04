@@ -37,22 +37,25 @@ export interface NavLink {
  * Kept in sync with the production dataset. (Making this data-driven from
  * Sanity is the eventual fix.) */
 export const productsSeries: NavLink[] = [
-  { label: "Backdrop Stands", href: "/products?series=backdrop-stand" },
-  { label: "Printed Backdrops", href: "/products?series=wood-oak" },
-  { label: "Photo Booths", href: "/products?series=aluminum" },
-  { label: "Event Tents", href: "/products?series=professional" },
-  { label: "Floral Walls", href: "/products?series=modular" },
-  { label: "Pop Up Displays", href: "/products?series=classical" },
+  { label: "Aluminum Tents", href: "/products?series=aluminum-tent" },
+  { label: "Steel Tents", href: "/products?series=steel-tent" },
+  { label: "Pop Up Walls", href: "/products?series=popup-walls" },
+  { label: "Backdrops", href: "/products?series=backdrops" },
+  { label: "Flags system", href: "/products?series=flags-system" },
+  { label: "Sign and Display", href: "/products?series=sign&display" },
+  { label: "Chairs", href: "/products?series=chairs" },
   // { label: "Replacement Fabric & Parts", href: "/products?series=folding" },
   // { label: "Sublimation Printer", href: "/products?series=spiral-pulley" },
 ];
 
 export const productsEquipment: NavLink[] = [
-  { label: "Stand", href: "/products?equipment=reformer" },
-  { label: "Booth", href: "/products?equipment=chair" },
-  { label: "Tent", href: "/products?equipment=cadillac" },
-  { label: "Roll Up", href: "/products?equipment=barrel" },
-  { label: "Printer", href: "/products?equipment=spine-corrector" },
+  { label: "Custom Canopy", href: "/products?equipment=custom-canopy" },
+  { label: "Custom Backdrops", href: "/products?equipment=custom-backdrops" },
+  { label: "Custom Flags", href: "/products?equipment=custom-flags" },
+  { label: "Custom Table Cover", href: "/products?equipment=custom-table-cover" },
+  { label: "Custom Chair", href: "/products?equipment=custom-chair" },
+  { label: "Custom Umbrella", href: "/products?equipment=custom-umbrella" },
+  { label: "Stock Color Canopy", href: "/products?equipment=stock-color-canopy" },
 ];
 
 export const productsParts: NavLink[] = [
