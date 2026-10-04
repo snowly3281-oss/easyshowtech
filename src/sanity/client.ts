@@ -14,7 +14,7 @@ import { createClient, type SanityClient } from '@sanity/client'
  * dataset; it is passed through when set.)
  *
  * Env (see .env.example):
- *   PUBLIC_SANITY_PROJECT_ID   default "p3d22f8w"
+ *   PUBLIC_SANITY_PROJECT_ID   default "w8rk6k6z"
  *   PUBLIC_SANITY_DATASET      default "production"
  *   SANITY_API_VERSION         default "2024-10-01"
  *   SANITY_READ_TOKEN          optional, SERVER-ONLY (no PUBLIC_ prefix, so it
@@ -22,7 +22,7 @@ import { createClient, type SanityClient } from '@sanity/client'
  *                              dataset is made private; use a read-only (Viewer)
  *                              token — never the Studio write token.
  */
-const projectId = import.meta.env.PUBLIC_SANITY_PROJECT_ID ?? 'p3d22f8w'
+const projectId = import.meta.env.PUBLIC_SANITY_PROJECT_ID ?? 'w8rk6k6z'
 const dataset = import.meta.env.PUBLIC_SANITY_DATASET ?? 'production'
 const apiVersion = import.meta.env.SANITY_API_VERSION ?? '2024-10-01'
 // Server-only (no PUBLIC_ prefix). Undefined while the dataset is public.

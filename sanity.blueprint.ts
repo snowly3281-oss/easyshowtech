@@ -13,7 +13,7 @@ export default defineBlueprint({
           '{_id, _type, _rev, language, sourceId, status, targetLanguages}',
         resource: {
           type: 'dataset',
-          id: 'p3d22f8w.production',
+          id: 'w8rk6k6z.production',
         },
       },
     }),
