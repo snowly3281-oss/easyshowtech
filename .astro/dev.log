@@ -1,11 +1,42 @@
-[2m22:48:48[22m [34m[@astrojs/cloudflare][39m Enabling image processing with Cloudflare Images for production with the "IMAGES" Images binding.
-[2m22:48:48[22m [34m[@astrojs/cloudflare][39m Enabling sessions with Cloudflare KV with the "SESSION" KV binding.
-[2m22:48:49[22m [34m[vite][39m [optimizer] bundling dependencies...
+[2m22:35:44[22m [34m[@astrojs/cloudflare][39m Enabling image processing with Cloudflare Images for production with the "IMAGES" Images binding.
+[2m22:35:44[22m [34m[@astrojs/cloudflare][39m Enabling sessions with Cloudflare KV with the "SESSION" KV binding.
+[2m22:35:46[22m [34m[vite][39m [optimizer] bundling dependencies...
 Using secrets defined in .env
-[2m22:48:51[22m [34m[vite][39m connected.
-[2m22:48:54[22m [34m[types][39m Generated [2m4ms[22m
-[42m[1m astro [22m[49m [32mv7.3.2[39m [2mready in[22m 9132 [2mms[22m
+[2m22:35:48[22m [34m[watch][39m studio/.sanity/runtime/index.html
+[2m22:35:49[22m [34m[vite][39m connected.
+[2m22:35:53[22m [34m[types][39m Generated [2m6ms[22m
+[2m22:35:54[22m [34m[vite][39m [optimizer] bundling dependencies...
+[42m[1m astro [22m[49m [32mv7.3.2[39m [2mready in[22m 11684 [2mms[22m
 [2m┃[22m Local    [36mhttp://localhost:4321/[39m
 [2m┃[22m Network  [2muse --host to expose[22m
-[2m22:48:55[22m [32mwatching for file changes...[39m
-[2m22:49:10[22m [34m[watch][39m studio/.sanity/runtime/index.html
+[2m22:35:54[22m [32mwatching for file changes...[39m
+[2m22:36:40[22m [34m[vite][39m 22:36:40 [200] / 3232ms
+[2m22:37:38[22m [34m[vite][39m 22:37:38 [200] /products 1351ms
+[2m22:42:39[22m [34m[vite][39m 22:42:39 [200] / 2143ms
+[2m22:44:29[22m [34m[vite][39m 22:44:29 [200] / 1107ms
+[2m09:41:12[22m [34m[vite][39m 09:41:12 [200] / 1015ms
+[2m11:28:55[22m [34m[vite][39m 11:28:55 [404] /solutions/franchise 285ms
+[2m11:28:55[22m [34m[vite][39m 11:28:55 [404] /solutions/boutique-studio 291ms
+[2m11:29:00[22m [34m[vite][39m 11:29:00 [404] /solutions/rehab-clinic 40ms
+[2m11:32:14[22m [34m[vite][39m 11:32:14 [404] /solutions/hotel-spa 57ms
+[2m11:32:58[22m [34m[vite][39m 11:32:58 [200] /products 1031ms
+[2m11:33:00[22m [34m[vite][39m 11:33:00 [404] /solutions/home-pt 38ms
+[2m11:36:46[22m [34m[vite][39m 11:36:46 [404] /solutions/training-academy 33ms
+[2m12:20:24[22m [34m[vite][39m 12:20:24 [200] / 1055ms
+[2m12:31:51[22m [34m[vite][39m 12:31:51 [200] / 1482ms
+[2m12:37:00[22m [34m[vite][39m 12:37:00 [200] / 1055ms
+[2m12:37:18[22m [34m[vite][39m 12:37:18 [200] /oem-services 980ms
+[2m13:32:54[22m [34m[watch][39m /src/styles/global.css
+[2m13:32:54[22m [34m[vite][39m [vite] program reload
+[2m13:32:59[22m [34m[vite][39m 13:32:59 [200] / 1737ms
+[2m13:33:06[22m [34m[watch][39m /src/styles/global.css, /src/components/home/HowWeWork.astro?astro&type=style&index=0&lang.css
+[2m13:33:06[22m [34m[vite][39m [vite] program reload
+[2m13:33:10[22m [34m[vite][39m 13:33:10 [200] / 1915ms
+[2m13:33:18[22m [34m[vite][39m 13:33:18 [200] /products 1088ms
+[2m13:36:06[22m [34m[vite][39m 13:36:06 [404] /solutions/boutique-studio 200ms
+[2m13:36:06[22m [34m[vite][39m 13:36:06 [404] /solutions/franchise 64ms
+[2m13:36:09[22m [34m[vite][39m 13:36:09 [404] /solutions/rehab-clinic 40ms
+[2m13:36:09[22m [34m[vite][39m 13:36:09 [404] /solutions/home-pt 31ms
+[2m13:36:10[22m [34m[vite][39m 13:36:10 [404] /solutions/training-academy 32ms
+[2m13:40:41[22m [34m[vite][39m 13:40:41 [200] / 979ms
+[2m13:40:56[22m [34m[vite][39m 13:40:56 [200] / 1285ms
