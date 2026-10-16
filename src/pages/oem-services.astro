@@ -1,4 +1,4 @@
----
+﻿---
 /**
  * OEM services — bespoke conversion page with its header, SEO and additional
  * operator-managed content blocks supplied by the OEM singleton in Sanity.
@@ -49,9 +49,9 @@ const pageTitle =
   t("Your brand. Our factory. Your design stays yours.");
 const pageIntro =
   oemHero?.subheading ||
-  t("Build a private-label Pilates equipment range with specifications, commercial terms and confidentiality requirements documented in writing.");
+  t("Build a private-label Display equipment range with specifications, commercial terms and confidentiality requirements documented in writing.");
 const metaTitle =
-  oemContent?.seo?.metaTitle || t("OEM services — Coral Pilates");
+  oemContent?.seo?.metaTitle || t("OEM services — EasyShow");
 const metaDescription = oemContent?.seo?.metaDescription || pageIntro;
 type OemCommercialFacts = Record<string, VerifiedValue | undefined>;
 const commercialFacts = (oemContent?.commercialFacts ??
@@ -213,7 +213,7 @@ const faqs = [
         <div class="hero-media">
           <img
             src="/factory/home-realfactory-01.webp"
-            alt={t("Inside the Coral Pilates factory")}
+            alt={t("Inside the EasyShow factory")}
             width="1280"
             height="800"
             loading="eager"
@@ -242,7 +242,7 @@ const faqs = [
           <span class="eyebrow">{t("Confidentiality and IP")}</span>
           <h2 class="head-h">{t("Put the operating rules in writing.")}</h2>
           <p class="body-l head-sub">
-            {t("The statements below are published only after Coral Pilates has confirmed the corresponding operating or contract term.")}
+            {t("The statements below are published only after EasyShow has confirmed the corresponding operating or contract term.")}
           </p>
         </div>
 
@@ -463,7 +463,7 @@ const faqs = [
             <p class="nda-note"><Icon name="shield" size={16} /> {ndaNotice}</p>
             <p class="caption privacy">{t("We use your details and files only to review and respond to this inquiry.")}</p>
 
-            <input type="hidden" name="subject" value="OEM inquiry — Coral Pilates" />
+            <input type="hidden" name="subject" value="OEM inquiry — EasyShow" />
             <input type="hidden" name="source_url" value="" data-oem-source />
             <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
 

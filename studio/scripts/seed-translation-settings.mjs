@@ -1,4 +1,4 @@
-import {createClient} from "@sanity/client";
+﻿import {createClient} from "@sanity/client";
 
 const token = process.env.SANITY_WRITE_TOKEN;
 if (!token) throw new Error("SANITY_WRITE_TOKEN missing (studio/.env).");
@@ -22,15 +22,15 @@ const document = {
   provider: existing?.provider ?? "sanity-ai",
   styleGuide:
     existing?.styleGuide ??
-    "Translate for a professional B2B Pilates equipment website. Keep the meaning precise, concise and commercially neutral. Do not invent certifications, prices, warranty promises or technical specifications. Preserve SKU codes, model names, dimensions, units, URLs and brand names.",
+    "Translate for a professional B2B Display equipment website. Keep the meaning precise, concise and commercially neutral. Do not invent certifications, prices, warranty promises or technical specifications. Preserve SKU codes, model names, dimensions, units, URLs and brand names.",
   protectedPhrases: existing?.protectedPhrases ?? [
-    "Coral Pilates",
+    "EasyShow",
     "Reformer",
     "Cadillac",
     "Ladder Barrel",
     "Spine Corrector",
     "Pedi Pole",
-    "Pilates Chair",
+    "Display Chair",
     "OEM",
     "RFQ",
     "SKU",

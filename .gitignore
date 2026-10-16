@@ -20,3 +20,15 @@ studio/dist
 node_modules/
 dist/
 .astro/
+
+# Cursor / IDE 调试状态
+sessions/
+
+# 临时备份文件 (中文命名备份)
+"astro.config - 副本.mjs"
+"复件astro.config.mjs"
+"备份astro.config.mjs"
+
+# 临时调试脚本
+scripts/_inspect-all.mjs
+scripts/_inspect-sanity.mjs

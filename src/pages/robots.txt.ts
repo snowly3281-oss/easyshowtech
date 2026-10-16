@@ -1,4 +1,4 @@
-import { PUBLIC_SITE_INDEXING_ENABLED } from 'astro:env/client'
+﻿import { PUBLIC_SITE_INDEXING_ENABLED } from 'astro:env/client'
 
 export const prerender = true
 
@@ -10,7 +10,7 @@ export function GET() {
         'Disallow: /configurations/',
         'Disallow: /thank-you',
         '',
-        'Sitemap: https://coralpilates.com/sitemap-index.xml',
+        'Sitemap: https://easyshowtech.com/sitemap-index.xml',
         '',
       ].join('\n')
     : ['User-agent: *', 'Disallow: /', ''].join('\n')

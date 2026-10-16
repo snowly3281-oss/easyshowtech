@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Seed the home singleton (id "home") + 3 posts for the insights strip.
  * Copy style: Title Case headings, Grade-8 reading level, concise.
  * Editorial text/stats only — the home CTAs point to fixed site routes and are
@@ -28,8 +28,8 @@ await client.createOrReplace({
   _type: 'home',
   hero: {
     eyebrow: 'Manufacturer · OEM-ready',
-    heading: 'Studio-Grade Pilates Equipment Manufacturer',
-    subheading: 'Pilates equipment for studios, clinics and hospitality projects, with OEM options quoted to your brief.',
+    heading: 'Studio-Grade Display Equipment Manufacturer',
+    subheading: 'Display equipment for studios, clinics and hospitality projects, with OEM options quoted to your brief.',
     stats: [],
   },
   howWeWork: {
@@ -90,9 +90,9 @@ await client.createOrReplace({
     body: "Tell us your space and volume. We'll send a quote and a lead time.",
   },
   seo: {
-    metaTitle: 'Coral Pilates — Studio-Grade Pilates Equipment Manufacturer',
+    metaTitle: 'EasyShow — Studio-Grade Display Equipment Manufacturer',
     metaDescription:
-      'Factory-direct Pilates equipment and OEM, built in our own factory for studios, clinics and hotels worldwide.',
+      'Factory-direct Display equipment and OEM, built in our own factory for studios, clinics and hotels worldwide.',
   },
 })
 console.log('home seeded')

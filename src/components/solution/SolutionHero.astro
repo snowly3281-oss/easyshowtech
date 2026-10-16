@@ -1,4 +1,4 @@
----
+﻿---
 import Icon from '../Icon.astro'
 import type { Locale } from '../../i18n/config'
 import { staticUi } from '../../i18n/static'
@@ -58,10 +58,10 @@ const t = (english: string) => staticUi(locale, english)
       <img
         src={heroImage}
         alt={isBoutique
-          ? t('Bright boutique Pilates studio fitted with maple reformers')
+          ? t('Bright boutique Display studio fitted with maple reformers')
           : t('{solution} equipment solution').replace(
               '{solution}',
-              solutionTitle ?? 'Pilates',
+              solutionTitle ?? 'Display',
             )}
         width="1600"
         height="1000"
@@ -88,7 +88,7 @@ const t = (english: string) => staticUi(locale, english)
   <div class="container">
     <div class="solution-why__intro">
       <div>
-        <p class="eyebrow">{t('Why Coral Pilates')}</p>
+        <p class="eyebrow">{t('Why EasyShow')}</p>
         <h2>{copy.whyHeading}</h2>
       </div>
       <p>{copy.whyBody}</p>

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Synchronise launch-ready catalog visibility and client-confirmed business facts.
  *
  * Safety:
@@ -96,12 +96,12 @@ function buildAboutDocument(existing) {
       _type: "verifiedMilestone",
       _key: "confirmed-2018-wood",
       year: "2018",
-      title: "Wood Pilates equipment production",
+      title: "Wood Display equipment production",
       description:
-        "Production expanded to wooden Pilates reformer frames and related equipment.",
+        "Production expanded to wooden Display reformer frames and related equipment.",
       confirmed: true,
       evidence:
-        "前期资料收集表格(2).xlsx，公司信息：2018 Pilates Wooden Bed Production。",
+        "前期资料收集表格(2).xlsx，公司信息：2018 Display Wooden Bed Production。",
     },
   ]);
 
@@ -111,7 +111,7 @@ function buildAboutDocument(existing) {
       _type: "sitePage",
       pageKey: "about",
       route: "/about",
-      title: "About Coral Pilates",
+      title: "About EasyShow",
     }),
     aboutFacts: {
       ...(existing?.aboutFacts ?? {}),
@@ -350,7 +350,7 @@ function buildSiteSettingsDocument(existing) {
       _id: "siteSettings",
       _type: "siteSettings",
     }),
-    salesEmail: "chris@coralpilates.com",
+    salesEmail: "chris@easyshowtech.com",
     companyAddress:
       "Room 102-2, Building 2, Phase I, Taihu Industrial Innovation Incubation & Acceleration Base, No. 2 Fengyuan Road, Xiangshan Subdistrict, Wuzhong District, Suzhou 215100, Jiangsu, China",
   };

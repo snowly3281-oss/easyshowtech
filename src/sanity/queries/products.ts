@@ -17,9 +17,18 @@ export const productPathsQuery = defineQuery(`
  * All published catalog records for the Products grid. Apparatus, accessories
  * and replacement parts deliberately share this query: buyers should use one
  * catalog with facets, rather than switch between two disconnected catalogs.
- * Each card carries its series, equipment and parts facets so the front end
- * can filter client-side. The legacy `equipment` fallback keeps old documents
- * readable during rollout.
+ *
+ * After the three-tab refactor each card carries three independent facet
+ * handles so the front end can route each product into exactly one tab:
+ *
+ *   - `seriesSlug` / `seriesKind`   — Products catalog tab (kind == "product")
+ *                                       and Parts tab (kind == "part")
+ *   - `serviceSlugs`                — Printing Service tab (any service ref)
+ *   - `partsCategoryKey`            — Parts & accessories sub-facet
+ *                                       (canonical key from the referenced doc)
+ *
+ * The deprecated `equipment` reference is still projected as a fallback
+ * for any product authored before the `service` document existed.
  */
 export const productListQuery = defineQuery(`
   *[
@@ -32,16 +41,21 @@ export const productListQuery = defineQuery(`
     "slug": slug.current,
     sku,
     "catalogType": coalesce(catalogType, "equipment"),
-    partsCategory,
+    "printingService": coalesce(printingService, false),
+    "partsCategoryKey": coalesce(partsCategory->key, partsCategory),
+    "partsCategoryTitle": partsCategory->title,
     summary,
     "seriesTitle": series->title,
     "seriesSlug": series->slug.current,
-    "equipmentTitles": select(
+    "seriesKind": coalesce(series->kind, "product"),
+    "serviceTitles": select(
+      count(serviceTypes) > 0 => serviceTypes[]->title,
       count(equipmentTypes) > 0 => equipmentTypes[]->title,
       defined(equipment) => [equipment->title],
       []
     ),
-    "equipmentSlugs": select(
+    "serviceSlugs": select(
+      count(serviceTypes) > 0 => serviceTypes[]->slug.current,
       count(equipmentTypes) > 0 => equipmentTypes[]->slug.current,
       defined(equipment) => [equipment->slug.current],
       []
@@ -75,15 +89,20 @@ export const productBySlugQuery = defineQuery(`
     "slug": slug.current,
     sku,
     catalogType,
-    partsCategory,
+    "printingService": coalesce(printingService, false),
+    "partsCategoryKey": coalesce(partsCategory->key, partsCategory),
+    "partsCategoryTitle": partsCategory->title,
     "seriesTitle": series->title,
     "seriesSlug": series->slug.current,
-    "equipmentTitles": select(
+    "seriesKind": coalesce(series->kind, "product"),
+    "serviceTitles": select(
+      count(serviceTypes) > 0 => serviceTypes[]->title,
       count(equipmentTypes) > 0 => equipmentTypes[]->title,
       defined(equipment) => [equipment->title],
       []
     ),
-    "equipmentSlugs": select(
+    "serviceSlugs": select(
+      count(serviceTypes) > 0 => serviceTypes[]->slug.current,
       count(equipmentTypes) > 0 => equipmentTypes[]->slug.current,
       defined(equipment) => [equipment->slug.current],
       []

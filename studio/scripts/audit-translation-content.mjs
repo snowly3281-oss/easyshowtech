@@ -1,4 +1,4 @@
-import {createClient} from "@sanity/client";
+﻿import {createClient} from "@sanity/client";
 
 const projectId = process.env.SANITY_PROJECT_ID || "p3d22f8w";
 const dataset = process.env.SANITY_DATASET || "production";
@@ -72,7 +72,7 @@ const ignoredKeys = new Set([
 ]);
 
 const intentionallyStable = [
-  /^Coral(?: Pilates)?$/i,
+  /^Coral(?: Display)?$/i,
   /^(?:OEM|RFQ|SKU|MOQ|B2B|FAQ)$/i,
   /^(?:Reformer|Cadillac|Ladder Barrel|Spine Corrector|Pedi Pole)$/i,
   /^(?:cm|mm|m|m²|kg|lb|lbs|sq ft|USD|EUR)$/i,

@@ -1,4 +1,4 @@
-import { defineConfig } from "sanity";
+﻿import { defineConfig } from "sanity";
 import { presentationTool } from "sanity/presentation";
 import { structureTool } from "sanity/structure";
 import { visionTool } from "@sanity/vision";
@@ -34,7 +34,7 @@ const SINGLETON_TYPES = new Set([
 ]);
 
 /**
- * Standalone Sanity Studio for Coral Pilates.
+ * Standalone Sanity Studio for EasyShow.
  *
  * This Studio is NOT embedded in the Astro app — it is deployed separately to a
  * <hostname>.sanity.studio URL via `sanity deploy`. projectId/dataset are

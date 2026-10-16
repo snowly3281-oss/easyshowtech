@@ -1,4 +1,4 @@
----
+﻿---
 /**
  * About — bespoke page layout with its operator-facing page header, SEO and
  * optional supporting sections managed in Sanity.
@@ -25,11 +25,11 @@ const eyebrow = page?.hero?.eyebrow || siteSettings.brand;
 const pageTitle =
   page?.hero?.heading ||
   page?.title ||
-  t("A real Pilates equipment factory, building for the world.");
+  t("A real Display equipment factory, building for the world.");
 const pageIntro =
   page?.hero?.subheading ||
   page?.introduction ||
-  t("We design and build Pilates equipment in Suzhou for studios, clinics and distributors.");
+  t("We design and build Display equipment in Suzhou for studios, clinics and distributors.");
 const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
 const metaTitle = page?.seo?.metaTitle || t("About — {brand}").replace("{brand}", siteSettings.brand);
 const metaDescription = page?.seo?.metaDescription || pageIntro;
@@ -41,7 +41,7 @@ const heroImage = heroBackgroundImage?.asset
   : "/factory/home-realfactory-02.webp";
 const heroImageAlt =
   heroBackgroundImage?.alt ||
-  t("The Coral Pilates factory floor in Suzhou");
+  t("The EasyShow factory floor in Suzhou");
 
 const principles = [
   { n: "01", icon: "factory", t: t("Our own factory"), d: t("We design and build in-house — no trading middlemen, with full control over quality and lead times.") },
@@ -142,7 +142,7 @@ const workshop = [t("Machining floor"), t("Joinery & finishing"), t("Final assem
             <h2 class="sec-h on-dark">{t("Built at real scale.")}</h2>
           </div>
           <p class="sec-intro on-dark-sub">
-            {t("Verified operating figures supplied and approved by Coral Pilates.")}
+            {t("Verified operating figures supplied and approved by EasyShow.")}
           </p>
         </div>
         <ul class="stat-row">
@@ -258,7 +258,7 @@ const workshop = [t("Machining floor"), t("Joinery & finishing"), t("Final assem
             <span class="eyebrow">{t("Milestones")}</span>
             <h2 class="sec-h">{t("Key moments.")}</h2>
           </div>
-          <p class="sec-intro">{t("The verified milestones behind Coral Pilates.")}</p>
+          <p class="sec-intro">{t("The verified milestones behind EasyShow.")}</p>
         </div>
         <ol class="timeline">
           {milestones.map((milestone) => (

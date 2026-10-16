@@ -1,4 +1,4 @@
-import {defineArrayMember, defineField, defineType} from "sanity";
+﻿import {defineArrayMember, defineField, defineType} from "sanity";
 import {DocumentIcon} from "@sanity/icons";
 import type {ReactNode} from "react";
 
@@ -42,7 +42,7 @@ export const sitePage = defineType({
       title: "页面名称",
       type: "string",
       group: "content",
-      description: "用于后台识别和页面主标题。示例：About Coral Pilates。",
+      description: "用于后台识别和页面主标题。示例：About EasyShow。",
       validation: (rule) => rule.required().error("请填写页面名称。"),
     }),
     defineField({
@@ -121,7 +121,7 @@ export const sitePage = defineType({
           title: "创始人行业经验",
           type: "verifiedValue",
           description:
-            "示例：15+ years in Pilates equipment manufacturing。",
+            "示例：15+ years in Display equipment manufacturing。",
         }),
         defineField({
           name: "founderFactoryRole",

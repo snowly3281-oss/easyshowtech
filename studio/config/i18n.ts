@@ -1,4 +1,4 @@
-export const SUPPORTED_LANGUAGES = [
+﻿export const SUPPORTED_LANGUAGES = [
   {id: "en", title: "英语 English"},
   {id: "es", title: "西班牙语 Español"},
   {id: "fr", title: "法语 Français"},
@@ -35,23 +35,23 @@ export const TARGET_LANGUAGES = SUPPORTED_LANGUAGES.filter(
 );
 
 export const DEFAULT_TRANSLATION_STYLE_GUIDE = [
-  "Translate for a professional B2B Pilates equipment website.",
+  "Translate for a professional B2B Display equipment website.",
   "Keep the meaning precise, concise and commercially neutral.",
   "Do not invent certifications, prices, warranty promises or technical specifications.",
   "Preserve SKU codes, model names, dimensions, units, URLs and brand names.",
-  "Keep Coral Pilates, Reformer, Cadillac, Ladder Barrel, Spine Corrector,",
-  "Pedi Pole and Pilates Chair unchanged unless the target market has a",
+  "Keep EasyShow, Reformer, Cadillac, Ladder Barrel, Spine Corrector,",
+  "Pedi Pole and Display Chair unchanged unless the target market has a",
   "well-established equivalent that does not alter product meaning.",
 ].join(" ");
 
 export const DEFAULT_PROTECTED_PHRASES = [
-  "Coral Pilates",
+  "EasyShow",
   "Reformer",
   "Cadillac",
   "Ladder Barrel",
   "Spine Corrector",
   "Pedi Pole",
-  "Pilates Chair",
+  "Display Chair",
   "OEM",
   "RFQ",
   "SKU",

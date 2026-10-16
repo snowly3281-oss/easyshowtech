@@ -1,4 +1,4 @@
----
+﻿---
 /**
  * Factory — bespoke page layout with its operator-facing page header, SEO and
  * optional supporting sections managed in Sanity.
@@ -31,9 +31,9 @@ const pageTitle =
 const pageIntro =
   page?.hero?.subheading ||
   page?.introduction ||
-  t("Most “Pilates manufacturers” are trading companies sourcing from third-party workshops. We are the workshop — and you're welcome to come see it.");
+  t("Most “Display manufacturers” are trading companies sourcing from third-party workshops. We are the workshop — and you're welcome to come see it.");
 const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
-const metaTitle = page?.seo?.metaTitle || t("Factory — Coral Pilates");
+const metaTitle = page?.seo?.metaTitle || t("Factory — EasyShow");
 const metaDescription = page?.seo?.metaDescription || pageIntro;
 
 const facts = page?.factoryFacts;
@@ -189,7 +189,7 @@ const oemPoints = [
             <span class="eyebrow">{primaryCapacity.label}</span>
             <span class="cap-n">{primaryCapacity.value}</span>
             <p class="caption">
-              {t("Verified operating information supplied by Coral Pilates.")}
+              {t("Verified operating information supplied by EasyShow.")}
             </p>
             {secondaryCapacity.length > 0 && (
               <div class="cap-sub">
@@ -347,7 +347,7 @@ const oemPoints = [
       <div class="founders">
         <div class="founders-copy">
           <span class="eyebrow">{t("The people behind it")}</span>
-          <h2 class="sec-h">{t("Team of Coral Pilates")}</h2>
+          <h2 class="sec-h">{t("Team of EasyShow")}</h2>
           <p class="body-l sec-sub">
             {t("No layered sales department, no outsourced QC. The people who answer your inquiry walk past the production line every morning. Founder Chris runs the factory hands-on.")}
           </p>

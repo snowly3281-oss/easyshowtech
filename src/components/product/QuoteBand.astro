@@ -1,4 +1,4 @@
----
+﻿---
 import type { SiteSettingsData } from '../../sanity/content'
 import {localizedPath, type Locale} from '../../i18n/config'
 import {localizeCountDuration, staticUi} from '../../i18n/static'
@@ -11,7 +11,7 @@ interface Props {
 
 const { settings, moq, locale = 'en' } = Astro.props
 const t = (english: string) => staticUi(locale, english)
-const email = settings?.salesEmail ?? 'chris@coralpilates.com'
+const email = settings?.salesEmail ?? 'chris@easyshowtech.com'
 const phone = settings?.phone ?? '+86 139 2197 4459'
 
 const contacts = [
@@ -27,7 +27,7 @@ const contacts = [
       <p class="eyebrow quote__eyebrow">{t('Request a quote')}</p>
       <h2 class="quote__title">{t("Let's spec your studio.")}</h2>
       <p class="quote__intro">
-        {t("Send us your model list and quantities — we'll reply within one business day with unit pricing, lead times and freight to your door.")}
+        {t("Send us your model list and quantities 鈥?we'll reply within one business day with unit pricing, lead times and freight to your door.")}
       </p>
       <a class="btn quote__btn" href={localizedPath('/contact', locale)}>{t('Request a quote')}</a>
     </div>

@@ -29,7 +29,7 @@ export const siteSettings = defineType({
       type: 'string',
       group: 'contact',
       description: '前台联系页和邮件按钮使用的企业邮箱，也是运营人员接收询盘的主要邮箱。',
-      initialValue: 'chris@coralpilates.com',
+      initialValue: 'chris@easyshowtech.com',
       validation: (rule) => rule.email().error('请填写有效的邮箱地址。'),
     }),
     defineField({

@@ -1,5 +1,5 @@
-/**
- * Bulk image importer for Coral Pilates products (pipeline A — Sanity).
+﻿/**
+ * Bulk image importer for EasyShow products (pipeline A — Sanity).
  *
  * Hybrid behaviour (per your call):
  *   • product EXISTS for a SKU  -> attach (featured -> mainImage, angles -> gallery)

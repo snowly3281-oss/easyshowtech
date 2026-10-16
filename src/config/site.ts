@@ -48,7 +48,13 @@ export const productsSeries: NavLink[] = [
   // { label: "Sublimation Printer", href: "/products?series=spiral-pulley" },
 ];
 
-export const productsEquipment: NavLink[] = [
+/* ---- Printing Service menu (was By Equipment) ---------------------------
+ * Source of truth is the 7 custom/stock equipment slugs. They were previously
+ * surfaced under "By Equipment" with `?equipment=`, but the Header no longer
+ * exposes a separate equipment column — the labels live under "Printing
+ * Service" with the same `?equipment=` filter URL. The i18n key is still
+ * `byService` (kept for backwards compat with the existing translations). */
+export const productsPrintingServices: NavLink[] = [
   { label: "Custom Canopy", href: "/products?equipment=custom-canopy" },
   { label: "Custom Backdrops", href: "/products?equipment=custom-backdrops" },
   { label: "Custom Flags", href: "/products?equipment=custom-flags" },
@@ -58,6 +64,12 @@ export const productsEquipment: NavLink[] = [
   { label: "Stock Color Canopy", href: "/products?equipment=stock-color-canopy" },
 ];
 
+// `productsEquipment` is no longer rendered in the Header but kept exported so
+// that the products page (which still uses `?equipment=`) keeps a single
+// source of truth for the equipment slug list.
+export const productsEquipment: NavLink[] = productsPrintingServices;
+
+/* ---- Parts & Accessories ------------------------------------------------- */
 export const productsParts: NavLink[] = [
   { label: "Fabrics", href: "/products?parts=springs" },
   { label: "Carry Bags", href: "/products?parts=upholstery" },

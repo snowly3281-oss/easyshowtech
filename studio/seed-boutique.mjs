@@ -1,16 +1,16 @@
-/**
+﻿/**
  * Seed ONE solution document ("Boutique studio") so the Astro vertical slice
  * has real content to render at /solutions/boutique-studio.
  *
  * WHY you run it (not the assistant): the assistant's sandbox can't reach
- * api.sanity.io and has no write token — only @sanity/client with the Studio
+ * api.sanity.io and has no write token 鈥?only @sanity/client with the Studio
  * write token can create documents. (Same reason as import-images.mjs.)
  *
- * It uses createOrReplace with a fixed _id, so it's idempotent — re-run freely.
+ * It uses createOrReplace with a fixed _id, so it's idempotent 鈥?re-run freely.
  * The copy here is realistic placeholder content; the client replaces it later
  * in Studio.
  *
- * ── Run (from studio/) ──────────────────────────────────────────────────────
+ * 鈹€鈹€ Run (from studio/) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
  *   DRY=1 node --env-file=.env seed-boutique.mjs   # print the doc, write nothing
  *   node --env-file=.env seed-boutique.mjs         # create/replace the document
  *
@@ -42,7 +42,7 @@ const para = (text, key) => ({
   children: [span(text, `${key}s`)],
 })
 
-const quote = (label) => ({ _type: 'ctaLink', label, external: 'mailto:chris@coralpilates.com' })
+const quote = (label) => ({ _type: 'ctaLink', label, external: 'mailto:chris@easyshowtech.com' })
 
 const doc = {
   _id: 'solution.boutique-studio',
@@ -51,7 +51,7 @@ const doc = {
   slug: { _type: 'slug', current: 'boutique-studio' },
   audience: ['budget_b2b', 'brand_owner'],
   summary:
-    'Factory-direct Pilates equipment for independent boutique studios — spec a balanced floor of reformers, towers and accessories, matched in finish and priced studio by studio.',
+    'Factory-direct Display equipment for independent boutique studios 鈥?spec a balanced floor of reformers, towers and accessories, matched in finish and priced studio by studio.',
   pageBuilder: [
     {
       _type: 'heroBlock',
@@ -59,7 +59,7 @@ const doc = {
       eyebrow: 'Solutions',
       heading: 'Equip a boutique studio that fills its schedule',
       subheading:
-        'Factory-direct reformers, towers and accessories with the finish your members notice — sized and priced for an independent studio.',
+        'Factory-direct reformers, towers and accessories with the finish your members notice 鈥?sized and priced for an independent studio.',
       cta: quote('Get a quote'),
     },
     {
@@ -68,7 +68,7 @@ const doc = {
       heading: 'A room that sells the experience',
       body: [
         para(
-          'A boutique studio lives or dies on how the room feels. Coral builds studio-grade equipment in our own Suzhou factory, so the wood, upholstery and hardware match across every piece — no mismatched second-hand kit.',
+          'A boutique studio lives or dies on how the room feels. Coral builds studio-grade equipment in our own Suzhou factory, so the wood, upholstery and hardware match across every piece 鈥?no mismatched second-hand kit.',
           'p1'
         ),
         para(
@@ -95,7 +95,7 @@ const doc = {
           _key: 'q1',
           question: 'What is the minimum order for a studio fit-out?',
           answer:
-            'There is no studio minimum — order a single reformer or a full floor. Volume and OEM pricing applies on larger orders; ask for a quote on your list.',
+            'There is no studio minimum 鈥?order a single reformer or a full floor. Volume and OEM pricing applies on larger orders; ask for a quote on your list.',
         },
         {
           _type: 'faqItem',
@@ -109,7 +109,7 @@ const doc = {
           _key: 'q3',
           question: 'Can we match the equipment to our brand?',
           answer:
-            'Yes — upholstery colours, wood finish and logo placement can be customised. For private-label or full OEM, see our OEM services.',
+            'Yes 鈥?upholstery colours, wood finish and logo placement can be customised. For private-label or full OEM, see our OEM services.',
         },
       ],
     },
@@ -119,11 +119,11 @@ const doc = {
 async function main() {
   if (DRY) {
     console.log(JSON.stringify(doc, null, 2))
-    console.log('\nDRY run — nothing written.')
+    console.log('\nDRY run 鈥?nothing written.')
     return
   }
   const res = await client.createOrReplace(doc)
-  console.log('Seeded solution:', res._id, '→ /solutions/boutique-studio')
+  console.log('Seeded solution:', res._id, '鈫?/solutions/boutique-studio')
 }
 
 main().catch((err) => {

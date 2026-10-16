@@ -1,4 +1,4 @@
-import {createClient} from '@sanity/client'
+﻿import {createClient} from '@sanity/client'
 import {documentEventHandler} from '@sanity/functions'
 
 declare const process: {
@@ -70,15 +70,15 @@ const LEGAL_PAGE_KEYS = new Set([
   'shipping',
 ])
 const DEFAULT_STYLE_GUIDE =
-  'Translate for a professional B2B Pilates equipment website. Keep the meaning precise, concise and commercially neutral. Do not invent certifications, prices, warranty promises or technical specifications. Preserve SKU codes, model names, dimensions, units, URLs and brand names.'
+  'Translate for a professional B2B Display equipment website. Keep the meaning precise, concise and commercially neutral. Do not invent certifications, prices, warranty promises or technical specifications. Preserve SKU codes, model names, dimensions, units, URLs and brand names.'
 const DEFAULT_PROTECTED_PHRASES = [
-  'Coral Pilates',
+  'EasyShow',
   'Reformer',
   'Cadillac',
   'Ladder Barrel',
   'Spine Corrector',
   'Pedi Pole',
-  'Pilates Chair',
+  'Display Chair',
   'OEM',
   'RFQ',
   'SKU',

@@ -1,4 +1,4 @@
-import { defineType, defineField, defineArrayMember } from "sanity";
+﻿import { defineType, defineField, defineArrayMember } from "sanity";
 import { PackageIcon } from "@sanity/icons";
 import { mediaField } from "sanity-plugin-media";
 
@@ -186,28 +186,44 @@ export const product = defineType({
       },
       hidden: true,
     }),
+    // `service` is the new home for the printing-service axis. Each product
+    // can belong to multiple services (e.g. "Fabric printing" + "Backdrop
+    // banner"). The deprecated `equipment` field below keeps legacy
+    // single-value references resolvable for migration.
     defineField({
-      name: "equipmentTypes",
-      title: "器械类型",
+      name: "serviceTypes",
+      title: "印刷服务分类",
       type: "array",
       group: "product",
       description:
-        "前台“按器械”筛选使用的分类。混合型产品可以选择多个，例如 Reformer + Cadillac。",
+        '前台「Printing Service」tab 的「by Service」筛选使用的分类。一个产品可以归属多个服务，例如 "Fabric Printing" + "Backdrop Banner"。',
       of: [
         {
           type: "reference",
-          to: [{ type: "equipment" }],
+          to: [{ type: "service" }],
         },
       ],
+      // The front end now keys the Printing tab off `serviceTypes`, not
+      // `printingService` boolean. For backwards compatibility we still
+      // accept the boolean and project it as an empty array, so legacy
+      // documents continue to render in the Products tab until operators
+      // explicitly attach services.
       hidden: ({ parent }) =>
         parent?.catalogType === "accessory" || parent?.catalogType === "spare_part",
       validation: (rule) =>
         rule.custom((value, context) => {
-          const parent = context.parent as { catalogType?: string } | undefined;
+          const parent = context.parent as {
+            catalogType?: string;
+            printingService?: boolean;
+          } | undefined;
           const catalogType = parent?.catalogType ?? "equipment";
-          return catalogType !== "equipment" || (Array.isArray(value) && value.length > 0)
+          if (catalogType === "accessory" || catalogType === "spare_part") return true;
+          if (Array.isArray(value) && value.length > 0) return true;
+          // Legacy product with `printingService: true` is allowed to keep an
+          // empty array until ops attach a concrete service.
+          return parent?.printingService === true
             ? true
-            : "整机产品至少需要选择一个器械类型。";
+            : "非配件产品至少需要选择一个印刷服务，或保持空数组但确保 series.kind='product'。";
         }).unique(),
     }),
     defineField({
@@ -232,22 +248,32 @@ export const product = defineType({
       // newly available.
     }),
     defineField({
+      name: "printingService",
+      title: "印刷服务产品（兼容字段）",
+      type: "boolean",
+      group: "product",
+      description:
+        "兼容旧文档。新的工作流是给产品添加 `serviceTypes` 引用——只要填了至少一个 serviceTypes，前台就会自动把产品归到 Printing Service tab。这里仍保留 boolean 用于历史数据回退（true → 显示在 Printing tab）。",
+      initialValue: false,
+      deprecated: {
+        reason:
+          "Use `serviceTypes` (a reference[] to the new `service` document) instead. The Printing Service tab is now scoped off `serviceTypes`.",
+      },
+    }),
+    // Reference to the `partsCategory` document. The stable `key` on the
+    // referenced document is what the front end uses for filter URLs and the
+    // i18n fallback label. Legacy string values (e.g. "springs") are still
+    // accepted during migration — see the migration note in
+    // `seed-parts-categories.mjs`.
+    defineField({
       name: "partsCategory",
       title: "附件 / 零件分类",
-      type: "string",
+      type: "reference",
       group: "product",
-      description: "便于内部管理和后续筛选。整机设备不需要填写。",
+      description:
+        '便于内部管理和前台筛选。整机产品不需要填写。引用的「partsCategory」文档的 `key` 字段是稳定标识，例如 "springs"。',
+      to: [{ type: "partsCategory" }],
       hidden: ({parent}) => !parent?.catalogType || parent.catalogType === "equipment",
-      options: {
-        list: [
-          {title: "弹簧与阻力系统", value: "springs"},
-          {title: "皮革、坐垫与软包", value: "upholstery"},
-          {title: "绳索、滑轮与线缆", value: "cables_ropes"},
-          {title: "脚杆与五金", value: "footbars_hardware"},
-          {title: "训练辅件（箱、垫、跳板等）", value: "training_accessories"},
-          {title: "其他", value: "other"},
-        ],
-      },
     }),
     defineField({
       name: "compatibleProducts",
@@ -896,8 +922,8 @@ export const product = defineType({
       title: "品牌（结构化数据）",
       type: "string",
       group: "advanced",
-      description: "供搜索引擎使用，默认 Coral Pilates，普通运营无需修改。",
-      initialValue: "Coral Pilates",
+      description: "供搜索引擎使用，默认 EasyShow，普通运营无需修改。",
+      initialValue: "EasyShow",
     }),
     defineField({
       name: "mpn",

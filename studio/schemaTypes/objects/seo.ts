@@ -1,4 +1,4 @@
-import { defineType, defineField } from 'sanity'
+﻿import { defineType, defineField } from 'sanity'
 import { SearchIcon } from '@sanity/icons'
 import { mediaField } from 'sanity-plugin-media'
 
@@ -22,7 +22,7 @@ export const seo = defineType({
       title: '焦点关键词 Focus keyword',
       type: 'string',
       description:
-        '填写一个真实的目标搜索词，用于实时 SEO 检查；例如 “pilates reformer for studio”。不要用多个逗号分隔的词堆。',
+        '填写一个真实的目标搜索词，用于实时 SEO 检查；例如 “display reformer for studio”。不要用多个逗号分隔的词堆。',
       validation: (rule) => rule.max(80).warning('焦点关键词建议不超过 80 个字符。'),
     }),
     defineField({

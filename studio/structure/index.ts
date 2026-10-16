@@ -14,6 +14,7 @@ import {
   DocumentsIcon,
   FolderIcon,
   HomeIcon,
+  ImageIcon,
   ImagesIcon,
   PackageIcon,
   SearchIcon,
@@ -21,6 +22,7 @@ import {
   TagsIcon,
   UserIcon,
   WarningOutlineIcon,
+  WrenchIcon,
 } from "@sanity/icons";
 import {SITE_PAGES, type SitePageDefinition} from "../config/sitePages";
 import {OperationsDashboard} from "../components/OperationsDashboard";
@@ -30,16 +32,30 @@ import {
   LOCALIZED_DOCUMENT_TYPES,
 } from "../config/i18n";
 
+/**
+ * Operator-facing taxonomy entries. After the three-tab refactor the product
+ * catalog has three independent axes:
+ *
+ *   - series          (kind="product" | "service" | "part")
+ *   - service         (new — Printing Service tab)
+ *   - partsCategory   (new — Parts & accessories sub-facets)
+ *
+ * The `equipment` document is fully deprecated and intentionally absent from
+ * the operator structure; legacy refs continue to resolve but no new menu
+ * entry exists for it.
+ */
 interface TaxonomyEntry {
   _id: string;
   title?: string;
   slug?: string;
+  key?: string;
   count?: number;
 }
 
 interface TaxonomyResult {
   series: TaxonomyEntry[];
-  equipment: TaxonomyEntry[];
+  service: TaxonomyEntry[];
+  partsCategory: TaxonomyEntry[];
 }
 
 const ENGLISH_SOURCE_FILTER =
@@ -60,13 +76,18 @@ const SINGLETONS = [
 const EXPLICIT_TYPES = [
   "product",
   "series",
-  "equipment",
+  "service",
+  "partsCategory",
   "solution",
   "post",
   "postAuthor",
   "postCategory",
   "postTag",
 ];
+// `equipment` is intentionally NOT in EXPLICIT_TYPES — the legacy document
+// is read-only + hidden, so the operator must never see a "Create new" entry
+// for it. It still appears in the auto-discovered "高级内容" list so legacy
+// docs can be browsed; the structure never links to it.
 const INTERNAL_TYPES = [
   "media.tag",
   "translation.metadata",
@@ -169,12 +190,13 @@ function fixedPageGroup(
 
 export const structure: StructureResolver = async (S, context) => {
   const client = context.getClient({apiVersion: "2026-07-24"});
-  let taxonomy: TaxonomyResult = {series: [], equipment: []};
+  let taxonomy: TaxonomyResult = {series: [], service: [], partsCategory: []};
 
   try {
     taxonomy = await client.fetch<TaxonomyResult>(`{
       "series": *[
         _type == "series" &&
+        coalesce(kind, "product") == "product" &&
         ${ENGLISH_SOURCE_FILTER}
       ] | order(order asc, title asc) {
         _id,
@@ -188,8 +210,8 @@ export const structure: StructureResolver = async (S, context) => {
           references(^._id)
         ])
       },
-      "equipment": *[
-        _type == "equipment" &&
+      "service": *[
+        _type == "service" &&
         ${ENGLISH_SOURCE_FILTER}
       ] | order(order asc, title asc) {
         _id,
@@ -200,12 +222,28 @@ export const structure: StructureResolver = async (S, context) => {
           coalesce(language, "en") == "en" &&
           !(_id in path("drafts.**")) &&
           coalesce(catalogType, "equipment") == "equipment" &&
-          references(^._id)
+          (count(serviceTypes[ _ref == ^._id ]) > 0 ||
+           count(equipmentTypes[ _ref == ^._id ]) > 0)
+        ])
+      },
+      "partsCategory": *[
+        _type == "partsCategory" &&
+        ${ENGLISH_SOURCE_FILTER}
+      ] | order(order asc, title asc) {
+        _id,
+        title,
+        "key": key,
+        "count": count(*[
+          _type == "product" &&
+          coalesce(language, "en") == "en" &&
+          !(_id in path("drafts.**")) &&
+          catalogType in ["accessory", "spare_part"] &&
+          (partsCategory._ref == ^._id || partsCategory == ^.key)
         ])
       }
     }`);
   } catch {
-    // The Studio remains usable offline; the two dynamic taxonomy folders will
+    // The Studio remains usable offline; the dynamic taxonomy folders will
     // simply be empty until the Content Lake is reachable again.
   }
 
@@ -290,6 +328,7 @@ export const structure: StructureResolver = async (S, context) => {
           .id("product-center-list")
           .title("产品中心")
           .items([
+            // ── Tab 1: Products catalog (整机) ───────────────────────────
             S.listItem()
               .id("products-all")
               .title("全部英文主产品")
@@ -303,9 +342,102 @@ export const structure: StructureResolver = async (S, context) => {
               ),
 
             S.listItem()
+              .id("products-by-series")
+              .title("按产品系列查看")
+              .icon(TagIcon)
+              .child(
+                S.list()
+                  .id("products-by-series-list")
+                  .title("按产品系列查看")
+                  .items(
+                    taxonomy.series.length === 0
+                      ? [
+                          S.listItem()
+                            .id("products-by-series-empty")
+                            .title("(尚无产品系列)"),
+                        ]
+                      : taxonomy.series.map((series) =>
+                          S.listItem()
+                            .id(structureSafeId("series", series._id))
+                            .title(
+                              `${series.title || "未命名系列"}（${series.count ?? 0}）`,
+                            )
+                            .icon(TagIcon)
+                            .child(
+                              filteredProductList(S, {
+                                id: structureSafeId(
+                                  "products-series",
+                                  series._id,
+                                ),
+                                title: series.title || "系列产品",
+                                filter:
+                                  `_type == "product" && ${ENGLISH_CONTENT_FILTER} && coalesce(catalogType, "equipment") == "equipment" && series._ref == $seriesId`,
+                                params: {seriesId: series._id},
+                              }),
+                            ),
+                        ),
+                  ),
+              ),
+
+            S.divider(),
+
+            // ── Tab 2: Printing Service ─────────────────────────────────
+            S.listItem()
+              .id("products-all-printing")
+              .title("全部印刷服务产品")
+              .icon(ImageIcon)
+              .child(
+                filteredProductList(S, {
+                  id: "products-all-printing-list",
+                  title: "全部印刷服务产品",
+                  filter: `_type == "product" && ${ENGLISH_CONTENT_FILTER} && (printingService == true || count(serviceTypes) > 0 || count(equipmentTypes) > 0)`,
+                }),
+              ),
+            S.listItem()
+              .id("products-by-service")
+              .title("按印刷服务查看")
+              .icon(ImageIcon)
+              .child(
+                S.list()
+                  .id("products-by-service-list")
+                  .title("按印刷服务查看")
+                  .items(
+                    taxonomy.service.length === 0
+                      ? [
+                          S.listItem()
+                            .id("products-by-service-empty")
+                            .title("(尚无印刷服务 — 跑 seed-services.mjs)"),
+                        ]
+                      : taxonomy.service.map((service) =>
+                          S.listItem()
+                            .id(structureSafeId("service", service._id))
+                            .title(
+                              `${service.title || "未命名服务"}（${service.count ?? 0}）`,
+                            )
+                            .icon(ImageIcon)
+                            .child(
+                              filteredProductList(S, {
+                                id: structureSafeId(
+                                  "products-service",
+                                  service._id,
+                                ),
+                                title: service.title || "服务产品",
+                                filter:
+                                  `_type == "product" && ${ENGLISH_CONTENT_FILTER} && (count(serviceTypes[ _ref == $serviceId ]) > 0 || count(equipmentTypes[ _ref == $serviceId ]) > 0)`,
+                                params: {serviceId: service._id},
+                              }),
+                            ),
+                        ),
+                  ),
+              ),
+
+            S.divider(),
+
+            // ── Tab 3: Parts & accessories ──────────────────────────────
+            S.listItem()
               .id("products-parts-accessories")
               .title("Parts / Accessories")
-              .icon(ComponentIcon)
+              .icon(WrenchIcon)
               .child(
                 S.list()
                   .id("products-parts-accessories-list")
@@ -319,26 +451,34 @@ export const structure: StructureResolver = async (S, context) => {
                         S.list()
                           .id("products-parts-by-category-list")
                           .title("按客户可见分类管理")
-                          .items([
-                            ["springs", "Springs（弹簧与阻力系统）"],
-                            ["upholstery", "Upholstery（皮革、坐垫与软包）"],
-                            ["cables_ropes", "Cables & ropes（绳索、滑轮与线缆）"],
-                            ["footbars_hardware", "Footbars & hardware（脚杆与五金）"],
-                            ["training_accessories", "Boxes, mats & training accessories（箱、垫与训练辅件）"],
-                            ["other", "Other parts（其他）"],
-                          ].map(([category, title]) =>
-                            S.listItem()
-                              .id(`products-parts-category-${category}`)
-                              .title(title)
-                              .child(
-                                filteredProductList(S, {
-                                  id: `products-parts-category-${category}-list`,
-                                  title,
-                                  filter: `_type == "product" && ${ENGLISH_CONTENT_FILTER} && catalogType in ["accessory", "spare_part"] && partsCategory == $partsCategory`,
-                                  params: {partsCategory: category},
-                                }),
-                              ),
-                          )),
+                          .items(
+                            taxonomy.partsCategory.length === 0
+                              ? [
+                                  S.listItem()
+                                    .id("products-parts-empty")
+                                    .title("(尚无配件分类 — 跑 seed-parts-categories.mjs)"),
+                                ]
+                              : taxonomy.partsCategory.map((category) =>
+                                  S.listItem()
+                                    .id(`products-parts-category-${category.key}`)
+                                    .title(
+                                      `${category.title || category.key}（${category.count ?? 0}）`,
+                                    )
+                                    .icon(WrenchIcon)
+                                    .child(
+                                      filteredProductList(S, {
+                                        id: `products-parts-category-${category.key}-list`,
+                                        title: category.title || category.key || "配件",
+                                        filter:
+                                          `_type == "product" && ${ENGLISH_CONTENT_FILTER} && catalogType in ["accessory", "spare_part"] && (partsCategory._ref == $categoryId || partsCategory == $categoryKey)`,
+                                        params: {
+                                          categoryId: category._id,
+                                          categoryKey: category.key,
+                                        },
+                                      }),
+                                    ),
+                                ),
+                          ),
                       ),
                     S.divider(),
                     S.listItem()
@@ -364,72 +504,9 @@ export const structure: StructureResolver = async (S, context) => {
                   ]),
               ),
 
-            S.listItem()
-              .id("products-by-series")
-              .title("按产品系列查看")
-              .icon(TagIcon)
-              .child(
-                S.list()
-                  .id("products-by-series-list")
-                  .title("按产品系列查看")
-                  .items(
-                    taxonomy.series.map((series) =>
-                      S.listItem()
-                        .id(structureSafeId("series", series._id))
-                        .title(
-                          `${series.title || "未命名系列"}（${series.count ?? 0}）`,
-                        )
-                        .icon(TagIcon)
-                        .child(
-                          filteredProductList(S, {
-                            id: structureSafeId(
-                              "products-series",
-                              series._id,
-                            ),
-                            title: series.title || "系列产品",
-                            filter:
-                              `_type == "product" && ${ENGLISH_CONTENT_FILTER} && coalesce(catalogType, "equipment") == "equipment" && series._ref == $seriesId`,
-                            params: {seriesId: series._id},
-                          }),
-                        ),
-                    ),
-                  ),
-              ),
-
-            S.listItem()
-              .id("products-by-equipment")
-              .title("按器械类型查看")
-              .icon(ComponentIcon)
-              .child(
-                S.list()
-                  .id("products-by-equipment-list")
-                  .title("按器械类型查看")
-                  .items(
-                    taxonomy.equipment.map((equipment) =>
-                      S.listItem()
-                        .id(structureSafeId("equipment", equipment._id))
-                        .title(
-                          `${equipment.title || "未命名器械"}（${equipment.count ?? 0}）`,
-                        )
-                        .icon(ComponentIcon)
-                        .child(
-                          filteredProductList(S, {
-                            id: structureSafeId(
-                              "products-equipment",
-                              equipment._id,
-                            ),
-                            title: equipment.title || "器械产品",
-                            filter:
-                              `_type == "product" && ${ENGLISH_CONTENT_FILTER} && coalesce(catalogType, "equipment") == "equipment" && references($equipmentId)`,
-                            params: {equipmentId: equipment._id},
-                          }),
-                        ),
-                    ),
-                  ),
-              ),
-
             S.divider(),
 
+            // ── Status views (unchanged) ─────────────────────────────────
             S.listItem()
               .id("products-visible")
               .title("网站可见产品")
@@ -614,6 +691,9 @@ export const structure: StructureResolver = async (S, context) => {
                     `_type == "product" && ${ENGLISH_CONTENT_FILTER} && (!defined(summary) || summary == "")`,
                 }),
               ),
+            // After the three-tab refactor a product only needs to belong to
+            // ONE of: series (kind=product), serviceTypes, or partsCategory.
+            // Catalog type drives which set of fields is required.
             S.listItem()
               .id("quality-product-taxonomy")
               .title("产品分类不完整")
@@ -623,7 +703,7 @@ export const structure: StructureResolver = async (S, context) => {
                   id: "quality-product-taxonomy-list",
                   title: "产品分类不完整",
                   filter:
-                    `_type == "product" && ${ENGLISH_CONTENT_FILTER} && (!defined(series) || (count(equipmentTypes) == 0 && !defined(equipment)))`,
+                    `_type == "product" && ${ENGLISH_CONTENT_FILTER} && ((coalesce(catalogType, "equipment") == "equipment" && (!defined(series) || (count(serviceTypes) == 0 && count(equipmentTypes) == 0 && !defined(equipment)))) || (coalesce(catalogType, "equipment") == "equipment" && printingService == true && count(serviceTypes) == 0 && count(equipmentTypes) == 0))`,
                 }),
               ),
             S.divider(),
@@ -667,15 +747,21 @@ export const structure: StructureResolver = async (S, context) => {
           .items([
             filteredDocumentListItem(S, {
               id: "series-all",
-              title: "产品系列",
+              title: "产品系列（Catalog）",
               schemaType: "series",
-              filter: `_type == "series" && ${ENGLISH_CONTENT_FILTER}`,
+              filter: `_type == "series" && ${ENGLISH_CONTENT_FILTER} && coalesce(kind, "product") == "product"`,
             }),
             filteredDocumentListItem(S, {
-              id: "equipment-all",
-              title: "器械分类",
-              schemaType: "equipment",
-              filter: `_type == "equipment" && ${ENGLISH_CONTENT_FILTER}`,
+              id: "service-all",
+              title: "印刷服务（Printing Service）",
+              schemaType: "service",
+              filter: `_type == "service" && ${ENGLISH_CONTENT_FILTER}`,
+            }),
+            filteredDocumentListItem(S, {
+              id: "parts-category-all",
+              title: "配件 / 零件分类（Parts & accessories）",
+              schemaType: "partsCategory",
+              filter: `_type == "partsCategory" && ${ENGLISH_CONTENT_FILTER}`,
             }),
             filteredDocumentListItem(S, {
               id: "taxonomy-post-categories",

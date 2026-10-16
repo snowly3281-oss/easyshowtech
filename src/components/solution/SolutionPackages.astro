@@ -1,4 +1,4 @@
----
+﻿---
 import type { SolutionData, SolutionPackage } from '../../sanity/content'
 import { formatPrice, getPricePresentation } from '../../lib/price'
 import {localizedPath, type Locale} from '../../i18n/config'
@@ -202,10 +202,10 @@ const defaultSeriesSlug =
               showPrices &&
               ['show', 'range', 'quote'].includes(pkg.priceDisplay ?? '')
             const whatsappText = [
-              t('Hello Coral Pilates, I would like to request a configuration.'),
+              t('Hello EasyShow, I would like to request a configuration.'),
               `${t('Solution')}: ${solution.title ?? t('Solution')}`,
               `${t('Package')}: ${pkg.title ?? tierLabel[pkg.tier ?? ''] ?? t('Package')}`,
-              `${t('Page')}: https://coralpilates.com${localizedPath(`/solutions/${solution.slug ?? ''}`, locale)}`,
+              `${t('Page')}: https://easyshowtech.com${localizedPath(`/solutions/${solution.slug ?? ''}`, locale)}`,
               '',
               t('Please send the current equipment schedule and help me confirm whether it fits my space.'),
             ].join('\n')

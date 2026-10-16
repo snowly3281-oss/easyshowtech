@@ -47,7 +47,7 @@ const solution =
   ))
 if (!solution) return Astro.rewrite('/404')
 
-const metaTitle = solution.seo?.metaTitle ?? `${solution.title ?? 'Solution'} — Coral Pilates`
+const metaTitle = solution.seo?.metaTitle ?? `${solution.title ?? 'Solution'} — EasyShow`
 const metaDescription = solution.seo?.metaDescription ?? solution.summary ?? undefined
 const ogAsset = solution.seo?.ogImage?.asset
 const ogImage = ogAsset

@@ -1,9 +1,11 @@
-type FacetName = 'series' | 'equipment' | 'parts'
+type FacetName = 'series' | 'service' | 'parts'
 type SortMode = 'featured' | 'price-asc' | 'price-desc'
+type CatalogTab = 'catalog' | 'printing' | 'parts'
 
 interface CatalogState {
+  tab: CatalogTab
   series: string[]
-  equipment: string[]
+  service: string[]
   parts: string[]
   min: number | null
   max: number | null
@@ -30,7 +32,7 @@ function debounce(callback: () => void, delay: number): () => void {
 }
 
 function facetName(value: string | null): FacetName | null {
-  return value === 'series' || value === 'equipment' || value === 'parts'
+  return value === 'series' || value === 'service' || value === 'parts'
     ? value
     : null
 }
@@ -39,6 +41,10 @@ function sortMode(value: string | null): SortMode {
   return value === 'price-asc' || value === 'price-desc'
     ? value
     : 'featured'
+}
+
+function catalogTab(value: string | null): CatalogTab {
+  return value === 'printing' || value === 'parts' ? value : 'catalog'
 }
 
 export function initProductCatalog(): void {
@@ -68,8 +74,9 @@ export function initProductCatalog(): void {
   )
 
   const state: CatalogState = {
+    tab: 'catalog',
     series: [],
-    equipment: [],
+    service: [],
     parts: [],
     min: null,
     max: null,
@@ -79,8 +86,9 @@ export function initProductCatalog(): void {
 
   const readUrl = () => {
     const params = new URLSearchParams(location.search)
+    state.tab = catalogTab(params.get('tab'))
     state.series = (params.get('series') ?? '').split(',').filter(Boolean)
-    state.equipment = (params.get('equipment') ?? '')
+    state.service = (params.get('service') ?? '')
       .split(',')
       .filter(Boolean)
     state.parts = (params.get('parts') ?? '').split(',').filter(Boolean)
@@ -103,13 +111,28 @@ export function initProductCatalog(): void {
     if (sortSelect) sortSelect.value = state.sort
     if (priceMin) priceMin.value = state.min == null ? '' : String(state.min)
     if (priceMax) priceMax.value = state.max == null ? '' : String(state.max)
+    root
+      .querySelectorAll<HTMLElement>('[data-tab]')
+      .forEach((tab) => {
+        const isActive = tab.dataset.tab === state.tab
+        tab.classList.toggle('is-active', isActive)
+        tab.setAttribute('aria-selected', isActive ? 'true' : 'false')
+      })
+    root
+      .querySelectorAll<HTMLElement>('[data-facetgroup]')
+      .forEach((group) => {
+        const showOn = (group.dataset.facetgroup ?? '').split(',').filter(Boolean)
+        const visible = showOn.length === 0 || showOn.includes(state.tab)
+        group.hidden = !visible
+      })
   }
 
   const syncUrl = () => {
     const params = new URLSearchParams()
+    if (state.tab !== 'catalog') params.set('tab', state.tab)
     if (state.series.length) params.set('series', state.series.join(','))
-    if (state.equipment.length)
-      params.set('equipment', state.equipment.join(','))
+    if (state.service.length)
+      params.set('service', state.service.join(','))
     if (state.parts.length) params.set('parts', state.parts.join(','))
     if (state.min != null) params.set('min', String(state.min))
     if (state.max != null) params.set('max', String(state.max))
@@ -120,8 +143,9 @@ export function initProductCatalog(): void {
   }
 
   const hasActiveFilters = () =>
+    state.tab !== 'catalog' ||
     state.series.length > 0 ||
-    state.equipment.length > 0 ||
+    state.service.length > 0 ||
     state.parts.length > 0 ||
     state.min != null ||
     state.max != null ||
@@ -130,19 +154,26 @@ export function initProductCatalog(): void {
 
   const matches = (card: HTMLElement) => {
     const series = card.dataset.series ?? ''
-    const equipment = (card.dataset.equipment ?? '')
+    const service = (card.dataset.service ?? card.dataset.equipment ?? '')
       .split(',')
       .filter(Boolean)
-    const catalogType = card.dataset.catalogType ?? 'equipment'
     const partsCategory = card.dataset.partsCategory ?? ''
+    const catalogType = card.dataset.catalogType ?? 'equipment'
+    const isPrinting = card.dataset.printingService === 'true' || service.length > 0
+    const isPart = catalogType === 'accessory' || catalogType === 'spare_part'
+
+    // Top-level tab gate: each card only appears in one tab.
+    if (state.tab === 'catalog' && (isPart || isPrinting)) return false
+    if (state.tab === 'printing' && !isPrinting) return false
+    if (state.tab === 'parts' && !isPart) return false
+
     if (state.series.length && !state.series.includes(series)) return false
     if (
-      state.equipment.length &&
-      !state.equipment.some((selected) => equipment.includes(selected))
+      state.service.length &&
+      !state.service.some((selected) => service.includes(selected))
     )
       return false
     if (state.parts.length) {
-      const isPart = catalogType === 'accessory' || catalogType === 'spare_part'
       const matchesAllParts = state.parts.includes('all') && isPart
       const matchesPartCategory = state.parts.includes(partsCategory)
       if (!matchesAllParts && !matchesPartCategory) return false
@@ -156,6 +187,9 @@ export function initProductCatalog(): void {
       return false
     return true
   }
+
+  const partsCategoryFromCard = (card: HTMLElement) =>
+    card.dataset.partsCategory ?? ''
 
   const sortCards = (items: HTMLElement[]) => {
     if (state.sort === 'featured') return items
@@ -308,8 +342,9 @@ export function initProductCatalog(): void {
   priceMax?.addEventListener('input', updatePrice)
   resetButton?.addEventListener('click', () => {
     Object.assign(state, {
+      tab: 'catalog',
       series: [],
-      equipment: [],
+      service: [],
       parts: [],
       min: null,
       max: null,
@@ -319,6 +354,29 @@ export function initProductCatalog(): void {
     syncControls()
     syncUrl()
     render()
+  })
+
+  // Tab switching — click a [data-tab] element to switch the top-level
+  // catalog section. Resets filters and page to keep navigation predictable.
+  root.querySelectorAll<HTMLElement>('[data-tab]').forEach((tab) => {
+    tab.addEventListener('click', (event) => {
+      event.preventDefault()
+      const next = catalogTab(tab.dataset.tab ?? null)
+      if (next === state.tab) return
+      state.tab = next
+      state.series = []
+      state.service = []
+      state.parts = []
+      state.min = null
+      state.max = null
+      state.sort = 'featured'
+      state.page = 1
+      syncControls()
+      syncUrl()
+      render()
+      const top = grid.getBoundingClientRect().top + window.scrollY - 120
+      window.scrollTo({ top, behavior: 'smooth' })
+    })
   })
 
   readUrl()

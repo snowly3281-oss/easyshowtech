@@ -1,4 +1,4 @@
-import { actions } from 'astro:actions'
+﻿import { actions } from 'astro:actions'
 import { actionErrorMessage } from './actionError'
 import { thankYouUrl } from './quoteForm'
 
@@ -498,7 +498,7 @@ export function initRfqCart(): void {
     if (!items.length || !whatsappNumber) return
     const form = new FormData(emailForm)
     const intro = [
-      label('labelWaHeading', 'Hello Coral Pilates, I would like an RFQ for:'),
+      label('labelWaHeading', 'Hello EasyShow, I would like an RFQ for:'),
       '',
       ...items.flatMap((item, index) => {
         const row = `${index + 1}. ${item.title}${item.sku ? ` (${item.sku})` : ''} x ${item.quantity}`

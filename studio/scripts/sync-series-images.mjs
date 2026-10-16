@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Upload the dedicated series hero files supplied by the client and connect
  * them to the matching Series documents. Professional currently has no
  * dedicated hero file, so it deliberately reuses the verified AR-1 product
@@ -53,28 +53,28 @@ const seriesImages = [
   {
     slug: "wood-maple",
     file: "series-wood-maple-hero-01.webp",
-    alt: "Wood maple Pilates reformer in a studio",
+    alt: "Wood maple Display reformer in a studio",
   },
   {
     slug: "wood-oak",
     file: "series-wood-oak-hero-01.webp",
-    alt: "Wood oak Pilates reformers prepared for a studio",
+    alt: "Wood oak Display reformers prepared for a studio",
   },
   {
     slug: "aluminum",
     file: "series-aluminum-hero-01.webp",
-    alt: "Aluminum Pilates reformer in a training space",
+    alt: "Aluminum Display reformer in a training space",
   },
   {
     slug: "classical",
     file: "series-classical-hero-01.webp",
-    alt: "Classical Pilates Cadillac apparatus",
+    alt: "Classical Display Cadillac apparatus",
   },
   {
     slug: "professional",
     assetId:
       "image-322192c517a8b1257cc143f25773001e1d3da79e-1000x1000-webp",
-    alt: "Professional black aluminum Pilates reformer",
+    alt: "Professional black aluminum Display reformer",
   },
 ];
 

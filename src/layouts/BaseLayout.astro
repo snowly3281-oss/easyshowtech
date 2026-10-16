@@ -148,6 +148,23 @@ const alternateLinks = SUPPORTED_LOCALES.map((locale) => ({
       name="twitter:card"
       content={ogImage ? "summary_large_image" : "summary"}
     />
+
+    <!-- Google tag (gtag.js) — site-wide analytics. The snippet is inlined so
+         the page transitions router keeps it across navigations and so it
+         works in environments where module scripts are deferred. -->
+    <script
+      is:inline
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-T70YN4EL08"
+    ></script>
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-T70YN4EL08");
+    </script>
   </head>
 
   <body>

@@ -1022,6 +1022,20 @@ export type Solution = {
   seo?: Seo;
 };
 
+export type ServiceReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "service";
+};
+
+export type PartsCategoryReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "partsCategory";
+};
+
 export type Product = {
   _id: string;
   _type: "product";
@@ -1039,19 +1053,14 @@ export type Product = {
   status?: "published" | "draft" | "archived";
   series?: SeriesReference;
   equipment?: EquipmentReference;
-  equipmentTypes?: Array<
+  serviceTypes?: Array<
     {
       _key: string;
-    } & EquipmentReference
+    } & ServiceReference
   >;
   catalogType?: "equipment" | "accessory" | "spare_part";
-  partsCategory?:
-    | "springs"
-    | "upholstery"
-    | "cables_ropes"
-    | "footbars_hardware"
-    | "training_accessories"
-    | "other";
+  printingService?: boolean;
+  partsCategory?: PartsCategoryReference;
   compatibleProducts?: Array<
     {
       _key: string;
@@ -1199,6 +1208,30 @@ export type Product = {
   order?: number;
 };
 
+export type PartsCategory = {
+  _id: string;
+  _type: "partsCategory";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  key?: string;
+  title?: string;
+  description?: string;
+  order?: number;
+};
+
+export type Service = {
+  _id: string;
+  _type: "service";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  title?: string;
+  slug?: Slug;
+  description?: string;
+  order?: number;
+};
+
 export type Equipment = {
   _id: string;
   _type: "equipment";
@@ -1228,6 +1261,7 @@ export type Series = {
   translatedAt?: string;
   title?: string;
   slug?: Slug;
+  kind?: "product" | "service" | "part";
   description?: string;
   image?: {
     asset?: SanityImageAssetReference;
@@ -1531,7 +1565,11 @@ export type AllSanitySchemaTypes =
   | SitePage
   | Oem
   | Solution
+  | ServiceReference
+  | PartsCategoryReference
   | Product
+  | PartsCategory
+  | Service
   | Equipment
   | Series
   | MediaTag
@@ -1836,11 +1874,12 @@ export type HomeQueryResult = {
 
 // Source: ../src/sanity/queries/home.ts
 // Variable: homeSeriesQuery
-// Query: *[    _type == "series" &&    coalesce(language, "en") == $language &&    count(*[      _type == "product" &&      coalesce(language, "en") == $language &&      status == "published" &&      references(^._id)    ]) > 0  ] | order(order asc, title asc){    _id,    title,    "slug": slug.current,    description,    "image": coalesce(      image,      (        *[          _type == "product" &&          coalesce(language, "en") == $language &&          status == "published" &&          references(^._id) &&          defined(mainImage.asset)        ] | order(order asc, title asc)      )[0].mainImage,      (        *[          _type == "product" &&          coalesce(language, "en") == $language &&          references(^._id) &&          defined(mainImage.asset)        ] | order(order asc, title asc)      )[0].mainImage    ){ asset, alt },    "skuCount": count(*[      _type == "product" &&      coalesce(language, "en") == $language &&      status == "published" &&      references(^._id)    ])  }
+// Query: *[    _type == "series" &&    coalesce(language, "en") == $language &&    coalesce(kind, "product") == "product" &&    count(*[      _type == "product" &&      coalesce(language, "en") == $language &&      status == "published" &&      references(^._id)    ]) > 0  ] | order(order asc, title asc){    _id,    title,    "slug": slug.current,    kind,    description,    "image": coalesce(      image,      (        *[          _type == "product" &&          coalesce(language, "en") == $language &&          status == "published" &&          references(^._id) &&          defined(mainImage.asset)        ] | order(order asc, title asc)      )[0].mainImage,      (        *[          _type == "product" &&          coalesce(language, "en") == $language &&          references(^._id) &&          defined(mainImage.asset)        ] | order(order asc, title asc)      )[0].mainImage    ){ asset, alt },    "skuCount": count(*[      _type == "product" &&      coalesce(language, "en") == $language &&      status == "published" &&      references(^._id)    ])  }
 export type HomeSeriesQueryResult = Array<{
   _id: string;
   title: string | null;
   slug: string | null;
+  kind: "part" | "product" | "service" | null;
   description: string | null;
   image: {
     asset: SanityImageAssetReference | null;
@@ -2815,27 +2854,23 @@ export type ProductPathsQueryResult = Array<{
 
 // Source: ../src/sanity/queries/products.ts
 // Variable: productListQuery
-// Query: *[    _type == "product" &&    coalesce(language, "en") == $language &&    status == "published"  ] | order(order asc, title asc){    _id,    title,    "slug": slug.current,    sku,    "catalogType": coalesce(catalogType, "equipment"),    partsCategory,    summary,    "seriesTitle": series->title,    "seriesSlug": series->slug.current,    "equipmentTitles": select(      count(equipmentTypes) > 0 => equipmentTypes[]->title,      defined(equipment) => [equipment->title],      []    ),    "equipmentSlugs": select(      count(equipmentTypes) > 0 => equipmentTypes[]->slug.current,      defined(equipment) => [equipment->slug.current],      []    ),    mainImage{ asset, alt },    priceDisplay,    price,    priceMin,    priceMax,    currency  }
+// Query: *[    _type == "product" &&    coalesce(language, "en") == $language &&    status == "published"  ] | order(order asc, title asc){    _id,    title,    "slug": slug.current,    sku,    "catalogType": coalesce(catalogType, "equipment"),    "printingService": coalesce(printingService, false),    "partsCategoryKey": coalesce(partsCategory->key, partsCategory),    "partsCategoryTitle": partsCategory->title,    summary,    "seriesTitle": series->title,    "seriesSlug": series->slug.current,    "seriesKind": coalesce(series->kind, "product"),    "serviceTitles": select(      count(serviceTypes) > 0 => serviceTypes[]->title,      count(equipmentTypes) > 0 => equipmentTypes[]->title,      defined(equipment) => [equipment->title],      []    ),    "serviceSlugs": select(      count(serviceTypes) > 0 => serviceTypes[]->slug.current,      count(equipmentTypes) > 0 => equipmentTypes[]->slug.current,      defined(equipment) => [equipment->slug.current],      []    ),    mainImage{ asset, alt },    priceDisplay,    price,    priceMin,    priceMax,    currency  }
 export type ProductListQueryResult = Array<{
   _id: string;
   title: string | null;
   slug: string | null;
   sku: string | null;
   catalogType: "accessory" | "equipment" | "spare_part";
-  partsCategory:
-    | "cables_ropes"
-    | "footbars_hardware"
-    | "other"
-    | "springs"
-    | "training_accessories"
-    | "upholstery"
-    | null;
+  printingService: boolean | false;
+  partsCategoryKey: PartsCategoryReference | string | null;
+  partsCategoryTitle: string | null;
   summary: string | null;
   seriesTitle: string | null;
   seriesSlug: string | null;
-  equipmentTitles:
+  seriesKind: "part" | "product" | "service";
+  serviceTitles:
     Array<never> | Array<string | null> | Array<string | null> | null;
-  equipmentSlugs:
+  serviceSlugs:
     Array<never> | Array<string | null> | Array<string | null> | null;
   mainImage: {
     asset: SanityImageAssetReference | null;
@@ -2850,26 +2885,22 @@ export type ProductListQueryResult = Array<{
 
 // Source: ../src/sanity/queries/products.ts
 // Variable: productBySlugQuery
-// Query: *[    _type == "product" &&    coalesce(language, "en") == $language &&    slug.current == $slug &&    status == "published"  ][0]{    _id,    title,    "slug": slug.current,    sku,    catalogType,    partsCategory,    "seriesTitle": series->title,    "seriesSlug": series->slug.current,    "equipmentTitles": select(      count(equipmentTypes) > 0 => equipmentTypes[]->title,      defined(equipment) => [equipment->title],      []    ),    "equipmentSlugs": select(      count(equipmentTypes) > 0 => equipmentTypes[]->slug.current,      defined(equipment) => [equipment->slug.current],      []    ),    summary,    productionStatus,    shipsIn,    certifications,    priceDisplay,    price,    priceMin,    priceMax,    currency,    priceUnit,    priceNote,    moq,    leadTime,    warranty,    mainImage{ asset, alt },    mainImageDimensionNote,    gallery[]{ _key, image, alt, label },    keySpecs[]{ _key, value, unit, label, note },    variants[]{ _key, name, skuSuffix, isDefault, description, janka, finish, swatchColor },    specDimensions[]{ _key, label, value },    specWeight[]{ _key, label, value },    specMechanism[]{ _key, label, value },    specMaterials[]{ _key, label, value },    specRevision,    compatibilityNotes,    installationNotes,    careNotes,    replacementGuidance,    "compatibleProducts": compatibleProducts[]->{      _id,      title,      "slug": slug.current,      sku,      "seriesTitle": series->title,      "seriesSlug": series->slug.current,      mainImage{ asset, alt }    },    oemTerms[]{ _key, label, value, note },    brand,    mpn,    gtin13,    material,    dimensions,    weight,    warrantyUrl,    certs[]{ _key, label, url },    pricing[]{ _key, currency, amount, validUntil },    "solutionPlacements": *[      _type == "solution" &&      coalesce(language, "en") == $language &&      defined(slug.current) &&      references(^._id)    ] | order(title asc){      _id,      title,      "slug": slug.current,      packages[]{        _key,        title,        tier,        isRecommended,        "productIds": items[].product._ref      }    },    "related": select(      count(relatedProducts) > 0 => relatedProducts[]->{        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,        "seriesSlug": series->slug.current,        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency      },      catalogType in ["accessory", "spare_part"] => *[        _type == "product" &&        coalesce(language, "en") == $language &&        status == "published" &&        catalogType == ^.catalogType &&        partsCategory == ^.partsCategory &&        _id != ^._id      ] | order(order asc, title asc)[0...3]{        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,        "seriesSlug": series->slug.current,        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency      },      *[        _type == "product" &&        coalesce(language, "en") == $language &&        status == "published" &&        coalesce(catalogType, "equipment") == "equipment" &&        _id != ^._id &&        series._ref == ^.series._ref      ] | order(order asc)[0...3]{        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,        "seriesSlug": series->slug.current,        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency      }    )  }
+// Query: *[    _type == "product" &&    coalesce(language, "en") == $language &&    slug.current == $slug &&    status == "published"  ][0]{    _id,    title,    "slug": slug.current,    sku,    catalogType,    "printingService": coalesce(printingService, false),    "partsCategoryKey": coalesce(partsCategory->key, partsCategory),    "partsCategoryTitle": partsCategory->title,    "seriesTitle": series->title,    "seriesSlug": series->slug.current,    "seriesKind": coalesce(series->kind, "product"),    "serviceTitles": select(      count(serviceTypes) > 0 => serviceTypes[]->title,      count(equipmentTypes) > 0 => equipmentTypes[]->title,      defined(equipment) => [equipment->title],      []    ),    "serviceSlugs": select(      count(serviceTypes) > 0 => serviceTypes[]->slug.current,      count(equipmentTypes) > 0 => equipmentTypes[]->slug.current,      defined(equipment) => [equipment->slug.current],      []    ),    summary,    productionStatus,    shipsIn,    certifications,    priceDisplay,    price,    priceMin,    priceMax,    currency,    priceUnit,    priceNote,    moq,    leadTime,    warranty,    mainImage{ asset, alt },    mainImageDimensionNote,    gallery[]{ _key, image, alt, label },    keySpecs[]{ _key, value, unit, label, note },    variants[]{ _key, name, skuSuffix, isDefault, description, janka, finish, swatchColor },    specDimensions[]{ _key, label, value },    specWeight[]{ _key, label, value },    specMechanism[]{ _key, label, value },    specMaterials[]{ _key, label, value },    specRevision,    compatibilityNotes,    installationNotes,    careNotes,    replacementGuidance,    "compatibleProducts": compatibleProducts[]->{      _id,      title,      "slug": slug.current,      sku,      "seriesTitle": series->title,      "seriesSlug": series->slug.current,      mainImage{ asset, alt }    },    oemTerms[]{ _key, label, value, note },    brand,    mpn,    gtin13,    material,    dimensions,    weight,    warrantyUrl,    certs[]{ _key, label, url },    pricing[]{ _key, currency, amount, validUntil },    "solutionPlacements": *[      _type == "solution" &&      coalesce(language, "en") == $language &&      defined(slug.current) &&      references(^._id)    ] | order(title asc){      _id,      title,      "slug": slug.current,      packages[]{        _key,        title,        tier,        isRecommended,        "productIds": items[].product._ref      }    },    "related": select(      count(relatedProducts) > 0 => relatedProducts[]->{        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,        "seriesSlug": series->slug.current,        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency      },      catalogType in ["accessory", "spare_part"] => *[        _type == "product" &&        coalesce(language, "en") == $language &&        status == "published" &&        catalogType == ^.catalogType &&        partsCategory == ^.partsCategory &&        _id != ^._id      ] | order(order asc, title asc)[0...3]{        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,        "seriesSlug": series->slug.current,        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency      },      *[        _type == "product" &&        coalesce(language, "en") == $language &&        status == "published" &&        coalesce(catalogType, "equipment") == "equipment" &&        _id != ^._id &&        series._ref == ^.series._ref      ] | order(order asc)[0...3]{        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,        "seriesSlug": series->slug.current,        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency      }    )  }
 export type ProductBySlugQueryResult = {
   _id: string;
   title: string | null;
   slug: string | null;
   sku: string | null;
   catalogType: "accessory" | "equipment" | "spare_part" | null;
-  partsCategory:
-    | "cables_ropes"
-    | "footbars_hardware"
-    | "other"
-    | "springs"
-    | "training_accessories"
-    | "upholstery"
-    | null;
+  printingService: boolean | false;
+  partsCategoryKey: PartsCategoryReference | string | null;
+  partsCategoryTitle: string | null;
   seriesTitle: string | null;
   seriesSlug: string | null;
-  equipmentTitles:
+  seriesKind: "part" | "product" | "service";
+  serviceTitles:
     Array<never> | Array<string | null> | Array<string | null> | null;
-  equipmentSlugs:
+  serviceSlugs:
     Array<never> | Array<string | null> | Array<string | null> | null;
   summary: string | null;
   productionStatus: "discontinued" | "in_production" | "made_to_order" | null;
@@ -3354,17 +3385,24 @@ export type SolutionPackageForRequestQueryResult = {
 
 // Source: ../src/sanity/queries/taxonomy.ts
 // Variable: taxonomyQuery
-// Query: {  "series": *[    _type == "series" &&    coalesce(language, "en") == $language &&    slug.current != "apparatus"  ] | order(order asc, title asc){ _id, title, "slug": slug.current },  "equipment": *[    _type == "equipment" &&    coalesce(language, "en") == $language  ] | order(order asc, title asc){ _id, title, "slug": slug.current }}
+// Query: {  "series": *[    _type == "series" &&    coalesce(language, "en") == $language &&    coalesce(kind, "product") == "product" &&    slug.current != "apparatus"  ] | order(order asc, title asc){    _id, title, "slug": slug.current, kind  },  "services": *[    _type == "service" &&    coalesce(language, "en") == $language  ] | order(order asc, title asc){    _id, title, "slug": slug.current  },  "partsCategories": *[    _type == "partsCategory" &&    coalesce(language, "en") == $language  ] | order(order asc, title asc){    _id, title, "categoryKey": key, description  }}
 export type TaxonomyQueryResult = {
   series: Array<{
     _id: string;
     title: string | null;
     slug: string | null;
+    kind: "part" | "product" | "service" | null;
   }>;
-  equipment: Array<{
+  services: Array<{
     _id: string;
     title: string | null;
     slug: string | null;
+  }>;
+  partsCategories: Array<{
+    _id: string;
+    title: string | null;
+    categoryKey: string | null;
+    description: string | null;
   }>;
 };
 
@@ -3373,7 +3411,7 @@ import "@sanity/client";
 declare module "@sanity/client" {
   interface SanityQueries {
     '\n  *[\n    _type == "home" &&\n    coalesce(language, "en") == $language\n  ][0]{\n    hero{\n      eyebrow, heading, subheading,\n      image{ asset, alt },\n      "videoUrl": video.asset->url,\n      "videoType": video.asset->mimeType,\n      ctaPrimary{ label, external, internal->{ _type, "slug": slug.current } },\n      ctaSecondary{ label, external, internal->{ _type, "slug": slug.current } },\n      stats[]{ _key, value, label }\n    },\n    howWeWork{\n      heading, intro,\n      cards[]{ _key, eyebrow, title, image{ asset, alt }, body, terms[]{ _key, label, value }, cta{ label, external, internal->{ _type, "slug": slug.current } } }\n    },\n    catalog{ eyebrow, heading, intro },\n    useCases{ eyebrow, heading },\n    oemBanner{ heading, body, cta{ label, external, internal->{ _type, "slug": slug.current } } },\n    factory{ eyebrow, heading, body, image{ asset, alt }, steps[]{ _key, label }, cta{ label, external, internal->{ _type, "slug": slug.current } } },\n    ipProtection{\n      eyebrow, heading, intro,\n      items[]{ _key, title, lead, body, featured },\n      cta{ label, external, internal->{ _type, "slug": slug.current } }\n    },\n    insights{ eyebrow, heading },\n    finalCta{ heading, body, cta{ label, external, internal->{ _type, "slug": slug.current } } },\n    seo{ metaTitle, metaDescription, ogImage{ asset, alt } }\n  }\n': HomeQueryResult;
-    '\n  *[\n    _type == "series" &&\n    coalesce(language, "en") == $language &&\n    count(*[\n      _type == "product" &&\n      coalesce(language, "en") == $language &&\n      status == "published" &&\n      references(^._id)\n    ]) > 0\n  ] | order(order asc, title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    "image": coalesce(\n      image,\n      (\n        *[\n          _type == "product" &&\n          coalesce(language, "en") == $language &&\n          status == "published" &&\n          references(^._id) &&\n          defined(mainImage.asset)\n        ] | order(order asc, title asc)\n      )[0].mainImage,\n      (\n        *[\n          _type == "product" &&\n          coalesce(language, "en") == $language &&\n          references(^._id) &&\n          defined(mainImage.asset)\n        ] | order(order asc, title asc)\n      )[0].mainImage\n    ){ asset, alt },\n    "skuCount": count(*[\n      _type == "product" &&\n      coalesce(language, "en") == $language &&\n      status == "published" &&\n      references(^._id)\n    ])\n  }\n': HomeSeriesQueryResult;
+    '\n  *[\n    _type == "series" &&\n    coalesce(language, "en") == $language &&\n    coalesce(kind, "product") == "product" &&\n    count(*[\n      _type == "product" &&\n      coalesce(language, "en") == $language &&\n      status == "published" &&\n      references(^._id)\n    ]) > 0\n  ] | order(order asc, title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    kind,\n    description,\n    "image": coalesce(\n      image,\n      (\n        *[\n          _type == "product" &&\n          coalesce(language, "en") == $language &&\n          status == "published" &&\n          references(^._id) &&\n          defined(mainImage.asset)\n        ] | order(order asc, title asc)\n      )[0].mainImage,\n      (\n        *[\n          _type == "product" &&\n          coalesce(language, "en") == $language &&\n          references(^._id) &&\n          defined(mainImage.asset)\n        ] | order(order asc, title asc)\n      )[0].mainImage\n    ){ asset, alt },\n    "skuCount": count(*[\n      _type == "product" &&\n      coalesce(language, "en") == $language &&\n      status == "published" &&\n      references(^._id)\n    ])\n  }\n': HomeSeriesQueryResult;
     '\n  {\n    "publishedProducts": count(*[\n      _type == "product" &&\n      coalesce(language, "en") == "en" &&\n      status == "published"\n    ]),\n    "publishedSeries": count(*[\n      _type == "series" &&\n      coalesce(language, "en") == "en" &&\n      count(*[\n        _type == "product" &&\n        coalesce(language, "en") == "en" &&\n        status == "published" &&\n        references(^._id)\n      ]) > 0\n    ])\n  }\n': HomeCatalogStatsQueryResult;
     '\n  *[\n    _type == "solution" &&\n    coalesce(language, "en") == $language &&\n    defined(slug.current)\n  ] | order(_createdAt asc){\n    _id, title, "slug": slug.current, summary, audience\n  }\n': HomeSolutionsQueryResult;
     '\n  *[\n    _type == "post" &&\n    coalesce(language, "en") == $language &&\n    defined(slug.current)\n  ] | order(publishedAt desc)[0...3]{\n    _id, title, "slug": slug.current, excerpt, publishedAt, _updatedAt,\n    "readingTime": round(length(pt::text(body)) / 1200),\n    "cover": coverImage{ asset, alt }\n  }\n': HomePostsQueryResult;
@@ -3384,12 +3422,12 @@ declare module "@sanity/client" {
     '\n  *[\n    _type == "post" &&\n    coalesce(language, "en") == $language &&\n    defined(slug.current)\n  ] | order(publishedAt desc){\n    _id, title, "slug": slug.current, excerpt, publishedAt, _updatedAt,\n    "readingTime": round(length(pt::text(body)) / 1200),\n    "cover": coverImage{ asset, alt },\n    featured,\n    editorialStatus,\n    "author": author->{ _id, name, role },\n    "categories": categories[]->{ _id, title, "slug": slug.current }\n  }\n': PostListQueryResult;
     '\n  *[\n    _type == "post" &&\n    coalesce(language, "en") == $language &&\n    slug.current == $slug\n  ][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    _updatedAt,\n    "readingTime": round(length(pt::text(body)) / 1200),\n    "cover": coverImage{ asset, alt },\n    body[]{\n      ...,\n      markDefs[]{\n        ...,\n        _type == "internalLink" => {\n          "reference": reference->{\n            _type,\n            route,\n            "slug": slug.current\n          }\n        }\n      },\n      _type == "postImageBlock" => {\n        image{ asset, alt },\n        caption\n      },\n      _type == "postGalleryBlock" => {\n        heading,\n        images[]{\n          _key,\n          image{ asset },\n          alt,\n          caption\n        }\n      },\n      _type == "postVideoBlock" => {\n        source,\n        url,\n        "fileUrl": file.asset->url,\n        caption\n      },\n      _type == "postProductBlock" => {\n        heading,\n        body,\n        "products": products[]->{\n          _id,\n          title,\n          "slug": slug.current,\n          sku,\n          summary,\n          mainImage{ asset, alt }\n        }\n      },\n      _type == "postSolutionBlock" => {\n        heading,\n        body,\n        "solution": solution->{\n          _id,\n          title,\n          "slug": slug.current,\n          summary\n        }\n      },\n      _type == "postDownloadBlock" => {\n        title,\n        description,\n        "fileUrl": file.asset->url,\n        buttonLabel\n      },\n      _type == "postCtaBlock" => {\n        heading,\n        body,\n        primaryCta{\n          label,\n          external,\n          internal->{ _type, route, "slug": slug.current }\n        },\n        secondaryCta{\n          label,\n          external,\n          internal->{ _type, route, "slug": slug.current }\n        }\n      }\n    },\n    audience,\n    editorialStatus,\n    featured,\n    "author": author->{ _id, name, role, portrait{ asset, alt }, bio },\n    "categories": categories[]->{ _id, title, "slug": slug.current },\n    "tags": tags[]->{ _id, title, "slug": slug.current },\n    "solutions": solutions[]->{ _id, title, "slug": slug.current },\n    "relatedProducts": relatedProducts[]->{\n      _id,\n      title,\n      "slug": slug.current,\n      sku,\n      summary,\n      mainImage{ asset, alt }\n    },\n    "relatedPosts": relatedPosts[]->{\n      _id,\n      title,\n      "slug": slug.current,\n      excerpt,\n      publishedAt,\n      _updatedAt,\n      "readingTime": round(length(pt::text(body)) / 1200),\n      "cover": coverImage{ asset, alt },\n      "categories": categories[]->{ _id, title, "slug": slug.current }\n    },\n    seo{ metaTitle, metaDescription, ogImage{ asset, alt } }\n  }\n': PostBySlugQueryResult;
     '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    status == "published" &&\n    defined(slug.current)\n  ]{ "slug": slug.current }\n': ProductPathsQueryResult;
-    '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    status == "published"\n  ] | order(order asc, title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    sku,\n    "catalogType": coalesce(catalogType, "equipment"),\n    partsCategory,\n    summary,\n    "seriesTitle": series->title,\n    "seriesSlug": series->slug.current,\n    "equipmentTitles": select(\n      count(equipmentTypes) > 0 => equipmentTypes[]->title,\n      defined(equipment) => [equipment->title],\n      []\n    ),\n    "equipmentSlugs": select(\n      count(equipmentTypes) > 0 => equipmentTypes[]->slug.current,\n      defined(equipment) => [equipment->slug.current],\n      []\n    ),\n    mainImage{ asset, alt },\n    priceDisplay,\n    price,\n    priceMin,\n    priceMax,\n    currency\n  }\n': ProductListQueryResult;
-    '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    slug.current == $slug &&\n    status == "published"\n  ][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    sku,\n    catalogType,\n    partsCategory,\n    "seriesTitle": series->title,\n    "seriesSlug": series->slug.current,\n    "equipmentTitles": select(\n      count(equipmentTypes) > 0 => equipmentTypes[]->title,\n      defined(equipment) => [equipment->title],\n      []\n    ),\n    "equipmentSlugs": select(\n      count(equipmentTypes) > 0 => equipmentTypes[]->slug.current,\n      defined(equipment) => [equipment->slug.current],\n      []\n    ),\n    summary,\n    productionStatus,\n    shipsIn,\n    certifications,\n    priceDisplay,\n    price,\n    priceMin,\n    priceMax,\n    currency,\n    priceUnit,\n    priceNote,\n    moq,\n    leadTime,\n    warranty,\n    mainImage{ asset, alt },\n    mainImageDimensionNote,\n    gallery[]{ _key, image, alt, label },\n    keySpecs[]{ _key, value, unit, label, note },\n    variants[]{ _key, name, skuSuffix, isDefault, description, janka, finish, swatchColor },\n    specDimensions[]{ _key, label, value },\n    specWeight[]{ _key, label, value },\n    specMechanism[]{ _key, label, value },\n    specMaterials[]{ _key, label, value },\n    specRevision,\n    compatibilityNotes,\n    installationNotes,\n    careNotes,\n    replacementGuidance,\n    "compatibleProducts": compatibleProducts[]->{\n      _id,\n      title,\n      "slug": slug.current,\n      sku,\n      "seriesTitle": series->title,\n      "seriesSlug": series->slug.current,\n      mainImage{ asset, alt }\n    },\n    oemTerms[]{ _key, label, value, note },\n    brand,\n    mpn,\n    gtin13,\n    material,\n    dimensions,\n    weight,\n    warrantyUrl,\n    certs[]{ _key, label, url },\n    pricing[]{ _key, currency, amount, validUntil },\n    "solutionPlacements": *[\n      _type == "solution" &&\n      coalesce(language, "en") == $language &&\n      defined(slug.current) &&\n      references(^._id)\n    ] | order(title asc){\n      _id,\n      title,\n      "slug": slug.current,\n      packages[]{\n        _key,\n        title,\n        tier,\n        isRecommended,\n        "productIds": items[].product._ref\n      }\n    },\n    "related": select(\n      count(relatedProducts) > 0 => relatedProducts[]->{\n        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,\n        "seriesSlug": series->slug.current,\n        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency\n      },\n      catalogType in ["accessory", "spare_part"] => *[\n        _type == "product" &&\n        coalesce(language, "en") == $language &&\n        status == "published" &&\n        catalogType == ^.catalogType &&\n        partsCategory == ^.partsCategory &&\n        _id != ^._id\n      ] | order(order asc, title asc)[0...3]{\n        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,\n        "seriesSlug": series->slug.current,\n        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency\n      },\n      *[\n        _type == "product" &&\n        coalesce(language, "en") == $language &&\n        status == "published" &&\n        coalesce(catalogType, "equipment") == "equipment" &&\n        _id != ^._id &&\n        series._ref == ^.series._ref\n      ] | order(order asc)[0...3]{\n        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,\n        "seriesSlug": series->slug.current,\n        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency\n      }\n    )\n  }\n': ProductBySlugQueryResult;
+    '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    status == "published"\n  ] | order(order asc, title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    sku,\n    "catalogType": coalesce(catalogType, "equipment"),\n    "printingService": coalesce(printingService, false),\n    "partsCategoryKey": coalesce(partsCategory->key, partsCategory),\n    "partsCategoryTitle": partsCategory->title,\n    summary,\n    "seriesTitle": series->title,\n    "seriesSlug": series->slug.current,\n    "seriesKind": coalesce(series->kind, "product"),\n    "serviceTitles": select(\n      count(serviceTypes) > 0 => serviceTypes[]->title,\n      count(equipmentTypes) > 0 => equipmentTypes[]->title,\n      defined(equipment) => [equipment->title],\n      []\n    ),\n    "serviceSlugs": select(\n      count(serviceTypes) > 0 => serviceTypes[]->slug.current,\n      count(equipmentTypes) > 0 => equipmentTypes[]->slug.current,\n      defined(equipment) => [equipment->slug.current],\n      []\n    ),\n    mainImage{ asset, alt },\n    priceDisplay,\n    price,\n    priceMin,\n    priceMax,\n    currency\n  }\n': ProductListQueryResult;
+    '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    slug.current == $slug &&\n    status == "published"\n  ][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    sku,\n    catalogType,\n    "printingService": coalesce(printingService, false),\n    "partsCategoryKey": coalesce(partsCategory->key, partsCategory),\n    "partsCategoryTitle": partsCategory->title,\n    "seriesTitle": series->title,\n    "seriesSlug": series->slug.current,\n    "seriesKind": coalesce(series->kind, "product"),\n    "serviceTitles": select(\n      count(serviceTypes) > 0 => serviceTypes[]->title,\n      count(equipmentTypes) > 0 => equipmentTypes[]->title,\n      defined(equipment) => [equipment->title],\n      []\n    ),\n    "serviceSlugs": select(\n      count(serviceTypes) > 0 => serviceTypes[]->slug.current,\n      count(equipmentTypes) > 0 => equipmentTypes[]->slug.current,\n      defined(equipment) => [equipment->slug.current],\n      []\n    ),\n    summary,\n    productionStatus,\n    shipsIn,\n    certifications,\n    priceDisplay,\n    price,\n    priceMin,\n    priceMax,\n    currency,\n    priceUnit,\n    priceNote,\n    moq,\n    leadTime,\n    warranty,\n    mainImage{ asset, alt },\n    mainImageDimensionNote,\n    gallery[]{ _key, image, alt, label },\n    keySpecs[]{ _key, value, unit, label, note },\n    variants[]{ _key, name, skuSuffix, isDefault, description, janka, finish, swatchColor },\n    specDimensions[]{ _key, label, value },\n    specWeight[]{ _key, label, value },\n    specMechanism[]{ _key, label, value },\n    specMaterials[]{ _key, label, value },\n    specRevision,\n    compatibilityNotes,\n    installationNotes,\n    careNotes,\n    replacementGuidance,\n    "compatibleProducts": compatibleProducts[]->{\n      _id,\n      title,\n      "slug": slug.current,\n      sku,\n      "seriesTitle": series->title,\n      "seriesSlug": series->slug.current,\n      mainImage{ asset, alt }\n    },\n    oemTerms[]{ _key, label, value, note },\n    brand,\n    mpn,\n    gtin13,\n    material,\n    dimensions,\n    weight,\n    warrantyUrl,\n    certs[]{ _key, label, url },\n    pricing[]{ _key, currency, amount, validUntil },\n    "solutionPlacements": *[\n      _type == "solution" &&\n      coalesce(language, "en") == $language &&\n      defined(slug.current) &&\n      references(^._id)\n    ] | order(title asc){\n      _id,\n      title,\n      "slug": slug.current,\n      packages[]{\n        _key,\n        title,\n        tier,\n        isRecommended,\n        "productIds": items[].product._ref\n      }\n    },\n    "related": select(\n      count(relatedProducts) > 0 => relatedProducts[]->{\n        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,\n        "seriesSlug": series->slug.current,\n        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency\n      },\n      catalogType in ["accessory", "spare_part"] => *[\n        _type == "product" &&\n        coalesce(language, "en") == $language &&\n        status == "published" &&\n        catalogType == ^.catalogType &&\n        partsCategory == ^.partsCategory &&\n        _id != ^._id\n      ] | order(order asc, title asc)[0...3]{\n        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,\n        "seriesSlug": series->slug.current,\n        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency\n      },\n      *[\n        _type == "product" &&\n        coalesce(language, "en") == $language &&\n        status == "published" &&\n        coalesce(catalogType, "equipment") == "equipment" &&\n        _id != ^._id &&\n        series._ref == ^.series._ref\n      ] | order(order asc)[0...3]{\n        _id, title, "slug": slug.current, sku, "seriesTitle": series->title,\n        "seriesSlug": series->slug.current,\n        mainImage{ asset, alt }, priceDisplay, price, priceMin, priceMax, currency\n      }\n    )\n  }\n': ProductBySlugQueryResult;
     '\n  *[_type == "siteSettings"][0]{\n    showPrices, salesEmail, phone, whatsapp, responseTime, companyAddress,\n    frameFinishes[]{ _key, name, hex },\n    upholsteryColors[]{ _key, name, hex },\n    socialLinks[]{ _key, platform, label, url }\n  }\n': SiteSettingsQueryResult;
     '\n  *[\n    _type == "solution" &&\n    coalesce(language, "en") == $language &&\n    defined(slug.current)\n  ]{ "slug": slug.current }\n': SolutionPathsQueryResult;
     '\n  *[\n    _type == "solution" &&\n    coalesce(language, "en") == $language &&\n    slug.current == $slug\n  ][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    audience,\n    summary,\n    configurationIntro,\n    assistedConfiguration{\n      heading,\n      body\n    },\n    seo{\n      metaTitle,\n      metaDescription,\n      ogImage{ asset, alt }\n    },\n    pageBuilder[]{\n      _key,\n      _type,\n      _type == "heroBlock" => {\n        eyebrow,\n        heading,\n        subheading,\n        backgroundImage{ asset, alt },\n        cta{ label, external, internal->{ _type, "slug": slug.current } }\n      },\n      _type == "ctaBlock" => {\n        heading,\n        body,\n        cta{ label, external, internal->{ _type, "slug": slug.current } }\n      },\n      _type == "textBlock" => {\n        heading,\n        body\n      },\n      _type == "faqsBlock" => {\n        heading,\n        items[]{ _key, question, answer }\n      }\n    },\n    "products": products[]->{\n      _id,\n      title,\n      "slug": slug.current,\n      sku,\n      mainImage{ asset, alt },\n      priceDisplay,\n      price,\n      currency\n    },\n    packages[]{\n      _key,\n      title,\n      tier,\n      isRecommended,\n      summary,\n      areaMinSqm,\n      areaMaxSqm,\n      areaMinSqFt,\n      areaMaxSqFt,\n      equipmentTotalMin,\n      equipmentTotalMax,\n      leadTime,\n      priceDisplay,\n      price,\n      priceMin,\n      priceMax,\n      currency,\n      priceUnit,\n      priceNote,\n      showItemQuantities,\n      layoutImage{ asset, alt },\n      seriesVariants[]{\n        _key,\n        isRecommended,\n        "series": series->{\n          _id,\n          title,\n          "slug": slug.current\n        },\n        items[]{\n          _key,\n          quantity,\n          unit,\n          variantNote,\n          customName,\n          "product": product->{\n            _id,\n            title,\n            "slug": slug.current,\n            sku,\n            status,\n            mainImage{ asset, alt }\n          }\n        }\n      },\n      items[]{\n        _key,\n        quantity,\n        unit,\n        variantNote,\n        customName,\n        "product": product->{\n          _id,\n          title,\n          "slug": slug.current,\n          sku,\n          status,\n          mainImage{ asset, alt }\n        }\n      },\n      "productLinks": items[defined(product)]{\n        _key,\n        "product": product->{\n          _id,\n          title,\n          "slug": slug.current,\n          sku,\n          status,\n          mainImage{ asset, alt }\n        }\n      }\n    }\n  }\n': SolutionBySlugQueryResult;
     '\n  *[_type == "solution" && _id == $solutionId][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    "package": packages[_key == $packageKey][0]{\n      _key,\n      title,\n      tier,\n      isRecommended,\n      summary,\n      areaMinSqm,\n      areaMaxSqm,\n      areaMinSqFt,\n      areaMaxSqFt,\n      equipmentTotalMin,\n      equipmentTotalMax,\n      leadTime,\n      priceDisplay,\n      price,\n      priceMin,\n      priceMax,\n      currency,\n      priceUnit,\n      priceNote,\n      showItemQuantities,\n      "layoutImageUrl": layoutImage.asset->url,\n      "configurationPdfUrl": configurationPdf.asset->url,\n      seriesVariants[]{\n        _key,\n        "series": series->{\n          title,\n          "slug": slug.current\n        },\n        items[]{\n          _key,\n          quantity,\n          unit,\n          variantNote,\n          customName,\n          "product": product->{\n            _id,\n            title,\n            "slug": slug.current,\n            sku\n          }\n        }\n      },\n      items[]{\n        _key,\n        quantity,\n        unit,\n        variantNote,\n        customName,\n        "product": product->{\n          _id,\n          title,\n          "slug": slug.current,\n          sku\n        }\n      }\n    }\n  }\n': SolutionPackageForRequestQueryResult;
-    '{\n  "series": *[\n    _type == "series" &&\n    coalesce(language, "en") == $language &&\n    slug.current != "apparatus"\n  ] | order(order asc, title asc){ _id, title, "slug": slug.current },\n  "equipment": *[\n    _type == "equipment" &&\n    coalesce(language, "en") == $language\n  ] | order(order asc, title asc){ _id, title, "slug": slug.current }\n}': TaxonomyQueryResult;
+    '{\n  "series": *[\n    _type == "series" &&\n    coalesce(language, "en") == $language &&\n    coalesce(kind, "product") == "product" &&\n    slug.current != "apparatus"\n  ] | order(order asc, title asc){\n    _id, title, "slug": slug.current, kind\n  },\n  "services": *[\n    _type == "service" &&\n    coalesce(language, "en") == $language\n  ] | order(order asc, title asc){\n    _id, title, "slug": slug.current\n  },\n  "partsCategories": *[\n    _type == "partsCategory" &&\n    coalesce(language, "en") == $language\n  ] | order(order asc, title asc){\n    _id, title, "categoryKey": key, description\n  }\n}': TaxonomyQueryResult;
   }
 }

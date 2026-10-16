@@ -143,7 +143,7 @@ const explicitRelatedPosts = post.relatedPosts ?? []
 const relatedGuides =
   explicitRelatedPosts.length > 0 ? explicitRelatedPosts.slice(0, 3) : recommendations.slice(0, 3)
 
-const metaTitle = post.seo?.metaTitle ?? `${post.title ?? t('Article')} — Coral Pilates`
+const metaTitle = post.seo?.metaTitle ?? `${post.title ?? t('Article')} — EasyShow`
 const metaDescription = post.seo?.metaDescription ?? post.excerpt ?? undefined
 const socialSource = post.seo?.ogImage?.asset || post.cover?.asset
 const ogImage = socialSource

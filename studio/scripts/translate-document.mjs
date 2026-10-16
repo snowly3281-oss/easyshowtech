@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Generate or refresh one language draft with Sanity Agent Actions Translate.
  *
  * This script intentionally never publishes translations. Legal and commercial
@@ -45,15 +45,15 @@ const LOCALIZED_TYPES = new Set([
   "postTag",
 ]);
 const STYLE_GUIDE =
-  "Translate for a professional B2B Pilates equipment website. Keep the meaning precise, concise and commercially neutral. Do not invent certifications, prices, warranty promises or technical specifications. Preserve SKU codes, model names, dimensions, units, URLs and brand names.";
+  "Translate for a professional B2B Display equipment website. Keep the meaning precise, concise and commercially neutral. Do not invent certifications, prices, warranty promises or technical specifications. Preserve SKU codes, model names, dimensions, units, URLs and brand names.";
 const PROTECTED_PHRASES = [
-  "Coral Pilates",
+  "EasyShow",
   "Reformer",
   "Cadillac",
   "Ladder Barrel",
   "Spine Corrector",
   "Pedi Pole",
-  "Pilates Chair",
+  "Display Chair",
   "OEM",
   "RFQ",
   "SKU",

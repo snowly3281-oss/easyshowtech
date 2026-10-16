@@ -1,4 +1,4 @@
----
+﻿---
 import {
   TURNSTILE_ACTION,
   TURNSTILE_SITE_KEY,
@@ -16,7 +16,7 @@ const t = (english: string) => staticUi(locale, english)
 const whatsappDigits = whatsapp.replace(/\D/g, '').replace(/^00/, '')
 const generalWhatsappHref = whatsappDigits
   ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(
-      t('Hello Coral Pilates, I would like to discuss Pilates equipment for my project.'),
+      t('Hello EasyShow, I would like to discuss Display equipment for my project.'),
     )}`
   : localizedPath('/contact', locale)
 ---
@@ -40,7 +40,7 @@ const generalWhatsappHref = whatsappDigits
   data-label-send-email={t('Send RFQ by email')}
   data-label-error={t('Something went wrong. Please try again.')}
   data-label-check-form={t('Please check the form and try again.')}
-  data-label-wa-heading={t('Hello Coral Pilates, I would like an RFQ for:')}
+  data-label-wa-heading={t('Hello EasyShow, I would like an RFQ for:')}
   data-label-contact={t('Contact')}
   data-label-notes={t('Notes')}
   data-label-source={t('Source')}
@@ -65,7 +65,7 @@ const generalWhatsappHref = whatsappDigits
       href={generalWhatsappHref}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={t('Chat with Coral Pilates on WhatsApp')}
+      aria-label={t('Chat with EasyShow on WhatsApp')}
       title={t('Chat on WhatsApp')}
     >
       <svg viewBox="0 0 24 24" aria-hidden="true">

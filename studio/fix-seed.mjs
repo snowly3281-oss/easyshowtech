@@ -1,4 +1,4 @@
-/**
+﻿/**
  * One-shot fix: the catalog products/taxonomy were seeded with DOTTED custom
  * ids (e.g. "product.wunda-chair", "series.aluminum"). Sanity's public/anonymous
  * read does NOT grant access to documents whose _id contains a dot, so they were
@@ -94,7 +94,7 @@ for (const p of products) {
     moq: '10 units',
     leadTime: p.lead,
     warranty: '10 years',
-    brand: 'Coral Pilates',
+    brand: 'EasyShow',
   })
   console.log('product', p.id)
 }

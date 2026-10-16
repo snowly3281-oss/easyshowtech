@@ -37,19 +37,22 @@ const [products, taxonomy, settings, page] = await Promise.all([
 
 let list = products ?? []
 let series = taxonomy?.series ?? []
-let equipment = taxonomy?.equipment ?? []
+let services = taxonomy?.services ?? []
+let partsCategories = taxonomy?.partsCategories ?? []
 
-// Keep both facets usable while translations are being rolled out. A
+// Keep all three facets usable while translations are being rolled out. A
 // composite taxonomy query can legitimately return one translated list and
 // one empty list; in that case fill only the missing facet from English.
-if (locale !== 'en' && (series.length === 0 || equipment.length === 0)) {
+if (locale !== 'en' && (series.length === 0 || services.length === 0 || partsCategories.length === 0)) {
   const englishTaxonomy = await fetchLocalized<TaxonomyQueryResult>(
     taxonomyQuery,
     {},
     'en',
   )
   if (series.length === 0) series = englishTaxonomy?.series ?? []
-  if (equipment.length === 0) equipment = englishTaxonomy?.equipment ?? []
+  if (services.length === 0) services = englishTaxonomy?.services ?? []
+  if (partsCategories.length === 0)
+    partsCategories = englishTaxonomy?.partsCategories ?? []
 }
 
 // Translation documents intentionally keep references to the canonical English
@@ -58,50 +61,70 @@ if (locale !== 'en' && (series.length === 0 || equipment.length === 0)) {
 const usedSeries = new Set(
   list.map((product) => product.seriesSlug).filter(Boolean),
 )
-const usedEquipment = new Set(
-  list.flatMap((product) => product.equipmentSlugs ?? []).filter(Boolean),
+const usedServices = new Set(
+  list.flatMap((product) => product.serviceSlugs ?? []).filter(Boolean),
+)
+const usedPartsCategories = new Set(
+  list.map((product) => product.partsCategoryKey).filter(Boolean),
 )
 series = series.filter((entry) => entry.slug && usedSeries.has(entry.slug))
-equipment = equipment.filter(
-  (entry) => entry.slug && usedEquipment.has(entry.slug),
+services = services.filter(
+  (entry) => entry.slug && usedServices.has(entry.slug),
+)
+partsCategories = partsCategories.filter(
+  (entry) => entry.categoryKey && usedPartsCategories.has(entry.categoryKey),
 )
 const seriesTitles = new Map(series.map((entry) => [entry.slug, entry.title]))
-const equipmentTitles = new Map(
-  equipment.map((entry) => [entry.slug, entry.title]),
+const serviceTitles = new Map(
+  services.map((entry) => [entry.slug, entry.title]),
 )
+// Map of canonical partsCategory.key → i18n fallback (the partsCategory
+// document is in EN only and may not be translated yet).
+const partsCategoryFallback = new Map([
+  ['springs', ui(locale, 'partsSprings')],
+  ['upholstery', ui(locale, 'partsUpholstery')],
+  ['cables_ropes', ui(locale, 'partsCablesRopes')],
+  ['footbars_hardware', ui(locale, 'partsFootbarsHardware')],
+  ['training_accessories', ui(locale, 'partsTrainingAccessories')],
+])
+const partsCategoryLabel = (key: string) =>
+  partsCategories.find((entry) => entry.categoryKey === key)?.title ??
+  partsCategoryFallback.get(key) ??
+  key
 list = list.map((product) => ({
   ...product,
   seriesTitle:
     seriesTitles.get(product.seriesSlug ?? '') ?? product.seriesTitle,
-  equipmentTitles: (product.equipmentSlugs ?? []).map(
+  serviceTitles: (product.serviceSlugs ?? []).map(
     (slug, index) =>
-      equipmentTitles.get(slug ?? '') ??
-      product.equipmentTitles?.[index] ??
+      serviceTitles.get(slug ?? '') ??
+      product.serviceTitles?.[index] ??
       slug,
   ),
+  partsCategoryLabel: product.partsCategoryKey
+    ? partsCategoryLabel(product.partsCategoryKey)
+    : product.partsCategoryKey,
 }))
 
-// Parts & accessories share this same Products catalogue. Only show a parts
-// category when it already contains a published product, so buyers never face
-// a dead filter while the client gradually expands the range.
-const partsCategoryDefinitions = [
-  { key: 'springs', label: ui(locale, 'partsSprings') },
-  { key: 'upholstery', label: ui(locale, 'partsUpholstery') },
-  { key: 'cables_ropes', label: ui(locale, 'partsCablesRopes') },
-  { key: 'footbars_hardware', label: ui(locale, 'partsFootbarsHardware') },
-  { key: 'training_accessories', label: ui(locale, 'partsTrainingAccessories') },
-] as const
+// The three-axis taxonomy may have stale categories (no live products using
+// them). Drop empty parts categories so the filter UI never shows a "no
+// results" facet.
 const hasPublishedParts = list.some(
   (product) =>
     product.catalogType === 'accessory' || product.catalogType === 'spare_part',
 )
-const partsCategories = partsCategoryDefinitions.filter((category) =>
-  list.some(
-    (product) =>
-      (product.catalogType === 'accessory' || product.catalogType === 'spare_part') &&
-      product.partsCategory === category.key,
-  ),
-)
+const partsCategoryDefinitions = partsCategories
+  .map((entry) => ({
+    key: entry.categoryKey,
+    label: partsCategoryFallback.get(entry.categoryKey) ?? entry.title,
+  }))
+  .filter((category) =>
+    list.some(
+      (product) =>
+        (product.catalogType === 'accessory' || product.catalogType === 'spare_part') &&
+        product.partsCategoryKey === category.key,
+    ),
+  )
 
 // Global price gate. When off (current client policy) every card shows "Get
 // quote" and the price-dependent controls (PRICE RANGE, Sort) stay hidden —
@@ -116,7 +139,7 @@ const pageIntro =
   page?.introduction ||
   ui(locale, 'catalogIntro')
 const pageBlocks = (page?.sections ?? []) as SolutionBlock[]
-const metaTitle = page?.seo?.metaTitle || `${pageTitle} — Coral Pilates`
+const metaTitle = page?.seo?.metaTitle || `${pageTitle} — EasyShow`
 const metaDescription =
   page?.seo?.metaDescription ||
   pageIntro
@@ -143,6 +166,36 @@ const resultLabels = {
       <p class="cat__intro">
         {pageIntro}
       </p>
+
+      <div class="cat__tabs" role="tablist" aria-label={ui(locale, 'products')}>
+        <a
+          href="#catalog"
+          class="cat__tab is-active"
+          role="tab"
+          aria-selected="true"
+          data-tab="catalog"
+        >
+          {ui(locale, 'tabProductsCatalog')}
+        </a>
+        <a
+          href="#printing"
+          class="cat__tab"
+          role="tab"
+          aria-selected="false"
+          data-tab="printing"
+        >
+          {ui(locale, 'tabPrintingService')}
+        </a>
+        <a
+          href="#parts"
+          class="cat__tab"
+          role="tab"
+          aria-selected="false"
+          data-tab="parts"
+        >
+          {ui(locale, 'tabPartsAccessories')}
+        </a>
+      </div>
 
       <div
         class="cat"
@@ -180,7 +233,7 @@ const resultLabels = {
             </button>
           </div>
 
-          <div class="facetgroup">
+          <div class="facetgroup" data-facetgroup="catalog">
             <p class="facetgroup__label">{ui(locale, 'bySeries')}</p>
             <div class="facetgroup__list">
               {
@@ -194,23 +247,27 @@ const resultLabels = {
             </div>
           </div>
         
-          <div class="facetgroup">
-            <p class="facetgroup__label">{ui(locale, 'byEquipment')}</p>
-            <div class="facetgroup__list">
-              {
-                equipment.map((e) => (
-                  <label class="facet">
-                    <input type="checkbox" data-facet="equipment" value={e.slug ?? ''} />
-                    <span>{e.title}</span>
-                  </label>
-                ))
-              }
-            </div>
-          </div>
+          {
+            services.length > 0 && (
+              <div class="facetgroup" data-facetgroup="printing">
+                <p class="facetgroup__label">{ui(locale, 'byService')}</p>
+                <div class="facetgroup__list">
+                  {
+                    services.map((e) => (
+                      <label class="facet">
+                        <input type="checkbox" data-facet="service" value={e.slug ?? ''} />
+                        <span>{e.title}</span>
+                      </label>
+                    ))
+                  }
+                </div>
+              </div>
+            )
+          }
          
           {
             hasPublishedParts && (
-              <div class="facetgroup">
+              <div class="facetgroup" data-facetgroup="parts">
                 <p class="facetgroup__label">{ui(locale, 'partsAccessories')}</p>
                 <div class="facetgroup__list">
                   <label class="facet">
@@ -218,7 +275,7 @@ const resultLabels = {
                     <span>{ui(locale, 'allPartsAccessories')}</span>
                   </label>
                   {
-                    partsCategories.map((category) => (
+                    partsCategoryDefinitions.map((category) => (
                       <label class="facet">
                         <input type="checkbox" data-facet="parts" value={category.key} />
                         <span>{category.label}</span>
@@ -232,7 +289,7 @@ const resultLabels = {
 
           {
             showPrices && (
-              <div class="facetgroup">
+              <div class="facetgroup" data-facetgroup="catalog,printing,parts">
                 <p class="facetgroup__label">{ui(locale, 'priceRange')}</p>
                 <div class="cat__price">
                   <input type="number" inputmode="numeric" min="0" data-price-min placeholder={ui(locale, 'minimum')} aria-label={ui(locale, 'minimumPrice')} />
@@ -335,9 +392,48 @@ const resultLabels = {
     color: var(--color-ink-600, #555);
   }
 
+  /* Top-level tab strip — switches the catalog between
+     Products catalog / Printing Service / Parts & accessories. */
+  .cat__tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: var(--space-6) 0 0;
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--color-ink-200, #e2ddd3);
+  }
+  .cat__tab {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    background: var(--color-paper, #f7f4ee);
+    color: var(--color-ink-700, #343434);
+    font: inherit;
+    font-size: var(--text-body-s);
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+      border-color 0.15s ease,
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+  .cat__tab:hover {
+    border-color: var(--color-coral);
+    color: var(--color-coral);
+  }
+  .cat__tab.is-active {
+    border-color: var(--color-coral);
+    background: var(--color-coral);
+    color: var(--color-white, #fff);
+  }
+
   /* Sidebar + results layout. */
   .cat {
-    margin: var(--space-7) 0 0;
+    margin: var(--space-5) 0 0;
     display: grid;
     grid-template-columns: 208px 1fr;
     gap: var(--space-7);

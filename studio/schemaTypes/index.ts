@@ -8,6 +8,8 @@ import {LOCALIZED_DOCUMENT_TYPE_SET} from "../config/i18n";
 // Documents
 import { series } from './series'
 import { equipment } from './equipment'
+import { service } from './service'
+import { partsCategory } from './partsCategory'
 import { product } from './product'
 import { solution } from './solution'
 import { oem } from './oem'
@@ -55,6 +57,8 @@ const registeredTypes: SchemaTypeDefinition[] = [
   // Documents
   series,
   equipment,
+  service,
+  partsCategory,
   product,
   solution,
   oem,

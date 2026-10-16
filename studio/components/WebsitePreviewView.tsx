@@ -1,4 +1,4 @@
-import {useMemo} from "react";
+﻿import {useMemo} from "react";
 import {Box, Card, Flex, Stack, Text} from "@sanity/ui";
 import type {UserViewComponent} from "sanity/structure";
 
@@ -47,7 +47,7 @@ export const WebsitePreviewView: UserViewComponent = (props) => {
     ) {
       return "http://localhost:4321";
     }
-    return "https://coralpilates.com";
+    return "https://easyshowtech.com";
   }, []);
 
   if (!route) {
@@ -93,7 +93,7 @@ export const WebsitePreviewView: UserViewComponent = (props) => {
           key={url}
           src={url}
           style={{border: 0, display: "block", height: "100%", width: "100%"}}
-          title="Coral Pilates 前台预览"
+          title="EasyShow 前台预览"
         />
       </Box>
     </Flex>

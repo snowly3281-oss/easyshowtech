@@ -1,6 +1,6 @@
-# Catalog ↔ Sanity 对照表（甲方 PDF / 2026-04）
+﻿# Catalog ↔ Sanity 对照表（甲方 PDF / 2026-04）
 
-> 由 `Coral Pilates Catalog 独立站 (1).pdf`（53 页, 86 SKU）解析，并与 Sanity `production` 数据集已上传的 222 张图片资源核对。
+> 由 `EasyShow Catalog 独立站 (1).pdf`（53 页, 86 SKU）解析，并与 Sanity `production` 数据集已上传的 222 张图片资源核对。
 
 图例：✅ 图片齐全 · 🟡 部分（缺主图或缺细节图）· ❌ 该 SKU 0 张图 · ⬜ 整个系列尚无图片
 

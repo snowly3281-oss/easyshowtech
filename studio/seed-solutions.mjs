@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Seed the five remaining solution pages (boutique-studio already exists) so the
  * hardcoded nav links in src/config/site.ts resolve through /solutions/[slug].
  * Dotless hyphenated ids (publicly readable). Idempotent via createOrReplace.
@@ -21,7 +21,7 @@ if (!process.env.SANITY_WRITE_TOKEN) {
 
 const span = (t, k) => ({ _type: 'span', _key: k, text: t, marks: [] })
 const para = (t, k) => ({ _type: 'block', _key: k, style: 'normal', markDefs: [], children: [span(t, `${k}s`)] })
-const quote = (label) => ({ _type: 'ctaLink', label, external: 'mailto:chris@coralpilates.com' })
+const quote = (label) => ({ _type: 'ctaLink', label, external: 'mailto:chris@easyshowtech.com' })
 
 const solutions = [
   {
@@ -31,7 +31,7 @@ const solutions = [
     audience: ['budget_b2b', 'oem_distributor'],
     summary: 'Roll out a consistent studio experience across every franchise location.',
     heroHeading: 'One studio standard, every location',
-    heroSub: 'Equip new franchise sites with identical, studio-grade equipment — matched finishes, bulk pricing and one point of contact.',
+    heroSub: 'Equip new franchise sites with identical, studio-grade equipment 鈥?matched finishes, bulk pricing and one point of contact.',
     textHeading: 'Consistency that scales',
     p1: 'Franchisees expect the same room and the same reformer in every city. Coral builds to a fixed spec, so unit 1 and unit 50 are identical.',
     p2: 'We keep your spec on file and ship to each opening on schedule, with volume pricing that improves as you grow.',
@@ -43,7 +43,7 @@ const solutions = [
     title: 'Rehab clinic',
     slug: 'rehab-clinic',
     audience: ['budget_b2b', 'brand_owner'],
-    summary: 'Clinical-grade Pilates equipment for physiotherapy and rehabilitation.',
+    summary: 'Clinical-grade Display equipment for physiotherapy and rehabilitation.',
     heroHeading: 'Built for clinical work',
     heroSub: 'Durable, easy-to-clean reformers and towers for physio, rehab and post-operative programming.',
     textHeading: 'Clinical durability',
@@ -57,9 +57,9 @@ const solutions = [
     title: 'Hotel spa',
     slug: 'hotel-spa',
     audience: ['brand_owner', 'oem_distributor'],
-    summary: 'Signature Pilates amenities for hotels, spas and wellness resorts.',
+    summary: 'Signature Display amenities for hotels, spas and wellness resorts.',
     heroHeading: 'A wellness amenity that signals quality',
-    heroSub: 'Beautiful, durable equipment for hotel gyms and spa studios — finished to match your property and your brand.',
+    heroSub: 'Beautiful, durable equipment for hotel gyms and spa studios 鈥?finished to match your property and your brand.',
     textHeading: 'On-brand, guest-ready',
     p1: 'Guests judge a wellness offer in seconds. Coral equipment looks the part and holds up to high-turnover use.',
     p2: 'Custom wood finishes and upholstery let the studio match your interior and brand palette.',

@@ -1,4 +1,4 @@
----
+﻿---
 import type { ProductData, SiteSettingsData } from '../../sanity/content'
 import { urlFor } from '../../sanity/image'
 import { formatPrice, getPricePresentation } from '../../lib/price'
@@ -14,7 +14,7 @@ interface Props {
 
 const { product, settings, locale = 'en' } = Astro.props
 const t = (english: string) => staticUi(locale, english)
-const productTitle = product.title ?? t('Coral Pilates equipment')
+const productTitle = product.title ?? t('EasyShow equipment')
 
 // Generic finish / upholstery configurator — global common options edited in
 // siteSettings (per-product variants come later). Frame finish only applies to

@@ -1,11 +1,14 @@
-import type {Locale} from "./config";
+﻿import type {Locale} from "./config";
 
 export type UiKey =
   | "home"
   | "products"
   | "allProducts"
   | "bySeries"
-  | "byEquipment"
+  | "byService"
+  | "tabProductsCatalog"
+  | "tabPrintingService"
+  | "tabPartsAccessories"
   | "partsAccessories"
   | "allPartsAccessories"
   | "partsSprings"
@@ -64,7 +67,10 @@ const english: Record<UiKey, string> = {
   products: "Products",
   allProducts: "All products",
   bySeries: "Products catalog",
-  byEquipment: "Printing Service",
+  byService: "Printing Service",
+  tabProductsCatalog: "Products catalog",
+  tabPrintingService: "Printing Service",
+  tabPartsAccessories: "Parts & accessories",
   partsAccessories: "Parts & accessories",
   allPartsAccessories: "All parts & accessories",
   partsSprings: "Springs",
@@ -73,7 +79,7 @@ const english: Record<UiKey, string> = {
   partsFootbarsHardware: "Footbars & hardware",
   partsTrainingAccessories: "Boxes & mats",
   partsPageIntro:
-    "Accessories and replacement parts for supported Coral Pilates equipment. Confirm compatibility with our team before ordering.",
+    "Accessories and replacement parts for supported EasyShow equipment. Confirm compatibility with our team before ordering.",
   partsEmptyTitle: "Parts catalog in preparation",
   partsEmptyDescription:
     "We are adding approved accessories and replacement parts. Send the model and SKU you need and our team will confirm availability.",
@@ -92,7 +98,7 @@ const english: Record<UiKey, string> = {
   footerTagline:
     "Professional Display equipment manufacturer. Factory-direct supply and OEM laboratory.",
   catalogIntro:
-    "Factory-direct Display equipment built to spec — browse the full range by series and equipment type.",
+    "Factory-direct Display equipment built to spec — browse the full range by series and service type.",
   filters: "Filters",
   resetAll: "Reset all",
   clearAllFilters: "Clear all active filters",
@@ -126,12 +132,15 @@ const english: Record<UiKey, string> = {
 
 const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
   es: {
-    brand: "Coral Pilates",
+    brand: "EasyShow",
     home: "Inicio",
     products: "Productos",
     allProducts: "Todos los productos",
-    bySeries: "Por serie",
-    byEquipment: "Por equipo",
+    bySeries: "Catálogo de productos",
+    byService: "Por servicio",
+    tabProductsCatalog: "Catálogo de productos",
+    tabPrintingService: "Servicio de impresión",
+    tabPartsAccessories: "Piezas y accesorios",
     partsAccessories: "Piezas y accesorios",
     allPartsAccessories: "Todas las piezas y accesorios",
     partsSprings: "Muelles",
@@ -140,7 +149,7 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     partsFootbarsHardware: "Barras de pies y herrajes",
     partsTrainingAccessories: "Cajas y colchonetas",
     partsPageIntro:
-      "Accesorios y piezas de repuesto para equipos Coral Pilates compatibles. Confirme la compatibilidad con nuestro equipo antes de realizar el pedido.",
+      "Accesorios y piezas de repuesto para equipos EasyShow compatibles. Confirme la compatibilidad con nuestro equipo antes de realizar el pedido.",
     partsEmptyTitle: "Catálogo de piezas en preparación",
     partsEmptyDescription:
       "Estamos añadiendo accesorios y repuestos aprobados. Envíenos el modelo y el SKU que necesita y nuestro equipo confirmará la disponibilidad.",
@@ -157,9 +166,9 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     privacy: "Privacidad",
     terms: "Términos",
     footerTagline:
-      "Fabricante profesional de equipos de Pilates. Suministro directo de fábrica y OEM para estudios, clínicas y hostelería.",
+      "Fabricante profesional de equipos de Display. Suministro directo de fábrica y OEM para estudios, clínicas y hostelería.",
     catalogIntro:
-      "Equipos de Pilates directos de fábrica y fabricados según especificaciones. Explore la gama completa por serie y tipo de equipo.",
+      "Equipos de Display directos de fábrica y fabricados según especificaciones. Explore la gama completa por serie y tipo de servicio.",
     filters: "Filtros",
     resetAll: "Restablecer",
     clearAllFilters: "Borrar todos los filtros activos",
@@ -191,12 +200,15 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     addedProductToRfq: "{product} añadido a la solicitud",
   },
   fr: {
-    brand: "Coral Pilates",
+    brand: "EasyShow",
     home: "Accueil",
     products: "Produits",
     allProducts: "Tous les produits",
-    bySeries: "Par série",
-    byEquipment: "Par équipement",
+    bySeries: "Catalogue produits",
+    byService: "Par service",
+    tabProductsCatalog: "Catalogue produits",
+    tabPrintingService: "Service d'impression",
+    tabPartsAccessories: "Pièces et accessoires",
     partsAccessories: "Pièces et accessoires",
     allPartsAccessories: "Toutes les pièces et accessoires",
     partsSprings: "Ressorts",
@@ -205,7 +217,7 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     partsFootbarsHardware: "Barres de pied et quincaillerie",
     partsTrainingAccessories: "Boîtes et tapis",
     partsPageIntro:
-      "Accessoires et pièces de rechange pour les équipements Coral Pilates compatibles. Confirmez la compatibilité avec notre équipe avant de commander.",
+      "Accessoires et pièces de rechange pour les équipements EasyShow compatibles. Confirmez la compatibilité avec notre équipe avant de commander.",
     partsEmptyTitle: "Catalogue de pièces en préparation",
     partsEmptyDescription:
       "Nous ajoutons des accessoires et pièces de rechange approuvés. Envoyez-nous le modèle et le SKU recherchés afin que notre équipe confirme la disponibilité.",
@@ -222,9 +234,9 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     privacy: "Confidentialité",
     terms: "Conditions",
     footerTagline:
-      "Fabricant professionnel d’équipements de Pilates. Vente directe usine et OEM pour studios, cliniques et hôtellerie.",
+      "Fabricant professionnel d’équipements de Display. Vente directe usine et OEM pour studios, cliniques et hôtellerie.",
     catalogIntro:
-      "Équipements de Pilates fabriqués sur mesure et vendus directement par l’usine — parcourez toute la gamme par série et type d’équipement.",
+      "Équipements de Display fabriqués sur mesure et vendus directement par l’usine — parcourez toute la gamme par série et type de service.",
     filters: "Filtres",
     resetAll: "Réinitialiser",
     clearAllFilters: "Effacer tous les filtres actifs",
@@ -256,12 +268,15 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     addedProductToRfq: "{product} ajouté à la demande",
   },
   de: {
-    brand: "Coral Pilates",
+    brand: "EasyShow",
     home: "Startseite",
     products: "Produkte",
     allProducts: "Alle Produkte",
-    bySeries: "Nach Serie",
-    byEquipment: "Nach Gerät",
+    bySeries: "Produktkatalog",
+    byService: "Nach Dienstleistung",
+    tabProductsCatalog: "Produktkatalog",
+    tabPrintingService: "Druckservice",
+    tabPartsAccessories: "Teile und Zubehör",
     partsAccessories: "Teile und Zubehör",
     allPartsAccessories: "Alle Teile und Zubehör",
     partsSprings: "Federn",
@@ -270,7 +285,7 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     partsFootbarsHardware: "Fußstangen und Beschläge",
     partsTrainingAccessories: "Boxen und Matten",
     partsPageIntro:
-      "Zubehör und Ersatzteile für kompatible Coral Pilates Geräte. Bitte bestätigen Sie die Kompatibilität vor der Bestellung mit unserem Team.",
+      "Zubehör und Ersatzteile für kompatible EasyShow Geräte. Bitte bestätigen Sie die Kompatibilität vor der Bestellung mit unserem Team.",
     partsEmptyTitle: "Teilekatalog in Vorbereitung",
     partsEmptyDescription:
       "Wir ergänzen derzeit freigegebenes Zubehör und Ersatzteile. Senden Sie uns das benötigte Modell und die SKU, damit unser Team die Verfügbarkeit bestätigen kann.",
@@ -287,9 +302,9 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     privacy: "Datenschutz",
     terms: "Bedingungen",
     footerTagline:
-      "Professioneller Hersteller von Pilates-Geräten. Direktlieferung und OEM für Studios, Kliniken und Hotellerie.",
+      "Professioneller Hersteller von Display-Geräten. Direktlieferung und OEM für Studios, Kliniken und Hotellerie.",
     catalogIntro:
-      "Direkt ab Werk und nach Spezifikation gefertigte Pilates-Geräte — entdecken Sie das gesamte Sortiment nach Serie und Gerätetyp.",
+      "Direkt ab Werk und nach Spezifikation gefertigte Display-Geräte — entdecken Sie das gesamte Sortiment nach Serie und Dienstleistung.",
     filters: "Filter",
     resetAll: "Zurücksetzen",
     clearAllFilters: "Alle aktiven Filter löschen",
@@ -321,12 +336,15 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     addedProductToRfq: "{product} zur Anfrage hinzugefügt",
   },
   it: {
-    brand: "Coral Pilates",
+    brand: "EasyShow",
     home: "Home",
     products: "Prodotti",
     allProducts: "Tutti i prodotti",
-    bySeries: "Per serie",
-    byEquipment: "Per attrezzatura",
+    bySeries: "Catalogo prodotti",
+    byService: "Per servizio",
+    tabProductsCatalog: "Catalogo prodotti",
+    tabPrintingService: "Servizio di stampa",
+    tabPartsAccessories: "Ricambi e accessori",
     partsAccessories: "Ricambi e accessori",
     allPartsAccessories: "Tutti i ricambi e accessori",
     partsSprings: "Molle",
@@ -335,7 +353,7 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     partsFootbarsHardware: "Barre poggiapiedi e ferramenta",
     partsTrainingAccessories: "Box e tappetini",
     partsPageIntro:
-      "Accessori e ricambi per attrezzature Coral Pilates compatibili. Conferma la compatibilità con il nostro team prima di ordinare.",
+      "Accessori e ricambi per attrezzature EasyShow compatibili. Conferma la compatibilità con il nostro team prima di ordinare.",
     partsEmptyTitle: "Catalogo ricambi in preparazione",
     partsEmptyDescription:
       "Stiamo aggiungendo accessori e ricambi approvati. Inviaci il modello e lo SKU di cui hai bisogno e il nostro team confermerà la disponibilità.",
@@ -352,9 +370,9 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     privacy: "Privacy",
     terms: "Termini",
     footerTagline:
-      "Produttore professionale di attrezzature Pilates. Fornitura diretta e OEM per studi, cliniche e hospitality.",
+      "Produttore professionale di attrezzature Display. Fornitura diretta e OEM per studi, cliniche e hospitality.",
     catalogIntro:
-      "Attrezzature Pilates prodotte su specifica e fornite direttamente dalla fabbrica — esplora l’intera gamma per serie e tipo.",
+      "Attrezzature Display prodotte su specifica e fornite direttamente dalla fabbrica — esplora l’intera gamma per serie e tipo di servizio.",
     filters: "Filtri",
     resetAll: "Reimposta",
     clearAllFilters: "Cancella tutti i filtri attivi",

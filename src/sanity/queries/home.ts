@@ -43,6 +43,10 @@ export const homeQuery = defineQuery(`
 /**
  * Series for the home catalog carousel.
  *
+ * After the three-tab refactor only product series are eligible for the
+ * home strip; `kind == "service"` series live in the Printing tab and
+ * `kind == "part"` series live in the Parts tab.
+ *
  * Only series with at least one public product are useful navigation targets.
  * The count is derived from products so an operator never has to maintain a
  * second, stale number on the Series document.
@@ -51,6 +55,7 @@ export const homeSeriesQuery = defineQuery(`
   *[
     _type == "series" &&
     coalesce(language, "en") == $language &&
+    coalesce(kind, "product") == "product" &&
     count(*[
       _type == "product" &&
       coalesce(language, "en") == $language &&
@@ -61,6 +66,7 @@ export const homeSeriesQuery = defineQuery(`
     _id,
     title,
     "slug": slug.current,
+    kind,
     description,
     "image": coalesce(
       image,

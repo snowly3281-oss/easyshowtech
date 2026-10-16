@@ -1,4 +1,4 @@
-import { Buffer } from 'node:buffer'
+﻿import { Buffer } from 'node:buffer'
 import { env } from 'cloudflare:workers'
 import { sanityClient } from '../../sanity/client'
 import { solutionPackageForRequestQuery } from '../../sanity/queries/solutions'
@@ -559,7 +559,7 @@ export function buildCustomerEmail(
       '',
       'Reply to this email if you want us to adjust the package to your room dimensions, budget, or class format.',
       '',
-      'Coral Pilates',
+      'EasyShow',
     ].join('\n')
   }
 
@@ -576,8 +576,8 @@ export function buildCustomerEmail(
     `We received your ${kind}.`,
     `Reference: ${record.id}`,
     '',
-    'A Coral Pilates specialist will review it and reply within one business day.',
+    'A EasyShow specialist will review it and reply within one business day.',
     '',
-    'Coral Pilates',
+    'EasyShow',
   ].join('\n')
 }

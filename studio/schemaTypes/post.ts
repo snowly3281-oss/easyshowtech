@@ -1,4 +1,4 @@
-import {defineArrayMember, defineField, defineType} from "sanity";
+﻿import {defineArrayMember, defineField, defineType} from "sanity";
 import {DocumentTextIcon} from "@sanity/icons";
 import {mediaField} from "sanity-plugin-media";
 import {AUDIENCE_OPTIONS} from "./lib/audience";
@@ -19,7 +19,7 @@ export const post = defineType({
   options: {
     canvasApp: {
       purpose:
-        "用于 Coral Pilates 英文资源文章。Canvas 负责标题、摘要和正文的长文撰写；发布设置、分类、关联内容、SEO 与翻译流程在 Studio 中完成。",
+        "用于 EasyShow 英文资源文章。Canvas 负责标题、摘要和正文的长文撰写；发布设置、分类、关联内容、SEO 与翻译流程在 Studio 中完成。",
     },
   },
   groups: [

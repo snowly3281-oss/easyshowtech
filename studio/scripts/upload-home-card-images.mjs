@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Migrate the local HowWeWork card placeholder photos (public/factory/*.webp)
  * into Sanity so the CMS becomes the source of truth for the home page
  * "Off-the-Shelf Stock & Custom Private-Label" cards.
@@ -37,12 +37,12 @@ const CARDS = [
   {
     key: 'c1',
     file: 'factory/home-realfactory-01.webp',
-    alt: 'Ready-to-ship Pilates equipment stacked in the Coral factory warehouse',
+    alt: 'Ready-to-ship Display equipment stacked in the Coral factory warehouse',
   },
   {
     key: 'c2',
     file: 'factory/home-realfactory-02.webp',
-    alt: 'Custom Pilates apparatus on the Coral factory production line',
+    alt: 'Custom Display apparatus on the Coral factory production line',
   },
 ]
 

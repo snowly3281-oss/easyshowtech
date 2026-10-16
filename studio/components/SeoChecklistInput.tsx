@@ -1,4 +1,4 @@
-import {useMemo} from "react";
+﻿import {useMemo} from "react";
 import {Badge, Card, Flex, Heading, Stack, Text} from "@sanity/ui";
 import {useFormValue, type ObjectInputProps} from "sanity";
 
@@ -96,7 +96,7 @@ export function SeoChecklistInput(props: ObjectInputProps<SeoValue>) {
         label: "焦点关键词",
         points: 15,
         passed: keyword.length > 0,
-        guidance: "填写一个真实的买家搜索词，例如 “pilates reformer for studio”。",
+        guidance: "填写一个真实的买家搜索词，例如 “display reformer for studio”。",
       },
       {
         label: "关键词出现在标题与摘要",

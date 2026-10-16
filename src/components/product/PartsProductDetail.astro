@@ -1,4 +1,4 @@
----
+﻿---
 import type {ProductData} from '../../sanity/content'
 import {urlFor} from '../../sanity/image'
 import {localizedPath, type Locale} from '../../i18n/config'
@@ -11,7 +11,7 @@ interface Props {
 
 const {product, locale = 'en'} = Astro.props
 const t = (english: string) => staticUi(locale, english)
-const productTitle = product.title ?? t('Coral Pilates part')
+const productTitle = product.title ?? t('EasyShow part')
 
 const categoryLabels: Record<string, string> = {
   springs: t('Springs'),

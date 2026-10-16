@@ -1,6 +1,6 @@
-# Coral Pilates — Sanity Studio
+﻿# EasyShow — Sanity Studio
 
-Standalone Sanity Studio for the Coral Pilates content (Products + taxonomies +
+Standalone Sanity Studio for the EasyShow content (Products + taxonomies +
 site settings). This is **separate** from the Astro site in the repo root — it
 deploys to its own `*.sanity.studio` URL and the Astro app stays a pure static
 site.

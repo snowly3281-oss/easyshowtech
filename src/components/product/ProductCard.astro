@@ -24,9 +24,11 @@ const addedLabel = uiFormat(locale, 'addedProductToRfq', {
 <li
   class="card"
   data-series={product.seriesSlug ?? ''}
+  data-service={(product.serviceSlugs ?? product.equipmentSlugs ?? []).filter(Boolean).join(',')}
   data-equipment={(product.equipmentSlugs ?? []).filter(Boolean).join(',')}
   data-catalog-type={product.catalogType ?? 'equipment'}
-  data-parts-category={product.partsCategory ?? ''}
+  data-printing-service={product.printingService ? 'true' : 'false'}
+  data-parts-category={product.partsCategoryKey ?? product.partsCategory ?? ''}
   data-price-min={price?.min ?? ''}
   data-price-max={price?.max ?? ''}
   data-name={(product.title ?? '').toLowerCase()}

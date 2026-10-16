@@ -12,7 +12,7 @@
 import {
   siteSettings,
   productsSeries,
-  productsEquipment,
+  productsPrintingServices,
   productsParts,
   solutionsByCustomer,
   companyLinks,
@@ -76,8 +76,8 @@ const productPartLabel = (label: string) =>
             {productsSeries.map((l) => <a href={localizeHref(l.href)} class="mega-link">{t(l.label)}</a>)}
           </div>
           <div class="mega-col">
-            <p class="mega-head">{ui(locale, "byEquipment")}</p>
-            {productsEquipment.map((l) => <a href={localizeHref(l.href)} class="mega-link">{t(l.label)}</a>)}
+            <p class="mega-head">{ui(locale, "byService")}</p>
+            {productsPrintingServices.map((l) => <a href={localizeHref(l.href)} class="mega-link">{t(l.label)}</a>)}
           </div>
           <div class="mega-col">
             <p class="mega-head">{ui(locale, "partsAccessories")}</p>
@@ -167,8 +167,8 @@ const productPartLabel = (label: string) =>
         <a href={localizeHref("/products")} class="m-link">{ui(locale, "allProducts")}</a>
         <p class="m-sub">{ui(locale, "bySeries")}</p>
         {productsSeries.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
-        <p class="m-sub">{ui(locale, "byEquipment")}</p>
-        {productsEquipment.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
+        <p class="m-sub">{ui(locale, "byService")}</p>
+        {productsPrintingServices.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
         <p class="m-sub">{ui(locale, "partsAccessories")}</p>
         {productsParts.map((l) => <a href={localizeHref(l.href)} class="m-link">{productPartLabel(l.label)}</a>)}
       </details>

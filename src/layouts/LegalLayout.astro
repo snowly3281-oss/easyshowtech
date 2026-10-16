@@ -1,4 +1,4 @@
----
+﻿---
 /**
  * LegalLayout.astro — shared shell for the legal / policy pages
  * (privacy, terms, warranty, returns, shipping).
@@ -45,7 +45,7 @@ const page = await getSitePage(pageKey, locale);
 const title = page?.title || t(fallbackTitle);
 const hasCmsBody = Array.isArray(page?.legalBody) && page.legalBody.length > 0;
 const hasFallbackBody = Astro.slots.has("fallback");
-const metaTitle = page?.seo?.metaTitle || `${title} — Coral Pilates`;
+const metaTitle = page?.seo?.metaTitle || `${title} — EasyShow`;
 const metaDescription =
   page?.seo?.metaDescription ||
   page?.introduction ||

@@ -1,9 +1,9 @@
-{
+﻿{
   "catalog": [
     "Privacy Policy",
-    "How Coral Pilates collects, uses, stores and shares information submitted through its B2B equipment inquiry website.",
+    "How EasyShow collects, uses, stores and shares information submitted through its B2B equipment inquiry website.",
     "Terms of Service",
-    "Terms governing use of the Coral Pilates B2B equipment website, quotation requests, uploaded materials and product information.",
+    "Terms governing use of the EasyShow B2B equipment website, quotation requests, uploaded materials and product information.",
     "Warranty",
     "Warranty coverage",
     "What is not covered",
@@ -21,14 +21,14 @@
     "Damaged or lost shipments"
   ],
   "privacy": {
-    "intro": "This Privacy Policy explains how Coral Pilates (“Coral Pilates”, “we”, “us” or “our”) handles personal information when you visit coralpilates.com, request a quotation, upload a floor plan, build an RFQ list, contact us, or otherwise use our website and related inquiry services.",
+    "intro": "This Privacy Policy explains how EasyShow (“EasyShow”, “we”, “us” or “our”) handles personal information when you visit easyshowtech.com, request a quotation, upload a floor plan, build an RFQ list, contact us, or otherwise use our website and related inquiry services.",
     "sections": [
       {
         "heading": "1. Scope of this policy",
         "blocks": [
           {
             "type": "paragraph",
-            "content": "This website is primarily designed for business inquiries from Pilates studios, clinics, distributors, hospitality operators, trainers and other professional buyers. This policy applies to information handled through the website. A separate contract, quotation or service-specific notice may apply to an order or another business relationship."
+            "content": "This website is primarily designed for business inquiries from Display studios, clinics, distributors, hospitality operators, trainers and other professional buyers. This policy applies to information handled through the website. A separate contract, quotation or service-specific notice may apply to an order or another business relationship."
           }
         ]
       },
@@ -138,7 +138,7 @@
           },
           {
             "type": "paragraph",
-            "content": "To make a request, email <a href=\"mailto:chris@coralpilates.com\">chris@coralpilates.com</a>. We may need to verify your identity and may retain information where permitted or required by law. You may also have the right to complain to the data-protection authority in your jurisdiction."
+            "content": "To make a request, email <a href=\"mailto:chris@easyshowtech.com\">chris@easyshowtech.com</a>. We may need to verify your identity and may retain information where permitted or required by law. You may also have the right to complain to the data-protection authority in your jurisdiction."
           }
         ]
       },
@@ -183,21 +183,21 @@
         "blocks": [
           {
             "type": "paragraph",
-            "content": "For privacy questions or requests, contact Coral Pilates at <a href=\"mailto:chris@coralpilates.com\">chris@coralpilates.com</a>, Suzhou, China."
+            "content": "For privacy questions or requests, contact EasyShow at <a href=\"mailto:chris@easyshowtech.com\">chris@easyshowtech.com</a>, Suzhou, China."
           }
         ]
       }
     ]
   },
   "terms": {
-    "intro": "These Terms of Service (“Terms”) govern your use of coralpilates.com and its inquiry, quotation, configuration, upload and RFQ features. By using the website, you agree to these Terms. If you use the website on behalf of a business or organisation, you confirm that you are authorised to do so.",
+    "intro": "These Terms of Service (“Terms”) govern your use of easyshowtech.com and its inquiry, quotation, configuration, upload and RFQ features. By using the website, you agree to these Terms. If you use the website on behalf of a business or organisation, you confirm that you are authorised to do so.",
     "sections": [
       {
         "heading": "1. Website purpose and business audience",
         "blocks": [
           {
             "type": "paragraph",
-            "content": "Coral Pilates provides information about Pilates equipment, manufacturing, OEM services and studio solutions. The website is primarily intended for studios, clinics, distributors, hospitality operators, trainers and other professional or business buyers."
+            "content": "EasyShow provides information about Display equipment, manufacturing, OEM services and studio solutions. The website is primarily intended for studios, clinics, distributors, hospitality operators, trainers and other professional or business buyers."
           },
           {
             "type": "paragraph",
@@ -281,7 +281,7 @@
         "blocks": [
           {
             "type": "paragraph",
-            "content": "The website, brand assets, product content, layouts, text, graphics and software are owned by or licensed to Coral Pilates and are protected by applicable intellectual-property laws. You may view and print reasonable portions for internal evaluation of a potential business purchase. No other licence is granted unless agreed in writing."
+            "content": "The website, brand assets, product content, layouts, text, graphics and software are owned by or licensed to EasyShow and are protected by applicable intellectual-property laws. You may view and print reasonable portions for internal evaluation of a potential business purchase. No other licence is granted unless agreed in writing."
           },
           {
             "type": "paragraph",
@@ -325,7 +325,7 @@
         "blocks": [
           {
             "type": "paragraph",
-            "content": "To the maximum extent permitted by applicable law, Coral Pilates will not be liable for indirect, incidental, special, consequential or punitive loss arising only from use of, or inability to use, the website or reliance on preliminary website content. Transaction-related liability will be governed by the applicable written quotation, confirmation or agreement."
+            "content": "To the maximum extent permitted by applicable law, EasyShow will not be liable for indirect, incidental, special, consequential or punitive loss arising only from use of, or inability to use, the website or reliance on preliminary website content. Transaction-related liability will be governed by the applicable written quotation, confirmation or agreement."
           },
           {
             "type": "paragraph",
@@ -365,7 +365,7 @@
         "blocks": [
           {
             "type": "paragraph",
-            "content": "Questions about these Terms may be sent to Coral Pilates at <a href=\"mailto:chris@coralpilates.com\">chris@coralpilates.com</a>, Suzhou, China."
+            "content": "Questions about these Terms may be sent to EasyShow at <a href=\"mailto:chris@easyshowtech.com\">chris@easyshowtech.com</a>, Suzhou, China."
           }
         ]
       }
