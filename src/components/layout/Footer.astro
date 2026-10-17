@@ -112,6 +112,9 @@ const brand = siteSettings.brand;
       </p>
       <nav class="legal-links" aria-label={t("Legal")}>
         {legalLinks.map((l) => <a href={localizeHref(l.href)} class="legal-link">{l.href === "/privacy" ? ui(locale, "privacy") : ui(locale, "terms")}</a>)}
+        <button type="button" class="legal-link legal-link--button" data-open-cookie-settings>
+          {t("Cookie Settings")}
+        </button>
       </nav>
       <LanguageSwitcher locale={locale} />
     </div>
@@ -264,6 +267,14 @@ const brand = siteSettings.brand;
   }
   .legal-link:hover {
     color: var(--color-white);
+  }
+  .legal-link--button {
+    appearance: none;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
   }
 
   /* Tablet: brand stacks above columns, columns go 2-up */

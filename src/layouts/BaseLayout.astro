@@ -30,6 +30,7 @@ import Header from "../components/layout/Header.astro";
 import Footer from "../components/layout/Footer.astro";
 import RfqWidget from "../components/rfq/RfqWidget.astro";
 import SanityVisualEditing from "../components/SanityVisualEditing";
+import CookieBanner from "../components/legal/CookieBanner.astro";
 import { getSiteSettings } from "../sanity/settings";
 import {
   PUBLIC_SITE_INDEXING_ENABLED,
@@ -149,19 +150,30 @@ const alternateLinks = SUPPORTED_LOCALES.map((locale) => ({
       content={ogImage ? "summary_large_image" : "summary"}
     />
 
-    <!-- Google tag (gtag.js) — site-wide analytics. The snippet is inlined so
-         the page transitions router keeps it across navigations and so it
-         works in environments where module scripts are deferred. -->
+    <!-- Google Consent Mode v2 (default = denied). The cookie banner below
+         calls gtag('consent', 'update', {...}) once the visitor accepts or
+         rejects. Snippets are inlined so Astro's view transitions router
+         keeps them across navigations and so they work when module scripts
+         are deferred. -->
+    <script is:inline>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("consent", "default", {
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+        analytics_storage: "denied",
+        wait_for_update: 500,
+      });
+    </script>
     <script
       is:inline
       async
       src="https://www.googletagmanager.com/gtag/js?id=G-T70YN4EL08"
     ></script>
     <script is:inline>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
       gtag("js", new Date());
       gtag("config", "G-T70YN4EL08");
     </script>
@@ -179,6 +191,7 @@ const alternateLinks = SUPPORTED_LOCALES.map((locale) => ({
 
     <Footer locale={documentLocale} />
     <RfqWidget whatsapp={globalSettings.whatsapp} locale={documentLocale} />
+    <CookieBanner locale={documentLocale} />
     {import.meta.env.DEV && <SanityVisualEditing client:only="react" />}
     <script is:inline>
       const coralLocales = new Set(["en", "es", "fr", "de", "it"]);
