@@ -1,4 +1,4 @@
-// @ts-check
+﻿// @ts-check
 import { defineConfig, envField } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 import react from '@astrojs/react';
@@ -10,8 +10,8 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   // Production origin — makes <link rel="canonical"> / og:url absolute
   // (BaseLayout uses Astro.site). Filtered catalog URLs canonicalize to
-  // https://coralpilates.com/products.
-  site: 'https://coralpilates.com',
+  // https://coraldisplay.com/products.
+  site: 'https://coraldisplay.com',
 
   // English remains at the root; the four approved additional languages use
   // path prefixes. Missing translated routes temporarily rewrite to English,

@@ -24,7 +24,7 @@ const locale = resolveLocale(
   Astro.originPathname || Astro.url.pathname,
 );
 const t = (english: string) => staticUi(locale, english);
-const [siteSettings, page] = await Promise.all([
+const [settings, page] = await Promise.all([
   getSiteSettings(),
   getSitePage("contact", locale),
 ]);
@@ -38,6 +38,8 @@ const pageIntro =
 const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
 const metaTitle = page?.seo?.metaTitle || t("Contact — {brand}").replace("{brand}", siteSettings.brand);
 const metaDescription = page?.seo?.metaDescription || pageIntro;
+const salesEmail = settings?.salesEmail ?? siteSettings.salesEmail;
+const phone = settings?.phone ?? siteSettings.phone;
 ---
 
 <BaseLayout
@@ -280,12 +282,12 @@ const metaDescription = page?.seo?.metaDescription || pageIntro;
             <p class="lead-name">Chris Qian</p>
             <p class="caption">{t("Your contact at {brand}").replace("{brand}", siteSettings.brand)}</p>
             <hr class="rule" />
-            <a class="line line-coral" href={`mailto:${siteSettings.salesEmail}`}>
-              <Icon name="mail" size={18} /><span>{siteSettings.salesEmail}</span>
+            <a class="line line-coral" href={`mailto:${salesEmail}`}>
+              <Icon name="mail" size={18} /><span>{salesEmail}</span>
             </a>
             <div class="line">
               <Icon name="chat" size={18} />
-              <span><span class="nums">{siteSettings.phone}</span><span class="sub">WhatsApp</span></span>
+              <span><span class="nums">{phone}</span><span class="sub">WhatsApp</span></span>
             </div>
           </div>
 

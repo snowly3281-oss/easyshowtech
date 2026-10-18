@@ -21,7 +21,6 @@ export type UiKey =
   | "partsEmptyDescription"
   | "askPartsQuote"
   | "solutions"
-  | "byCustomer"
   | "company"
   | "resources"
   | "contact"
@@ -60,7 +59,8 @@ export type UiKey =
   | "viewDetails"
   | "addToRfq"
   | "addProductToRfq"
-  | "addedProductToRfq";
+  | "addedProductToRfq"
+  | "brand";
 
 const english: Record<UiKey, string> = {
   home: "Home",
@@ -85,7 +85,6 @@ const english: Record<UiKey, string> = {
     "We are adding approved accessories and replacement parts. Send the model and SKU you need and our team will confirm availability.",
   askPartsQuote: "Ask about a part",
   solutions: "Solutions",
-  byCustomer: "By customer",
   company: "Company",
   resources: "Resources",
   contact: "Contact",
@@ -128,6 +127,7 @@ const english: Record<UiKey, string> = {
   addToRfq: "Add to RFQ",
   addProductToRfq: "Add {product} to RFQ",
   addedProductToRfq: "{product} added to RFQ",
+  brand: "EasyShow",
 };
 
 const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
@@ -155,7 +155,6 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
       "Estamos añadiendo accesorios y repuestos aprobados. Envíenos el modelo y el SKU que necesita y nuestro equipo confirmará la disponibilidad.",
     askPartsQuote: "Consultar una pieza",
     solutions: "Soluciones",
-    byCustomer: "Por tipo de cliente",
     company: "Empresa",
     resources: "Recursos",
     contact: "Contacto",
@@ -223,7 +222,6 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
       "Nous ajoutons des accessoires et pièces de rechange approuvés. Envoyez-nous le modèle et le SKU recherchés afin que notre équipe confirme la disponibilité.",
     askPartsQuote: "Demander une pièce",
     solutions: "Solutions",
-    byCustomer: "Par type de client",
     company: "Entreprise",
     resources: "Ressources",
     contact: "Contact",
@@ -291,7 +289,6 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
       "Wir ergänzen derzeit freigegebenes Zubehör und Ersatzteile. Senden Sie uns das benötigte Modell und die SKU, damit unser Team die Verfügbarkeit bestätigen kann.",
     askPartsQuote: "Teil anfragen",
     solutions: "Lösungen",
-    byCustomer: "Nach Kundentyp",
     company: "Unternehmen",
     resources: "Ratgeber",
     contact: "Kontakt",
@@ -359,7 +356,6 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
       "Stiamo aggiungendo accessori e ricambi approvati. Inviaci il modello e lo SKU di cui hai bisogno e il nostro team confermerà la disponibilità.",
     askPartsQuote: "Richiedi un ricambio",
     solutions: "Soluzioni",
-    byCustomer: "Per tipo di cliente",
     company: "Azienda",
     resources: "Risorse",
     contact: "Contatti",

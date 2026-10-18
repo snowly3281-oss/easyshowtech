@@ -32,10 +32,13 @@ import RfqWidget from "../components/rfq/RfqWidget.astro";
 import SanityVisualEditing from "../components/SanityVisualEditing";
 import CookieBanner from "../components/legal/CookieBanner.astro";
 import { getSiteSettings } from "../sanity/settings";
+import { homeServicesQuery } from "../sanity/queries/home";
+import type { HomeServicesQueryResult } from "../sanity/sanity.types";
 import {
   PUBLIC_SITE_INDEXING_ENABLED,
 } from "astro:env/client";
 import {
+  fetchLocalizedList,
   localizedPath,
   resolveLocale,
   SUPPORTED_LOCALES,
@@ -89,6 +92,14 @@ const canonical = Astro.url?.pathname
   : undefined;
 const globalSettings = await getSiteSettings();
 const shouldNoIndex = noIndex || !PUBLIC_SITE_INDEXING_ENABLED;
+// Pull the Printing Service taxonomy once per request. Both the Header mega
+// menu ("By Service") and the home carousel consume the same list.
+const printingServices = await fetchLocalizedList<HomeServicesQueryResult[number]>(
+  homeServicesQuery,
+  {},
+  documentLocale,
+  (item) => item.slug,
+);
 const alternateLinks = SUPPORTED_LOCALES.map((locale) => ({
   locale,
   href: new URL(
@@ -183,7 +194,7 @@ const alternateLinks = SUPPORTED_LOCALES.map((locale) => ({
     <div id="route-progress" aria-hidden="true" transition:persist>
       <span id="route-progress__bar"></span>
     </div>
-    <Header locale={documentLocale} />
+    <Header locale={documentLocale} printingServices={printingServices} />
 
     <main>
       <slot />

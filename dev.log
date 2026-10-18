@@ -1,13 +1,17 @@
-[2m13:53:23[22m [34m[@astrojs/cloudflare][39m Enabling image processing with Cloudflare Images for production with the "IMAGES" Images binding.
-[2m13:53:23[22m [34m[@astrojs/cloudflare][39m Enabling sessions with Cloudflare KV with the "SESSION" KV binding.
-Using secrets defined in .env
-[2m13:53:24[22m [34m[vite][39m connected.
-[2m13:53:26[22m [34m[types][39m Generated [2m3ms[22m
-[42m[1m astro [22m[49m [32mv7.3.2[39m [2mready in[22m 2674 [2mms[22m
-[2m┃[22m Local    [36mhttp://localhost:4321/[39m
-[2m┃[22m Network  [2muse --host to expose[22m
-[2m13:53:26[22m [32mwatching for file changes...[39m
-[2m13:53:33[22m [34m[vite][39m 13:53:33 [200] / 1316ms
-[2m14:00:50[22m [34m[vite][39m 14:00:50 [200] / 129ms
-[2m20:53:09[22m [34m[watch][39m studio/.sanity/runtime/index.html
-[2m20:53:09[22m [34m[vite][39m [vite] program reload
+
+> easyshowtech@0.0.1 predev
+> npm run lock:check && node scripts/prepare-dev.mjs
+
+
+> easyshowtech@0.0.1 lock:check
+> npx --yes npm@10.9.2 ci --dry-run --ignore-scripts --no-audit --no-fund --silent
+
+Cleared the Vite dependency cache.
+
+> easyshowtech@0.0.1 dev
+> astro dev --background --force
+
+Dev server running at http://localhost:4321 (pid 34804)
+  Stop:   astro dev stop
+  Status: astro dev status
+  Logs:   astro dev logs

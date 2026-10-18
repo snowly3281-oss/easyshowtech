@@ -101,7 +101,7 @@ list = list.map((product) => ({
       product.serviceTitles?.[index] ??
       slug,
   ),
-  partsCategoryLabel: product.partsCategoryKey
+  partsCategoryLabel: typeof product.partsCategoryKey === 'string'
     ? partsCategoryLabel(product.partsCategoryKey)
     : product.partsCategoryKey,
 }))
@@ -115,8 +115,8 @@ const hasPublishedParts = list.some(
 )
 const partsCategoryDefinitions = partsCategories
   .map((entry) => ({
-    key: entry.categoryKey,
-    label: partsCategoryFallback.get(entry.categoryKey) ?? entry.title,
+    key: entry.categoryKey ?? '',
+    label: partsCategoryFallback.get(entry.categoryKey ?? '') ?? entry.title ?? '',
   }))
   .filter((category) =>
     list.some(

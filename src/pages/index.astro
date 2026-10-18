@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro'
 import HomeHero from '../components/home/HomeHero.astro'
 import HowWeWork from '../components/home/HowWeWork.astro'
 import CatalogStrip from '../components/home/CatalogStrip.astro'
+import PrintingService from '../components/home/PrintingService.astro'
 import UseCases from '../components/home/UseCases.astro'
 import OemBanner from '../components/home/OemBanner.astro'
 import FactorySection from '../components/home/FactorySection.astro'
@@ -14,6 +15,7 @@ import {
   homeQuery,
   homeSeriesQuery,
   homeCatalogStatsQuery,
+  homeServicesQuery,
   homeSolutionsQuery,
   homePostsQuery,
 } from '../sanity/queries/home'
@@ -21,6 +23,7 @@ import type {
   HomeQueryResult,
   HomeSeriesQueryResult,
   HomeCatalogStatsQueryResult,
+  HomeServicesQueryResult,
   HomeSolutionsQueryResult,
   HomePostsQueryResult,
 } from '../sanity/sanity.types'
@@ -35,7 +38,7 @@ const locale = resolveLocale(
   Astro.props.locale,
   Astro.originPathname || Astro.url.pathname,
 )
-const [home, series, catalogStats, solutions, posts] = await Promise.all([
+const [home, series, catalogStats, services, solutions, posts] = await Promise.all([
   fetchLocalized<HomeQueryResult>(homeQuery, {}, locale),
   fetchLocalizedList<HomeSeriesQueryResult[number]>(
     homeSeriesQuery,
@@ -44,6 +47,12 @@ const [home, series, catalogStats, solutions, posts] = await Promise.all([
     (item) => item.slug,
   ),
   sanityClient.fetch<HomeCatalogStatsQueryResult>(homeCatalogStatsQuery),
+  fetchLocalizedList<HomeServicesQueryResult[number]>(
+    homeServicesQuery,
+    {},
+    locale,
+    (item) => item.slug,
+  ),
   fetchLocalizedList<HomeSolutionsQueryResult[number]>(
     homeSolutionsQuery,
     {},
@@ -74,6 +83,7 @@ const heroPoster = heroImageAsset
   <HomeHero hero={home?.hero} poster={heroPoster} catalogStats={catalogStats} />
   <HowWeWork data={home?.howWeWork} />
   <CatalogStrip intro={home?.catalog} series={series ?? []} />
+  <PrintingService services={services ?? []} />
   <UseCases intro={home?.useCases} solutions={solutions ?? []} />
   <OemBanner data={home?.oemBanner} />
   <FactorySection data={home?.factory} />

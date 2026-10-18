@@ -1,5 +1,6 @@
 import { defineType, defineField, defineArrayMember } from "sanity";
 import { BulbOutlineIcon } from "@sanity/icons";
+import { mediaField } from "sanity-plugin-media";
 import { AUDIENCE_OPTIONS } from "./lib/audience";
 
 /**
@@ -56,6 +57,24 @@ export const solution = defineType({
         "决定网址 /solutions/[slug]。发布后不要随意修改，否则旧链接会失效。",
       options: { source: "title", maxLength: 96 },
       validation: (rule) => rule.required(),
+    }),
+    mediaField({
+      name: "coverImage",
+      title: "首页卡片图 / 列表图",
+      group: "content",
+      type: "image",
+      mediaTags: ["role-hero"],
+      description:
+        "在首页「解决方案」卡片、解决方案列表页等位置使用。比例建议 16:9。建议：每张图清晰展示一个真实场景，避免出现拼接的 collage 风格。",
+      options: { hotspot: true },
+      fields: [
+        defineField({
+          name: "alt",
+          title: "替代文字 Alt",
+          type: "string",
+          description: "用一句话描述图中的场景，方便无障碍读屏和搜索引擎。",
+        }),
+      ],
     }),
     defineField({
       name: "audience",
@@ -166,19 +185,26 @@ export const solution = defineType({
     }),
   ],
   preview: {
-    select: { title: "title", audience: "audience" },
+    select: {
+      title: "title",
+      audience: "audience",
+      media: "coverImage",
+    },
     prepare: ({
       title,
       audience,
+      media,
     }: {
       title?: string;
       audience?: string[];
+      media?: unknown;
     }) => ({
       title: title || "未命名解决方案",
       subtitle:
         Array.isArray(audience) && audience.length
           ? audience.join(" · ")
           : "尚未设置目标客户",
+      media,
     }),
   },
 });

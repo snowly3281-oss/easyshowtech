@@ -1,5 +1,6 @@
 ---
 import type { HomeData, HomeSolution } from '../../sanity/content'
+import { urlFor } from '../../sanity/image'
 import {localizedPath, resolveLocale} from '../../i18n/config'
 import {staticUi} from '../../i18n/static'
 
@@ -16,6 +17,16 @@ const items = solutions ?? []
 const eyebrow = intro?.eyebrow ?? t('Who we work with')
 const heading = intro?.heading ?? t('Solutions for {count} Core Client Scenarios').replace('{count}', String(items.length))
 const pad2 = (n: number) => String(n + 1).padStart(2, '0')
+// Resolve a card-sized cover URL from a solution's first heroBlock image.
+// Falls back to a neutral placeholder so the card still has a frame before
+// the operator uploads a photo for that solution.
+const coverUrl = (s: HomeSolution): string | null => {
+  const asset = s.coverImage?.asset
+  if (!asset) return null
+  return urlFor(asset).width(1200).height(675).fit('crop').auto('format').url()
+}
+const coverAlt = (s: HomeSolution): string =>
+  s.coverImage?.alt ?? s.title ?? 'Solution image'
 ---
 
 {
@@ -47,7 +58,22 @@ const pad2 = (n: number) => String(n + 1).padStart(2, '0')
           <div class="sx__panel">
             {items.map((s, i) => (
               <article class={`sx__item${i === 0 ? ' is-active' : ''}`} data-sx-item={i}>
-                <div class="sx__photo" />
+                {(() => {
+                  const url = coverUrl(s)
+                  return url ? (
+                    <img
+                      class="sx__photo"
+                      src={url}
+                      alt={coverAlt(s)}
+                      width="1200"
+                      height="675"
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                      fetchpriority={i === 0 ? 'high' : 'auto'}
+                    />
+                  ) : (
+                    <div class="sx__photo sx__photo--empty" aria-hidden="true" />
+                  )
+                })()}
                 <div class="sx__body">
                   <span class="eyebrow">{pad2(i)}</span>
                   <h3 class="sx__h3">{s.title}</h3>
@@ -201,6 +227,17 @@ const pad2 = (n: number) => String(n + 1).padStart(2, '0')
   .sx__photo {
     aspect-ratio: 16 / 9;
     background: var(--color-paper-2, #ece7dd);
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+  }
+  .sx__photo--empty {
+    background: linear-gradient(
+      135deg,
+      var(--color-paper-2, #ece7dd) 0%,
+      var(--color-paper-3, #d8d2c4) 100%
+    );
   }
   .sx__body {
     padding: var(--space-6);

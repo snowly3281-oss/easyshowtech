@@ -1,0 +1,17 @@
+
+> easyshowtech@0.0.1 predev
+> npm run lock:check && node scripts/prepare-dev.mjs
+
+
+> easyshowtech@0.0.1 lock:check
+> npx --yes npm@10.9.2 ci --dry-run --ignore-scripts --no-audit --no-fund --silent
+
+Cleared the Vite dependency cache.
+
+> easyshowtech@0.0.1 dev
+> astro dev --background --force
+
+Dev server running at http://localhost:4321 (pid 40248)
+  Stop:   astro dev stop
+  Status: astro dev status
+  Logs:   astro dev logs

@@ -9,7 +9,7 @@ interface Props {
 }
 
 const {platform = ''} = Astro.props
-const name = platform.trim().toLowerCase()
+const name = (platform ?? '').trim().toLowerCase()
 ---
 
 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">

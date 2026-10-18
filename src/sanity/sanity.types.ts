@@ -988,6 +988,14 @@ export type Solution = {
   translatedAt?: string;
   title?: string;
   slug?: Slug;
+  coverImage?: {
+    asset?: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "image";
+  };
   audience?: Array<string>;
   summary?: string;
   pageBuilder?: Array<
@@ -1229,7 +1237,17 @@ export type Service = {
   title?: string;
   slug?: Slug;
   description?: string;
+  coverImage?: {
+    asset?: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "image";
+  };
   order?: number;
+  displayInHomeCarousel?: boolean;
+  homeOrder?: number;
 };
 
 export type Equipment = {
@@ -1897,14 +1915,35 @@ export type HomeCatalogStatsQueryResult = {
 };
 
 // Source: ../src/sanity/queries/home.ts
+// Variable: homeServicesQuery
+// Query: *[    _type == "service" &&    coalesce(language, "en") == $language  ] | order(order asc, title asc){    _id,    title,    "slug": slug.current,    description,    order,    homeOrder,    displayInHomeCarousel,    "coverImage": coverImage{ asset, alt }  }
+export type HomeServicesQueryResult = Array<{
+  _id: string;
+  title: string | null;
+  slug: string | null;
+  description: string | null;
+  order: number | null;
+  homeOrder: number | null;
+  displayInHomeCarousel: boolean | null;
+  coverImage: {
+    asset: SanityImageAssetReference | null;
+    alt: string | null;
+  } | null;
+}>;
+
+// Source: ../src/sanity/queries/home.ts
 // Variable: homeSolutionsQuery
-// Query: *[    _type == "solution" &&    coalesce(language, "en") == $language &&    defined(slug.current)  ] | order(_createdAt asc){    _id, title, "slug": slug.current, summary, audience  }
+// Query: *[    _type == "solution" &&    coalesce(language, "en") == $language &&    defined(slug.current)  ] | order(_createdAt asc){    _id,    title,    "slug": slug.current,    summary,    audience,    "coverImage": coalesce(      coverImage{ asset, alt },      pageBuilder[_type == "heroBlock"][0].backgroundImage{ asset, alt }    )  }
 export type HomeSolutionsQueryResult = Array<{
   _id: string;
   title: string | null;
   slug: string | null;
   summary: string | null;
   audience: Array<string> | null;
+  coverImage: {
+    asset: SanityImageAssetReference | null;
+    alt: string | null;
+  } | null;
 }>;
 
 // Source: ../src/sanity/queries/home.ts
@@ -3413,7 +3452,8 @@ declare module "@sanity/client" {
     '\n  *[\n    _type == "home" &&\n    coalesce(language, "en") == $language\n  ][0]{\n    hero{\n      eyebrow, heading, subheading,\n      image{ asset, alt },\n      "videoUrl": video.asset->url,\n      "videoType": video.asset->mimeType,\n      ctaPrimary{ label, external, internal->{ _type, "slug": slug.current } },\n      ctaSecondary{ label, external, internal->{ _type, "slug": slug.current } },\n      stats[]{ _key, value, label }\n    },\n    howWeWork{\n      heading, intro,\n      cards[]{ _key, eyebrow, title, image{ asset, alt }, body, terms[]{ _key, label, value }, cta{ label, external, internal->{ _type, "slug": slug.current } } }\n    },\n    catalog{ eyebrow, heading, intro },\n    useCases{ eyebrow, heading },\n    oemBanner{ heading, body, cta{ label, external, internal->{ _type, "slug": slug.current } } },\n    factory{ eyebrow, heading, body, image{ asset, alt }, steps[]{ _key, label }, cta{ label, external, internal->{ _type, "slug": slug.current } } },\n    ipProtection{\n      eyebrow, heading, intro,\n      items[]{ _key, title, lead, body, featured },\n      cta{ label, external, internal->{ _type, "slug": slug.current } }\n    },\n    insights{ eyebrow, heading },\n    finalCta{ heading, body, cta{ label, external, internal->{ _type, "slug": slug.current } } },\n    seo{ metaTitle, metaDescription, ogImage{ asset, alt } }\n  }\n': HomeQueryResult;
     '\n  *[\n    _type == "series" &&\n    coalesce(language, "en") == $language &&\n    coalesce(kind, "product") == "product" &&\n    count(*[\n      _type == "product" &&\n      coalesce(language, "en") == $language &&\n      status == "published" &&\n      references(^._id)\n    ]) > 0\n  ] | order(order asc, title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    kind,\n    description,\n    "image": coalesce(\n      image,\n      (\n        *[\n          _type == "product" &&\n          coalesce(language, "en") == $language &&\n          status == "published" &&\n          references(^._id) &&\n          defined(mainImage.asset)\n        ] | order(order asc, title asc)\n      )[0].mainImage,\n      (\n        *[\n          _type == "product" &&\n          coalesce(language, "en") == $language &&\n          references(^._id) &&\n          defined(mainImage.asset)\n        ] | order(order asc, title asc)\n      )[0].mainImage\n    ){ asset, alt },\n    "skuCount": count(*[\n      _type == "product" &&\n      coalesce(language, "en") == $language &&\n      status == "published" &&\n      references(^._id)\n    ])\n  }\n': HomeSeriesQueryResult;
     '\n  {\n    "publishedProducts": count(*[\n      _type == "product" &&\n      coalesce(language, "en") == "en" &&\n      status == "published"\n    ]),\n    "publishedSeries": count(*[\n      _type == "series" &&\n      coalesce(language, "en") == "en" &&\n      count(*[\n        _type == "product" &&\n        coalesce(language, "en") == "en" &&\n        status == "published" &&\n        references(^._id)\n      ]) > 0\n    ])\n  }\n': HomeCatalogStatsQueryResult;
-    '\n  *[\n    _type == "solution" &&\n    coalesce(language, "en") == $language &&\n    defined(slug.current)\n  ] | order(_createdAt asc){\n    _id, title, "slug": slug.current, summary, audience\n  }\n': HomeSolutionsQueryResult;
+    '\n  *[\n    _type == "service" &&\n    coalesce(language, "en") == $language\n  ] | order(order asc, title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    description,\n    order,\n    homeOrder,\n    displayInHomeCarousel,\n    "coverImage": coverImage{ asset, alt }\n  }\n': HomeServicesQueryResult;
+    '\n  *[\n    _type == "solution" &&\n    coalesce(language, "en") == $language &&\n    defined(slug.current)\n  ] | order(_createdAt asc){\n    _id,\n    title,\n    "slug": slug.current,\n    summary,\n    audience,\n    "coverImage": coalesce(\n      coverImage{ asset, alt },\n      pageBuilder[_type == "heroBlock"][0].backgroundImage{ asset, alt }\n    )\n  }\n': HomeSolutionsQueryResult;
     '\n  *[\n    _type == "post" &&\n    coalesce(language, "en") == $language &&\n    defined(slug.current)\n  ] | order(publishedAt desc)[0...3]{\n    _id, title, "slug": slug.current, excerpt, publishedAt, _updatedAt,\n    "readingTime": round(length(pt::text(body)) / 1200),\n    "cover": coverImage{ asset, alt }\n  }\n': HomePostsQueryResult;
     '\n  *[\n    _type == "oem" &&\n    coalesce(language, "en") == $language\n  ][0] {\n    _id,\n    title,\n    pageBuilder[] {\n      _key,\n      _type,\n      _type == "heroBlock" => {\n        eyebrow,\n        heading,\n        subheading,\n        backgroundImage { asset, alt },\n        cta {\n          label,\n          external,\n          internal-> {\n            _type,\n            route,\n            "slug": slug.current\n          }\n        }\n      },\n      _type == "ctaBlock" => {\n        heading,\n        body,\n        cta {\n          label,\n          external,\n          internal-> {\n            _type,\n            route,\n            "slug": slug.current\n          }\n        }\n      },\n      _type == "textBlock" => {\n        heading,\n        body\n      },\n      _type == "faqsBlock" => {\n        heading,\n        items[] { _key, question, answer }\n      }\n    },\n    commercialFacts {\n      standardMoq,\n      toolingFrom,\n      flexibleMoq,\n      leadTime,\n      activeClients,\n      toolingQuote,\n      ndaTerm,\n      brandedSpringColour,\n      certificationScope,\n      dedicatedLines,\n      operatorNdas,\n      toolingEscrow,\n      patentFilingHelp,\n      nonSupplyCommitment,\n      breachRemedy,\n      toolingOwnership\n    },\n    seo {\n      metaTitle,\n      metaDescription,\n      ogImage { asset, alt }\n    }\n  }\n': OemPageQueryResult;
     '\n  *[\n    _type == "sitePage" &&\n    pageKey == $pageKey &&\n    coalesce(language, "en") == $language\n  ][0] {\n    _id,\n    pageKey,\n    route,\n    title,\n    navigationLabel,\n    introduction,\n    effectiveDate,\n    hero {\n      eyebrow,\n      heading,\n      subheading,\n      backgroundImage { asset, alt },\n      cta {\n        label,\n        external,\n        internal-> {\n          _type,\n          route,\n          "slug": slug.current\n        }\n      }\n    },\n    sections[] {\n      _key,\n      _type,\n      _type == "textBlock" => {\n        heading,\n        body\n      },\n      _type == "ctaBlock" => {\n        heading,\n        body,\n        cta {\n          label,\n          external,\n          internal-> {\n            _type,\n            route,\n            "slug": slug.current\n          }\n        }\n      },\n      _type == "faqsBlock" => {\n        heading,\n        items[] { _key, question, answer }\n      }\n    },\n    aboutFacts {\n      yearsManufacturing,\n      unitsShipped,\n      countriesServed,\n      productPatents,\n      founderExperience,\n      founderFactoryRole,\n      founderClientRole,\n      factorySize,\n      machines,\n      productionLines,\n      annualCapacity,\n      milestones[] {\n        _key,\n        year,\n        title,\n        description,\n        confirmed\n      }\n    },\n    factoryFacts {\n      floorArea,\n      teamMembers,\n      productionLines,\n      manufacturingSteps,\n      manufacturingStages[] {\n        _key,\n        number,\n        title,\n        description,\n        tag,\n        image { asset, alt }\n      },\n      cncTolerance,\n      annualCapacity,\n      productionTeam,\n      totalTeam,\n      certifications[],\n      dedicatedLines,\n      mutualNda,\n      nonSupplyCommitment\n    },\n    legalBody[] {\n      ...,\n      markDefs[] {\n        ...,\n        _type == "internalLink" => {\n          "reference": reference-> {\n            _type,\n            route,\n            "slug": slug.current\n          }\n        }\n      },\n      _type == "postImageBlock" => {\n        image { asset, alt },\n        caption\n      },\n      _type == "postGalleryBlock" => {\n        heading,\n        images[] {\n          _key,\n          image { asset },\n          alt,\n          caption\n        }\n      },\n      _type == "postVideoBlock" => {\n        source,\n        url,\n        "fileUrl": file.asset->url,\n        caption\n      },\n      _type == "postDownloadBlock" => {\n        title,\n        description,\n        "fileUrl": file.asset->url,\n        buttonLabel\n      }\n    },\n    seo {\n      metaTitle,\n      metaDescription,\n      ogImage { asset, alt }\n    }\n  }\n': SitePageByKeyQueryResult;

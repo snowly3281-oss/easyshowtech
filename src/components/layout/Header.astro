@@ -12,20 +12,23 @@
 import {
   siteSettings,
   productsSeries,
-  productsPrintingServices,
   productsParts,
   solutionsByCustomer,
   companyLinks,
 } from "../../config/site";
+import type { HomeServicesQueryResult } from "../../sanity/sanity.types";
 import {localizedPath, type Locale} from "../../i18n/config";
 import {ui} from "../../i18n/ui";
 import {staticUi} from "../../i18n/static";
 
 interface Props {
   locale?: Locale;
+  /** Printing Service taxonomy sourced from Sanity. Used to render the
+   *  "By Service" mega-menu column and the mobile equivalent. */
+  printingServices?: HomeServicesQueryResult;
 }
 
-const {locale = "en"} = Astro.props;
+const {locale = "en", printingServices = []} = Astro.props;
 const t = (english: string) => staticUi(locale, english);
 const localizeHref = (href: string) => {
   // Use site URL from settings, fallback to production domain
@@ -35,6 +38,12 @@ const localizeHref = (href: string) => {
 };
 const productPartLabel = (label: string) =>
   label === "Parts & accessories" ? ui(locale, "partsAccessories") : t(label);
+// Resolve a card label from the active locale, falling back to the slug
+// itself so an unfinished translation still renders something usable.
+const serviceLabel = (s: HomeServicesQueryResult[number]) =>
+  s.title ?? s.slug ?? "";
+const serviceHref = (s: HomeServicesQueryResult[number]) =>
+  `${localizedPath("/products", locale)}?tab=printing&service=${encodeURIComponent(s.slug ?? "")}`;
 ---
 
 <header class="site-header">
@@ -77,7 +86,9 @@ const productPartLabel = (label: string) =>
           </div>
           <div class="mega-col">
             <p class="mega-head">{ui(locale, "byService")}</p>
-            {productsPrintingServices.map((l) => <a href={localizeHref(l.href)} class="mega-link">{t(l.label)}</a>)}
+            {printingServices.map((s) => (
+              <a href={serviceHref(s)} class="mega-link">{serviceLabel(s)}</a>
+            ))}
           </div>
           <div class="mega-col">
             <p class="mega-head">{ui(locale, "partsAccessories")}</p>
@@ -86,11 +97,11 @@ const productPartLabel = (label: string) =>
         </div>
       </div>
 
-      <!-- Solutions: dropdown-only (no index page) → trigger button, not a link -->
+      <!-- Solutions: has its own index page, so the label links to it -->
       <div class="nav-item" data-nav-item>
-        <button
-          type="button"
-          class="nav-link nav-trigger"
+        <a
+          href={localizeHref("/solutions")}
+          class="nav-link"
           id="solutionsTrigger"
           aria-haspopup="true"
           aria-expanded="false"
@@ -98,7 +109,7 @@ const productPartLabel = (label: string) =>
           data-nav-trigger
         >
           {ui(locale, "solutions")} <span class="chev" aria-hidden="true">▾</span>
-        </button>
+        </a>
         <div
           class="dropdown mega"
           id="solutionsMenu"
@@ -106,7 +117,6 @@ const productPartLabel = (label: string) =>
           data-dropdown
         >
           <div class="mega-col">
-            <p class="mega-head">{ui(locale, "byCustomer")}</p>
             {solutionsByCustomer.map((l) => <a href={localizeHref(l.href)} class="mega-link">{t(l.label)}</a>)}
           </div>
         </div>
@@ -168,7 +178,9 @@ const productPartLabel = (label: string) =>
         <p class="m-sub">{ui(locale, "bySeries")}</p>
         {productsSeries.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
         <p class="m-sub">{ui(locale, "byService")}</p>
-        {productsPrintingServices.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
+        {printingServices.map((s) => (
+          <a href={serviceHref(s)} class="m-link">{serviceLabel(s)}</a>
+        ))}
         <p class="m-sub">{ui(locale, "partsAccessories")}</p>
         {productsParts.map((l) => <a href={localizeHref(l.href)} class="m-link">{productPartLabel(l.label)}</a>)}
       </details>

@@ -62,18 +62,18 @@ if (!rawProduct) return Astro.rewrite('/404')
 const seriesTitles = new Map(
   (taxonomy?.series ?? []).map((entry) => [entry.slug, entry.title]),
 )
-const equipmentTitles = new Map(
-  (taxonomy?.equipment ?? []).map((entry) => [entry.slug, entry.title]),
+const serviceTitles = new Map(
+  (taxonomy?.services ?? []).map((entry) => [entry.slug, entry.title]),
 )
 const product = {
   ...rawProduct,
   seriesTitle:
     seriesTitles.get(rawProduct.seriesSlug ?? '') ?? rawProduct.seriesTitle,
-  equipmentTitles: (rawProduct.equipmentSlugs ?? []).map(
-    (equipmentSlug, index) =>
-      equipmentTitles.get(equipmentSlug ?? '') ??
-      rawProduct.equipmentTitles?.[index] ??
-      equipmentSlug,
+  serviceTitles: (rawProduct.serviceSlugs ?? []).map(
+    (serviceSlug, index) =>
+      serviceTitles.get(serviceSlug ?? '') ??
+      rawProduct.serviceTitles?.[index] ??
+      serviceSlug,
   ),
   related: (rawProduct.related ?? []).map((related) => ({
     ...related,

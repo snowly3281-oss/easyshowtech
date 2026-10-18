@@ -21,8 +21,10 @@ const categoryLabels: Record<string, string> = {
   training_accessories: t('Boxes & mats'),
   other: t('Other parts'),
 }
-const categoryLabel = product.partsCategory
-  ? (categoryLabels[product.partsCategory] ?? t('Parts & accessories'))
+const categoryKey =
+  typeof product.partsCategoryKey === 'string' ? product.partsCategoryKey : null
+const categoryLabel = categoryKey
+  ? (categoryLabels[categoryKey] ?? t('Parts & accessories'))
   : t('Parts & accessories')
 
 const mainAsset = product.mainImage?.asset

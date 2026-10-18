@@ -55,13 +55,13 @@ export const productsSeries: NavLink[] = [
  * Service" with the same `?equipment=` filter URL. The i18n key is still
  * `byService` (kept for backwards compat with the existing translations). */
 export const productsPrintingServices: NavLink[] = [
-  { label: "Custom Canopy", href: "/products?equipment=custom-canopy" },
-  { label: "Custom Backdrops", href: "/products?equipment=custom-backdrops" },
-  { label: "Custom Flags", href: "/products?equipment=custom-flags" },
-  { label: "Custom Table Cover", href: "/products?equipment=custom-table-cover" },
-  { label: "Custom Chair", href: "/products?equipment=custom-chair" },
-  { label: "Custom Umbrella", href: "/products?equipment=custom-umbrella" },
-  { label: "Stock Color Canopy", href: "/products?equipment=stock-color-canopy" },
+  { label: "Branded Canopies",        href: "/products?equipment=custom-canopy" },
+  { label: "Display Backdrops",        href: "/products?equipment=custom-backdrops" },
+  { label: "Promotional Flags",        href: "/products?equipment=custom-flags" },
+  { label: "Table Throws",             href: "/products?equipment=custom-table-cover" },
+  { label: "Branded Chairs",           href: "/products?equipment=custom-chair" },
+  { label: "Promotional Umbrellas",    href: "/products?equipment=custom-umbrella" },
+  { label: "Solid Color Canopies",     href: "/products?equipment=stock-color-canopy" },
 ];
 
 // `productsEquipment` is no longer rendered in the Header but kept exported so

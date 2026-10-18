@@ -44,7 +44,7 @@ const modalLabels = {
 }
 
 type PackageSeriesVariant = NonNullable<
-  NonNullable<SolutionPackage['seriesVariants']>[number]
+  NonNullable<SolutionPackage['seriesVariants']>[number] & { series: NonNullable<{ title: string | null; slug: string | null }> }
 >
 
 function range(
@@ -59,9 +59,9 @@ function range(
 
 function packageVariants(pkg: SolutionPackage): PackageSeriesVariant[] {
   return (pkg.seriesVariants ?? []).filter(
-    (variant) =>
-      variant?._key &&
-      variant?.series?.slug &&
+    (variant): variant is PackageSeriesVariant =>
+      !!variant?._key &&
+      !!variant?.series?.slug &&
       (variant.items ?? []).some(
         (item) => item?.product?.title || item?.customName,
       ),
@@ -71,14 +71,20 @@ function packageVariants(pkg: SolutionPackage): PackageSeriesVariant[] {
 const seriesOptions = Array.from(
   new Map(
     packages.flatMap((pkg) =>
-      packageVariants(pkg).map((variant) => [
-        variant.series.slug,
-        {
-          slug: variant.series.slug,
-          title: variant.series.title,
-          isRecommended: variant.isRecommended === true,
-        },
-      ]),
+      packageVariants(pkg).flatMap((variant) =>
+        variant.series
+          ? [
+              [
+                variant.series.slug,
+                {
+                  slug: variant.series.slug,
+                  title: variant.series.title,
+                  isRecommended: variant.isRecommended === true,
+                },
+              ] as const,
+            ]
+          : [],
+      ),
     ),
   ).values(),
 )

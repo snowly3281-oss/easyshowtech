@@ -1,0 +1,330 @@
+---
+/**
+ * PrintingService.astro — Home page "Printing service" section.
+ *
+ * Data-driven from Sanity `service` documents. The carousel renders every
+ * service where `displayInHomeCarousel == true`, ordered by `homeOrder`,
+ * with `coverImage` (when present) and `description`. Clicking a card
+ * sends the visitor to `/products?tab=printing&service=<slug>` so the
+ * products page opens the Printing Service tab filtered to that category.
+ *
+ * If no services come back from the CMS the section is hidden — it's
+ * intentional that the carousel is content-controlled, never a hardcoded
+ * fallback list.
+ */
+import type { HomeServicesQueryResult } from '../../sanity/sanity.types'
+import { urlFor } from '../../sanity/image'
+import {localizedPath, resolveLocale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+
+interface Props {
+  services?: HomeServicesQueryResult
+}
+
+const { services = [] } = Astro.props
+const locale = resolveLocale(undefined, Astro.url.pathname)
+const t = (english: string) => staticUi(locale, english)
+
+// Show only services the operator has flagged for the home carousel.
+// Items without a `homeOrder` fall back to a stable high value so new
+// services appear at the end until the operator assigns one.
+const items = services
+  .filter((s) => s.displayInHomeCarousel !== false)
+  .slice()
+  .sort((a, b) => {
+    const ao = a.homeOrder ?? Number.POSITIVE_INFINITY
+    const bo = b.homeOrder ?? Number.POSITIVE_INFINITY
+    return ao - bo
+  })
+
+const pad2 = (n: number) => String(n + 1).padStart(2, '0')
+const eyebrow = t('What we produce')
+const heading = t('Printing service for every EasyShow product')
+const intro = t(
+  'Seven in-house print lines | Custom artwork + stock colorways | Production-ready files reviewed by our team',
+)
+
+// URL for the card thumbnail (optional). Falls back to no image so the
+// card still has a frame, just without a photo.
+const thumbUrl = (s: HomeServicesQueryResult[number]): string | null => {
+  const asset = s.coverImage?.asset
+  if (!asset) return null
+  return urlFor(asset).width(800).height(600).fit('crop').auto('format').url()
+}
+const thumbAlt = (s: HomeServicesQueryResult[number]): string =>
+  s.coverImage?.alt ?? s.title ?? 'Printing service'
+
+// Card click target — encode the service slug so the products page opens
+// the Printing Service tab pre-filtered.
+const cardHref = (s: HomeServicesQueryResult[number]): string =>
+  `${localizedPath('/products', locale)}?tab=printing&service=${encodeURIComponent(s.slug ?? '')}`
+---
+
+{
+  items.length > 0 && (
+    <section class="section ps">
+      <div class="container">
+        <div class="ps__head">
+          <div class="ps__heading">
+            <p class="eyebrow">{eyebrow}</p>
+            <h2 class="ps__title">{heading}</h2>
+            <p class="body-s ps__intro">{intro}</p>
+            <a class="btn btn-link ps__viewall" href={`${localizedPath('/products', locale)}?tab=printing`}>
+              {t('View all services')} <span aria-hidden="true">→</span>
+            </a>
+          </div>
+          <div class="ps__nav">
+            <button class="ps__arrow" data-ps-prev type="button" aria-label={t('Previous')} disabled>‹</button>
+            <button class="ps__arrow" data-ps-next type="button" aria-label={t('Next')}>›</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Full-bleed carousel. Cards may carry a cover image and a short
+          description that the operator authors in Sanity. */}
+      <ul class="ps__rail" data-ps-rail>
+        {items.map((s, i) => {
+          const url = thumbUrl(s)
+          return (
+            <li class="ps__card">
+              <a href={cardHref(s)} class="ps__link">
+                {url ? (
+                  <div class="ps__photo">
+                    <img
+                      src={url}
+                      alt={thumbAlt(s)}
+                      width="800"
+                      height="600"
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                    />
+                  </div>
+                ) : (
+                  <div class="ps__photo ps__photo--empty" aria-hidden="true">
+                    <span class="ps__num">{pad2(i)}</span>
+                  </div>
+                )}
+                <div class="ps__body">
+                  {url && <span class="ps__num">{pad2(i)}</span>}
+                  <p class="ps__name">{s.title}</p>
+                  {s.description && <p class="ps__desc">{s.description}</p>}
+                  <span class="ps__arrowico" aria-hidden="true">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <path d="M4.5 11.5 11.5 4.5M11.5 4.5H6M11.5 4.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </span>
+                </div>
+              </a>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+<script is:inline>
+  function initPrintingService() {
+    const rail = document.querySelector('[data-ps-rail]')
+    if (!rail || rail.dataset.initialized === 'true') return
+    rail.dataset.initialized = 'true'
+
+    const prev = document.querySelector('[data-ps-prev]')
+    const next = document.querySelector('[data-ps-next]')
+    function step(dir) {
+      const cards = rail.querySelectorAll('.ps__card')
+      let w = rail.clientWidth * 0.8
+      if (cards.length >= 2) {
+        w = cards[1].getBoundingClientRect().left - cards[0].getBoundingClientRect().left
+      } else if (cards.length === 1) {
+        w = cards[0].getBoundingClientRect().width
+      }
+      rail.scrollBy({ left: w * dir, behavior: 'smooth' })
+    }
+    function sync() {
+      const max = rail.scrollWidth - rail.clientWidth - 2
+      if (prev) prev.disabled = rail.scrollLeft <= 2
+      if (next) next.disabled = rail.scrollLeft >= max || max <= 0
+    }
+    if (prev) prev.addEventListener('click', function () { step(-1) })
+    if (next) next.addEventListener('click', function () { step(1) })
+    rail.addEventListener('scroll', sync, { passive: true })
+    window.addEventListener('resize', sync)
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', sync, { once: true })
+    } else {
+      window.requestAnimationFrame(sync)
+    }
+  }
+
+  initPrintingService()
+  document.addEventListener('astro:page-load', initPrintingService)
+</script>
+
+<style>
+  .ps__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--space-5);
+  }
+  .ps__title {
+    margin: var(--space-2) 0 0;
+  }
+  .ps__intro {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600, #555);
+    max-width: 50ch;
+  }
+  .ps__viewall {
+    margin: var(--space-3) 0 0;
+  }
+  .ps__nav {
+    display: flex;
+    gap: var(--space-2);
+    flex: none;
+  }
+  .ps__arrow {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--color-coral);
+    background: transparent;
+    color: var(--color-coral);
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .ps__arrow:hover:not(:disabled) {
+    background: var(--color-coral);
+    color: #fff;
+  }
+  .ps__arrow:disabled {
+    border-color: var(--color-ink-200, #e2ddd3);
+    color: var(--color-ink-400, #9a948a);
+    cursor: default;
+  }
+
+  /* Full-bleed rail, same pattern as CatalogStrip. */
+  .ps__rail {
+    --rail-gutter: var(--gutter-lg);
+    --rail-pad: max(var(--rail-gutter), calc((100% - var(--container-box)) / 2 + var(--rail-gutter)));
+    margin: var(--space-6) 0 0;
+    padding: 0 var(--rail-gutter) var(--space-3) var(--rail-pad);
+    list-style: none;
+    display: grid;
+    grid-auto-flow: column;
+    /* Each card around 240px; the rail auto-expands to fit up to ~7 cards
+       on wide screens and scrolls on narrower viewports. */
+    grid-auto-columns: minmax(220px, 1fr);
+    gap: var(--space-5);
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline-start: var(--rail-pad);
+    scrollbar-width: none;
+  }
+  .ps__rail::-webkit-scrollbar {
+    display: none;
+  }
+  @media (max-width: 1279px) {
+    .ps__rail {
+      --rail-gutter: var(--gutter-md);
+      grid-auto-columns: 240px;
+    }
+  }
+  @media (max-width: 767px) {
+    .ps__head {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .ps__nav {
+      align-self: flex-end;
+    }
+    .ps__rail {
+      --rail-gutter: var(--gutter-sm);
+      grid-auto-columns: 75vw;
+    }
+  }
+
+  .ps__card {
+    scroll-snap-align: start;
+  }
+  .ps__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+    min-height: 132px;
+  }
+  .ps__link:hover {
+    border-color: var(--color-coral);
+  }
+  .ps__photo {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--color-paper-2, #ece7dd);
+    overflow: hidden;
+  }
+  .ps__photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .ps__photo--empty {
+    display: grid;
+    place-items: start start;
+    padding: var(--space-4);
+    background: linear-gradient(
+      135deg,
+      var(--color-paper-2, #ece7dd) 0%,
+      var(--color-paper-3, #d8d2c4) 100%
+    );
+  }
+  .ps__num {
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-ink-400, #9a948a);
+    margin-bottom: var(--space-3);
+    display: block;
+  }
+  .ps__photo--empty .ps__num {
+    margin-bottom: 0;
+  }
+  .ps__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: var(--space-4) var(--space-5) var(--space-5);
+    gap: var(--space-2);
+  }
+  .ps__name {
+    margin: 0;
+    font-weight: 600;
+    font-size: var(--text-h4);
+    line-height: 1.25;
+  }
+  .ps__desc {
+    margin: 0;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-600, #555);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ps__arrowico {
+    display: inline-flex;
+    color: var(--color-ink-900, #0e1013);
+    margin-top: auto;
+    align-self: flex-end;
+  }
+</style>

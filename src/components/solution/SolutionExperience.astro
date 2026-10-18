@@ -34,15 +34,18 @@ const faq = blocks.find((block) => block._type === 'faqsBlock') as
   | undefined
 const isBoutique = solution.slug === 'boutique-studio'
 
+const heroBlock = hero as HeroBlockData | undefined
+const heroBgImageAsset = heroBlock?.backgroundImage?.asset
 const firstPackageImageAsset = solution.packages
   ?.flatMap((pkg) => pkg?.items ?? [])
   .find((item) => item?.product?.mainImage?.asset)?.product?.mainImage?.asset
-
 const heroImage = isBoutique
   ? '/solutions/boutique-studio-hero.webp'
-  : firstPackageImageAsset
-    ? urlFor(firstPackageImageAsset).width(1400).height(900).fit('crop').auto('format').url()
-    : '/factory/home-realfactory-01.webp'
+  : heroBgImageAsset
+    ? urlFor(heroBgImageAsset).width(2200).height(1100).fit('crop').auto('format').url()
+    : firstPackageImageAsset
+      ? urlFor(firstPackageImageAsset).width(1400).height(900).fit('crop').auto('format').url()
+      : '/factory/home-realfactory-01.webp'
 
 const scenarioCopy: Record<
   string,

@@ -119,8 +119,43 @@ export const homeCatalogStatsQuery = defineQuery(`
 `)
 
 /**
+ * Printing-service cards for the home carousel and the Header "By Service"
+ * mega menu. Both consumers share this projection:
+ *
+ *   - Home: filters `displayInHomeCarousel == true`, sorts by `homeOrder`,
+ *     shows up to 7 cards (the operator toggles extras off if needed).
+ *   - Header: ignores the flag, sorts by `order`, lists every active service.
+ *
+ * `coverImage` is projected with width 800 / auto-format so the carousel
+ * uses the same optimized variant across reloads.
+ */
+export const homeServicesQuery = defineQuery(`
+  *[
+    _type == "service" &&
+    coalesce(language, "en") == $language
+  ] | order(order asc, title asc){
+    _id,
+    title,
+    "slug": slug.current,
+    description,
+    order,
+    homeOrder,
+    displayInHomeCarousel,
+    "coverImage": coverImage{ asset, alt }
+  }
+`)
+
+/**
  * Solutions for the "Built for your setting" tabs. Ordered by creation (which
  * matches the nav order); a settings-driven order is the later, proper fix.
+ *
+ * `coverImage` resolution order:
+ *   1. `coverImage` field on the solution (the operator-controlled 16:9 card
+ *      image — preferred, lives next to the slug so the home card is
+ *      independent of any pageBuilder layout change)
+ *   2. First heroBlock's backgroundImage (legacy fallback — keeps existing
+ *      solutions looking right until the operator uploads a coverImage)
+ * The front end renders the first non-null value as the home card.
  */
 export const homeSolutionsQuery = defineQuery(`
   *[
@@ -128,7 +163,15 @@ export const homeSolutionsQuery = defineQuery(`
     coalesce(language, "en") == $language &&
     defined(slug.current)
   ] | order(_createdAt asc){
-    _id, title, "slug": slug.current, summary, audience
+    _id,
+    title,
+    "slug": slug.current,
+    summary,
+    audience,
+    "coverImage": coalesce(
+      coverImage{ asset, alt },
+      pageBuilder[_type == "heroBlock"][0].backgroundImage{ asset, alt }
+    )
   }
 `)
 
