@@ -15,8 +15,8 @@
     "prebuild": "npm run lock:check",
     "build": "astro build",
     "preview": "astro preview",
-    "deploy:dry-run": "npm run build && wrangler deploy --dry-run",
-    "deploy": "npm run build && wrangler deploy",
+    "deploy:dry-run": "npm run build && wrangler deploy --config dist/server/wrangler.json --dry-run",
+    "deploy": "npm run publish:site",
     "deploy:www-redirect": "wrangler deploy --config wrangler.www-redirect.jsonc",
     "astro": "astro",
     "typegen": "npm --prefix studio run typegen:astro",
@@ -25,7 +25,11 @@
     "i18n:function:deploy": "npx sanity@latest blueprints deploy",
     "i18n:function:logs": "npx sanity@latest functions logs translate-published-content",
     "db:migrate:local": "wrangler d1 migrations apply coral-inquiries --local",
-    "db:migrate:remote": "wrangler d1 migrations apply coral-inquiries --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply coral-inquiries --remote",
+    "publish:site": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/publish-site.ps1",
+    "publish:check": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/publish-site.ps1 -CheckOnly",
+    "test:deployment": "node --test scripts/deployment.test.mjs",
+    "content:check": "node scripts/check-published-content.mjs"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.1",

@@ -29,12 +29,17 @@ export const solutionPackageItem = defineType({
       description:
         '仅用于尚未录入 Products 的配件。产品建立后应删除临时名称并改为关联产品。',
     }),
+    ...[
+      ['role', '场景角色'], ['quantityLabel', '参考数量（如 1–2 units）'],
+      ['quantityNote', '数量说明（非 MOQ）'], ['reason', '推荐原因'],
+    ].map(([name, title]) => defineField({name, title, type: 'string'})),
+    defineField({name: 'requirement', title: '配置状态', type: 'string', options: {list: ['required', 'recommended', 'optional']}}),
+    defineField({name: 'alternative', title: '替代产品', type: 'reference', to: [{type: 'product'}]}),
     defineField({
       name: 'quantity',
       title: '数量',
       type: 'number',
-      initialValue: 1,
-      validation: (rule) => rule.required().integer().min(1).max(999),
+      validation: (rule) => rule.integer().min(1).max(999),
     }),
     defineField({
       name: 'unit',

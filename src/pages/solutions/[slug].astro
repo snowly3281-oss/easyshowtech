@@ -1,4 +1,8 @@
 ---
+import ScenarioDetail from '../../components/solution/ScenarioDetail.astro'
+import {solutionScenarios, findScenario} from '../../data/solutionScenarios'
+import {scenarioSolutionQuery} from '../../sanity/queries/scenarioSolutions'
+import type {ScenarioSolutionQueryResult} from '../../sanity/sanity.types'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import SolutionExperience from '../../components/solution/SolutionExperience.astro'
 import { sanityClient } from '../../sanity/client'
@@ -17,10 +21,10 @@ export async function getStaticPaths() {
     solutionPathsQuery,
     {language: 'en'},
   )
-  const paths: { params: { slug: string }; props: { solution: SolutionData } }[] = []
+  const paths: { params: { slug: string }; props: { solution?: SolutionData } }[] = []
 
   for (const entry of slugs ?? []) {
-    if (!entry.slug) continue
+    if (!entry.slug || (findScenario(entry.slug) && findScenario(entry.slug)?.slug !== entry.slug)) continue
     const solution = await sanityClient.fetch<SolutionBySlugQueryResult>(
       solutionBySlugQuery,
       {slug: entry.slug, language: 'en'}
@@ -28,6 +32,9 @@ export async function getStaticPaths() {
     if (solution) paths.push({ params: { slug: entry.slug }, props: { solution } })
   }
 
+  for (const scenario of solutionScenarios) {
+    if (!paths.some(p => p.params.slug === scenario.slug)) paths.push({params: {slug: scenario.slug}, props: {}})
+  }
   return paths
 }
 
@@ -38,6 +45,8 @@ const locale = resolveLocale(
 )
 const props = Astro.props as Props
 const slug = props.slug ?? Astro.params.slug
+const scenario = findScenario(slug ?? '')
+const scenarioContent = scenario ? await fetchLocalized<ScenarioSolutionQueryResult>(scenarioSolutionQuery, {slug: scenario.slug, documentId: scenario.documentId, aliases: [...scenario.aliases]}, locale) : null
 const solution =
   props.solution ??
   (await fetchLocalized<SolutionBySlugQueryResult>(
@@ -45,11 +54,11 @@ const solution =
     {slug: slug ?? ''},
     locale,
   ))
-if (!solution) return Astro.rewrite('/404')
+if (!solution && !scenario) return Astro.rewrite('/404')
 
-const metaTitle = solution.seo?.metaTitle ?? `${solution.title ?? 'Solution'} — EasyShow`
-const metaDescription = solution.seo?.metaDescription ?? solution.summary ?? undefined
-const ogAsset = solution.seo?.ogImage?.asset
+const metaTitle = (scenario ? scenarioContent?.seo?.metaTitle : solution?.seo?.metaTitle) ?? `${scenario?.title ?? solution?.title ?? 'Solution'} — EasyShow`
+const metaDescription = (scenario ? scenarioContent?.seo?.metaDescription ?? scenario.intro : solution?.seo?.metaDescription ?? solution?.summary) ?? undefined
+const ogAsset = scenario ? scenarioContent?.seo?.ogImage?.asset : solution?.seo?.ogImage?.asset
 const ogImage = ogAsset
   ? urlFor(ogAsset).width(1200).height(630).fit('crop').url()
   : undefined
@@ -57,10 +66,10 @@ const siteSettings = await getSiteSettings()
 ---
 
 <BaseLayout locale={locale} title={metaTitle} description={metaDescription} ogImage={ogImage}>
-  <SolutionExperience
+  {scenario ? <ScenarioDetail scenario={scenario} content={scenarioContent} locale={locale} /> : solution && <SolutionExperience
     solution={solution}
     whatsapp={siteSettings.whatsapp}
     showPrices={siteSettings.showPrices}
     locale={locale}
-  />
+  />}
 </BaseLayout>

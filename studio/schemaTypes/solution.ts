@@ -48,6 +48,14 @@ export const solution = defineType({
     },
   ],
   fields: [
+    defineField({name: 'scenarioIntro', title: '场景介绍', type: 'text', group: 'content'}),
+    defineField({name: 'needs', title: '展示需求', type: 'array', group: 'content', of: [{type: 'string'}]}),
+    defineField({name: 'howProductsWorkTogether', title: '产品如何配合', type: 'text', group: 'content'}),
+    defineField({name: 'customizationOptions', title: '定制讨论事项', type: 'array', group: 'content', of: [{type: 'string'}]}),
+    defineField({name: 'supportServices', title: '项目级支持服务', type: 'array', group: 'content', description: '仅引用已确认的 service。产品适用印刷服务继续维护在 product.printingServices。', of: [{type: 'reference', to: [{type: 'service'}]}]}),
+    defineField({name: 'relatedSolutions', title: '相关场景', type: 'array', group: 'content', of: [{type: 'reference', to: [{type: 'solution'}]}]}),
+    ...['heroImage', 'combinationImage'].map(name => defineField({name, title: name === 'heroImage' ? '场景首图' : '产品组合图', type: 'image', group: 'content', options: {hotspot: true}, fields: [{name: 'alt', title: '替代文字', type: 'string'}, {name: 'caption', title: '来源/参考图说明', type: 'string'}]})),
+    defineField({name: 'gallery', title: '场景图库', type: 'array', group: 'content', of: [{type: 'image', options: {hotspot: true}, fields: [{name: 'alt', title: '替代文字', type: 'string'}, {name: 'caption', title: '来源/参考图说明', type: 'string'}]}]}),
     defineField({
       name: "title",
       title: "解决方案名称",
@@ -138,11 +146,11 @@ export const solution = defineType({
       validation: (rule) =>
         rule
           .unique()
-          .custom((packages?: { tier?: string; isRecommended?: boolean }[]) => {
+          .custom((packages?: { tier?: string; environment?: string; isRecommended?: boolean }[]) => {
             if (!packages) return true;
-            const tiers = packages.map((pkg) => pkg?.tier).filter(Boolean);
+            const tiers = packages.map((pkg) => pkg?.tier ? `${pkg.tier}:${pkg.environment ?? ''}` : null).filter(Boolean);
             if (new Set(tiers).size !== tiers.length) {
-              return "每个面积档位只能出现一次。";
+              return "同一使用环境中的每个档位只能出现一次。";
             }
             if (packages.filter((pkg) => pkg?.isRecommended).length > 1) {
               return "只能有一个配置单标记为推荐方案。";

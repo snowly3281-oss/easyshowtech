@@ -1,0 +1,534 @@
+{
+  "notice": "REVIEW PLAN ONLY. Not Sanity documents and not an import file. Merge fields and append only absent _keys on existing documents; never replace packages or create product/service documents.",
+  "solutions": [
+    {
+      "existingDocumentId": "solution.boutique-studio",
+      "canonicalSlug": "wedding-party",
+      "aliases": [
+        "boutique-studio",
+        "event-activation"
+      ],
+      "proposedFields": {
+        "scenarioIntro": "Personalized display planning for weddings, private parties and special celebrations.",
+        "needs": [
+          "Ceremony backdrop",
+          "Photo area",
+          "Welcome display",
+          "Guest area"
+        ],
+        "howProductsWorkTogether": "Use a backdrop as the visual focus, a welcome display for information and optional seating around the guest area.",
+        "supportServices": [
+          {
+            "_key": "artwork",
+            "_type": "reference",
+            "_ref": "service.artwork-design-setup"
+          }
+        ]
+      },
+      "appendPackagesAfterReview": [
+        {
+          "_key": "scenario-both",
+          "title": "Celebration planning example",
+          "tier": "standard",
+          "environment": "both",
+          "summary": "Illustrative reference configuration; final specification and quantities require a quote.",
+          "_type": "solutionPackage",
+          "scenarioConfiguration": true,
+          "priceDisplay": "quote",
+          "items": [
+            {
+              "_key": "0",
+              "role": "Photo background",
+              "quantityLabel": "1",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Create a visual focus for photographs.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-bd-001"
+              }
+            },
+            {
+              "_key": "1",
+              "role": "Welcome display",
+              "quantityLabel": "1–2",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Welcome guests and share directions.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-sd-001"
+              }
+            },
+            {
+              "_key": "2",
+              "role": "Supporting seating",
+              "quantityLabel": "As needed",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "optional",
+              "reason": "Discuss seating for the guest or photo area.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-ch-001"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "existingDocumentId": "solution.franchise",
+      "canonicalSlug": "events-trade-shows",
+      "aliases": [
+        "franchise",
+        "trade-show-exhibitor"
+      ],
+      "proposedFields": {
+        "scenarioIntro": "Plan a coordinated branded display for exhibitions, promotional events and outdoor activations.",
+        "needs": [
+          "Brand visibility",
+          "Booth layout",
+          "Visitor reception",
+          "Product presentation",
+          "Viewing distance",
+          "Portable setup"
+        ],
+        "howProductsWorkTogether": "An indoor setup starts with a main visual wall and information displays. For outdoor events, discuss a tent, flags and directional signs together with venue requirements.",
+        "supportServices": [
+          {
+            "_key": "artwork",
+            "_type": "reference",
+            "_ref": "service.artwork-design-setup"
+          }
+        ]
+      },
+      "appendPackagesAfterReview": [
+        {
+          "_key": "scenario-indoor",
+          "title": "Standard indoor",
+          "tier": "standard",
+          "environment": "indoor",
+          "summary": "Illustrative reference configuration; final specification and quantities require a quote.",
+          "_type": "solutionPackage",
+          "scenarioConfiguration": true,
+          "priceDisplay": "quote",
+          "items": [
+            {
+              "_key": "0",
+              "role": "Main visual wall",
+              "quantityLabel": "1",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "required",
+              "reason": "Establish the booth’s main visual focus.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-pw-001"
+              }
+            },
+            {
+              "_key": "1",
+              "role": "Information display",
+              "quantityLabel": "1–2",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Present event and product information.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-sd-001"
+              }
+            },
+            {
+              "_key": "2",
+              "role": "Photo background",
+              "quantityLabel": "As needed",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "optional",
+              "reason": "Add a separate photo area when space allows.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-bd-001"
+              }
+            }
+          ]
+        },
+        {
+          "_key": "scenario-outdoor",
+          "title": "Standard outdoor",
+          "tier": "standard",
+          "environment": "outdoor",
+          "summary": "Illustrative reference configuration; final specification and quantities require a quote.",
+          "_type": "solutionPackage",
+          "scenarioConfiguration": true,
+          "priceDisplay": "quote",
+          "items": [
+            {
+              "_key": "0",
+              "role": "Event space",
+              "quantityLabel": "1",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Discuss a branded gathering point and venue requirements.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-at-001"
+              },
+              "alternative": {
+                "_type": "reference",
+                "_ref": "product.es-st-001"
+              }
+            },
+            {
+              "_key": "1",
+              "role": "Visibility",
+              "quantityLabel": "2+",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Help visitors identify the event area.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-fs-001"
+              }
+            },
+            {
+              "_key": "2",
+              "role": "Information display",
+              "quantityLabel": "1",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "optional",
+              "reason": "Add directions and event information.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-sd-001"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "existingDocumentId": "solution.rehab-clinic",
+      "canonicalSlug": "photography-film",
+      "aliases": [
+        "rehab-clinic",
+        "photography-and-film"
+      ],
+      "proposedFields": {
+        "scenarioIntro": "Plan visual backgrounds for photo shoots, interviews, video production and creative sets.",
+        "needs": [
+          "Clean background",
+          "Visual surface",
+          "Scene changes",
+          "Custom artwork"
+        ],
+        "howProductsWorkTogether": "Start with the background and camera framing, then discuss supporting displays and seating where needed.",
+        "supportServices": [
+          {
+            "_key": "artwork",
+            "_type": "reference",
+            "_ref": "service.artwork-design-setup"
+          }
+        ]
+      },
+      "appendPackagesAfterReview": [
+        {
+          "_key": "scenario-indoor",
+          "title": "Background planning example",
+          "tier": "standard",
+          "environment": "indoor",
+          "summary": "Illustrative reference configuration; final specification and quantities require a quote.",
+          "_type": "solutionPackage",
+          "scenarioConfiguration": true,
+          "priceDisplay": "quote",
+          "items": [
+            {
+              "_key": "0",
+              "role": "Main background",
+              "quantityLabel": "1+",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Plan the background around camera framing.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-bd-001"
+              }
+            },
+            {
+              "_key": "1",
+              "role": "Alternative scene",
+              "quantityLabel": "As needed",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "optional",
+              "reason": "Discuss an additional visual surface.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-pw-001"
+              }
+            },
+            {
+              "_key": "2",
+              "role": "Interview seating",
+              "quantityLabel": "As needed",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "optional",
+              "reason": "Discuss the seating role in the shot.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-ch-001"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "existingDocumentId": "solution.hotel-spa",
+      "canonicalSlug": "retail-pop-up-stores",
+      "aliases": [
+        "hotel-spa",
+        "retail-pop-up"
+      ],
+      "proposedFields": {
+        "scenarioIntro": "Coordinate displays for temporary shops, product launches and retail promotions.",
+        "needs": [
+          "Brand identity",
+          "Promotion",
+          "Store navigation",
+          "Temporary space"
+        ],
+        "howProductsWorkTogether": "Combine a brand wall with promotional information and directional displays to guide visitors through the space.",
+        "supportServices": [
+          {
+            "_key": "artwork",
+            "_type": "reference",
+            "_ref": "service.artwork-design-setup"
+          }
+        ]
+      },
+      "appendPackagesAfterReview": [
+        {
+          "_key": "scenario-both",
+          "title": "Retail planning example",
+          "tier": "standard",
+          "environment": "both",
+          "summary": "Illustrative reference configuration; final specification and quantities require a quote.",
+          "_type": "solutionPackage",
+          "scenarioConfiguration": true,
+          "priceDisplay": "quote",
+          "items": [
+            {
+              "_key": "0",
+              "role": "Brand wall",
+              "quantityLabel": "1",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Define the visual identity of the temporary space.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-pw-001"
+              }
+            },
+            {
+              "_key": "1",
+              "role": "Promotional information",
+              "quantityLabel": "1–2",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Present product and campaign information.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-sd-001"
+              }
+            },
+            {
+              "_key": "2",
+              "role": "Entrance visibility",
+              "quantityLabel": "As needed",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "optional",
+              "reason": "Discuss outdoor wayfinding where permitted.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-fs-001"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "existingDocumentId": "solution.home-pt",
+      "canonicalSlug": "religious-community",
+      "aliases": [
+        "home-pt",
+        "wedding-and-celebration"
+      ],
+      "proposedFields": {
+        "scenarioIntro": "Plan welcoming displays for community gatherings, outreach programs and group activities.",
+        "needs": [
+          "Welcome",
+          "Wayfinding",
+          "Gathering space",
+          "Event information"
+        ],
+        "howProductsWorkTogether": "Coordinate entrance signs, event information and gathering areas. Discuss outdoor structures only where the venue permits them.",
+        "supportServices": [
+          {
+            "_key": "artwork",
+            "_type": "reference",
+            "_ref": "service.artwork-design-setup"
+          }
+        ]
+      },
+      "appendPackagesAfterReview": [
+        {
+          "_key": "scenario-both",
+          "title": "Community planning example",
+          "tier": "standard",
+          "environment": "both",
+          "summary": "Illustrative reference configuration; final specification and quantities require a quote.",
+          "_type": "solutionPackage",
+          "scenarioConfiguration": true,
+          "priceDisplay": "quote",
+          "items": [
+            {
+              "_key": "0",
+              "role": "Gathering area",
+              "quantityLabel": "As needed",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "optional",
+              "reason": "Discuss the outdoor gathering space and venue rules.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-at-001"
+              },
+              "alternative": {
+                "_type": "reference",
+                "_ref": "product.es-st-001"
+              }
+            },
+            {
+              "_key": "1",
+              "role": "Wayfinding",
+              "quantityLabel": "1–2",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Help visitors identify entrances.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-fs-001"
+              }
+            },
+            {
+              "_key": "2",
+              "role": "Event information",
+              "quantityLabel": "1+",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Communicate the event schedule and directions.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-sd-001"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "existingDocumentId": "solution.training-academy",
+      "canonicalSlug": "education-training",
+      "aliases": [
+        "training-academy",
+        "education-and-training"
+      ],
+      "proposedFields": {
+        "scenarioIntro": "Plan displays for schools, seminars, workshops, training programs and open days.",
+        "needs": [
+          "Institution branding",
+          "Presentation",
+          "Registration",
+          "Information display"
+        ],
+        "howProductsWorkTogether": "Connect a presentation background with registration and information displays; add outdoor wayfinding where appropriate.",
+        "supportServices": [
+          {
+            "_key": "artwork",
+            "_type": "reference",
+            "_ref": "service.artwork-design-setup"
+          }
+        ]
+      },
+      "appendPackagesAfterReview": [
+        {
+          "_key": "scenario-both",
+          "title": "Education planning example",
+          "tier": "standard",
+          "environment": "both",
+          "summary": "Illustrative reference configuration; final specification and quantities require a quote.",
+          "_type": "solutionPackage",
+          "scenarioConfiguration": true,
+          "priceDisplay": "quote",
+          "items": [
+            {
+              "_key": "0",
+              "role": "Presentation background",
+              "quantityLabel": "1",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Frame the presentation area.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-bd-001"
+              }
+            },
+            {
+              "_key": "1",
+              "role": "Registration and information",
+              "quantityLabel": "1–2",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "recommended",
+              "reason": "Guide visitors to registration and sessions.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-sd-001"
+              }
+            },
+            {
+              "_key": "2",
+              "role": "Outdoor wayfinding",
+              "quantityLabel": "As needed",
+              "quantityNote": "Reference quantity only; confirm against venue and budget.",
+              "requirement": "optional",
+              "reason": "Discuss signs for outdoor open days.",
+              "_type": "solutionPackageItem",
+              "product": {
+                "_type": "reference",
+                "_ref": "product.es-fs-001"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

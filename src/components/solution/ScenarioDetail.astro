@@ -1,0 +1,55 @@
+---
+import {solutionConfigurations} from '../../data/solutionConfigurations'
+import {scenarioCatalogQuery} from '../../sanity/queries/scenarioSolutions'
+import {sanityClient} from '../../sanity/client'
+import type {ScenarioCatalogQueryResult} from '../../sanity/sanity.types'
+import {urlFor} from '../../sanity/image'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {staticUi} from '../../i18n/static'
+import {solutionScenarios, canonicalSolutionSlug} from '../../data/solutionScenarios'
+import type {ScenarioSolutionQueryResult} from '../../sanity/sanity.types'
+interface Props { scenario: typeof solutionScenarios[number]; content?: ScenarioSolutionQueryResult; locale: Locale }
+const {scenario, content, locale} = Astro.props
+const t = (text: string) => staticUi(locale, text)
+const link = (path: string) => localizedPath(path, locale)
+const image = (value: NonNullable<ScenarioSolutionQueryResult>['heroImage']) => value?.asset ? urlFor(value.asset).width(1400).height(840).fit('crop').auto('format').url() : null
+const hero = image(content?.heroImage ?? null)
+const examples = solutionConfigurations[scenario.slug] ?? []
+const ids = [...new Set(examples.flatMap(pkg => pkg.items.flatMap(item => [item.productId, item.alternativeId].filter((id): id is string => Boolean(id)))))]
+const catalog = await sanityClient.fetch<ScenarioCatalogQueryResult>(scenarioCatalogQuery, {ids})
+type PublicPackage = NonNullable<NonNullable<ScenarioSolutionQueryResult>['packages']>[number]
+const fallbackPackages: PublicPackage[] = examples.map(pkg => ({...pkg, items: pkg.items.map(item => ({...item, requirement: item.requirement as 'required' | 'recommended' | 'optional',
+  product: catalog.products.find(p => p._id === item.productId) ?? null,
+  alternative: catalog.products.find(p => p._id === item.alternativeId) ?? null,
+}))}))
+const packages = (content?.packages?.length ? content.packages : fallbackPackages).filter(pkg => pkg.items?.some(i => i.product?.isActive === true && i.product.slug))
+const products = [...new Map(packages.flatMap(pkg => pkg.items ?? []).flatMap(i => i.product?.isActive === true && i.product.slug ? [i.product] : []).map(p => [p._id, p])).values()]
+const support = (content?.supportServices ?? catalog.support).filter(s => s?.isActive === true && s.slug)
+const services = [...new Map(products.flatMap(p => p.printingServices ?? []).filter(s => s?.isActive === true && s.slug).map(s => [s!._id, s!])).values()]
+const request = (pkg?: {title: string | null; _key: string}) => link('/contact') + '?' + new URLSearchParams({solution: scenario.title, ...(pkg ? {configuration: pkg.title ?? pkg._key} : {})}).toString()
+const needs = content?.needs?.length ? content.needs : scenario.needs
+const customization = content?.customizationOptions?.length ? content.customizationOptions : ['Venue dimensions and indoor / outdoor setting', 'Artwork, logo and visual placement', 'Reference quantities and budget', 'Destination and required event date']
+---
+<section class="section hero"><div class="container grid">
+  <div><p class="eyebrow">{t('Solutions')}</p><h1>{scenario.title}</h1><p class="body-l">{content?.scenarioIntro || t(scenario.intro)}</p>
+    <div class="actions"><a class="btn btn-coral" href={request()}>{t('Get a custom solution')}</a><a class="btn btn-outline" href="#combination">{t('Explore the setup')}</a></div>
+  </div>
+  <figure>{hero ? <img src={hero} alt={content?.heroImage?.alt || scenario.title} width="1400" height="840" fetchpriority="high" /> : <img src="/solutions/scene-placeholder.svg" alt={t('Scenario image placeholder')} width="1400" height="840"/>}<figcaption>{hero ? content?.heroImage?.caption : t('Planning placeholder — replace with an approved scene image.')}</figcaption></figure>
+</div></section>
+<section class="section"><div class="container"><p class="eyebrow">{t('Scenario introduction')}</p><h2>{t('Plan around your setting')}</h2><p>{content?.scenarioIntro || t(scenario.intro)}</p><h3>{t('What this solution needs')}</h3><ul class="chips">{needs.map(need => <li>{t(need)}</li>)}</ul></div></section>
+<section id="combination" class="section band"><div class="container"><h2>{t('Recommended product combination')}</h2><p>{t('Reference configurations guide the discussion. Final products and quantities are confirmed in your quote; these are not minimum order quantities.')}</p>
+  {packages.length ? packages.map(pkg => <article class="package"><h3>{pkg.title}</h3><p>{pkg.summary}</p><div class="cards">{(pkg.items ?? []).filter(i => i.product?.isActive === true && i.product.slug).map(item => <article><p class="eyebrow">{item.role}</p><h4><a href={link('/products/' + item.product!.slug)}>{item.product!.title}</a></h4><p>{t(item.requirement || 'recommended')}</p>{item.quantityLabel && <p>{t('Typical setup')}: {item.quantityLabel}</p>}<p>{item.quantityNote}</p><p>{item.reason}</p>{item.alternative?.isActive === true && item.alternative.slug && <p>{t('Alternative')}: <a href={link('/products/' + item.alternative.slug)}>{item.alternative.title}</a></p>}</article>)}</div><a class="btn btn-outline" href={request(pkg)}>{t('Discuss this configuration')}</a></article>) : <><p>{t('Product roles to discuss — catalogue references and quantities await review.')}</p><ul class="chips">{scenario.planningProducts.map(name => <li>{name}</li>)}</ul><a href={link('/products')}>{t('Explore products')}</a></>}
+  <h3>{t('How the products work together')}</h3><p>{content?.howProductsWorkTogether || t(scenario.together)}</p>
+  {image(content?.combinationImage ?? null) && <figure><img src={image(content?.combinationImage ?? null)!} alt={content?.combinationImage?.alt || t('Product combination')} width="1400" height="840" loading="lazy"/><figcaption>{content?.combinationImage?.caption}</figcaption></figure>}
+</div></section>
+<section class="section"><div class="container"><h2>{t('Complete the look with custom printing')}</h2><h3>{t('Product-level applicable services')}</h3>
+{services.length ? <div class="cards">{services.map(service => <article><h4><a href={link('/printing-services/' + service.slug)}>{service.title}</a></h4><p>{service.shortDescription}</p><p>{products.filter(p => p.printingServices?.some(s => s?._id === service._id)).map(p => p.title).join(' · ')}</p></article>)}</div> : <p>{t('Applicable printing is confirmed against each selected product, material and artwork.')}</p>}
+<h3>{t('Solution-level support services')}</h3>{support.length ? <ul>{support.map(s => <li><a href={link('/printing-services/' + s!.slug)}>{s!.title}</a><p>{s!.shortDescription}</p></li>)}</ul> : <p>{t('Discuss artwork preparation and project coordination in your inquiry.')}</p>}
+</div></section>
+<section class="section band"><div class="container"><h2>{t('Example configuration')}</h2>{scenario.slug === 'events-trade-shows' ? <div class="cards"><article><h3>{t('Indoor planning example')}</h3><p>{t('Main visual wall → information displays → optional photo background.')}</p></article><article><h3>{t('Outdoor planning example')}</h3><p>{t('Event tent → flags for visibility → directional display. Confirm venue rules and installation requirements.')}</p></article></div> : <p>{t(scenario.together)}</p>}<p>{t('Illustrative roles only. Select actual products and confirm quantities, printing and installation in the RFQ.')}</p><h3>{t('Customization options')}</h3><ul>{customization.map(option => <li>{t(option)}</li>)}</ul></div></section>
+{content?.gallery?.length && <section class="section"><div class="container cards">{content.gallery.filter(img => img.asset).map(img => <figure><img src={image(img)!} alt={img.alt || scenario.title} width="1400" height="840" loading="lazy"/><figcaption>{img.caption}</figcaption></figure>)}</div></section>}
+<section class="section"><div class="container"><h2>{t('Related products')}</h2>{products.length ? <div class="cards">{products.map(product => <article>{product.mainImage?.asset && <img src={urlFor(product.mainImage.asset).width(500).height(350).fit('crop').url()} alt={product.mainImage.alt || product.title || ''} width="500" height="350" loading="lazy"/>}<h3><a href={link('/products/' + product.slug)}>{product.title}</a></h3></article>)}</div> : <a href={link('/products')}>{t('Browse the product catalogue')}</a>}<h2>{t('Related solutions')}</h2><ul class="chips">{(content?.relatedSolutions?.length ? content.relatedSolutions.filter(s => s?.slug).map(s => ({title: s!.title, slug: canonicalSolutionSlug(s!.slug!)})) : solutionScenarios.filter(s => s.slug !== scenario.slug)).map(s => <li><a href={link('/solutions/' + s.slug)}>{s.title}</a></li>)}</ul></div></section>
+<section class="section band"><div class="container"><h2>{t('Build your custom display solution')}</h2><p>{t('Share your venue, reference quantities, artwork, destination and event date. Product specifications, minimums and lead time will be confirmed in your quote.')}</p><a class="btn btn-coral" href={request()}>{t('Request a solution quote')}</a></div></section>
+<style>
+  h1{max-width:20ch} h2,h3{margin-block:1rem} p{max-width:75ch} .grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:center}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:1.5rem;margin-block:1.5rem}.cards article,.package{padding:1.5rem;border:1px solid var(--color-ink-200);border-radius:var(--radius-md)}.actions,.chips{display:flex;gap:1rem;flex-wrap:wrap;margin-block:1.5rem}.chips{list-style:none;padding:0}.chips li{padding:.7rem 1rem;border:1px solid var(--color-ink-200)}figure{margin:0}img{max-width:100%;height:auto;border-radius:var(--radius-md)}figcaption{font-size:.85rem;color:var(--color-ink-600)}.placeholder{aspect-ratio:5/3;display:grid;place-content:center;text-align:center;border:2px dashed var(--color-ink-200);background:var(--color-paper-2);padding:2rem}@media(max-width:760px){.grid{grid-template-columns:1fr}}
+</style>

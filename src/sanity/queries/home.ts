@@ -139,7 +139,7 @@ export const homeSolutionsQuery = defineQuery(`
   ] | order(coalesce(sortOrder, 9999) asc, _createdAt asc){
     _id,
     title,
-    "slug": slug.current,
+    "slug": select(slug.current in ["boutique-studio", "event-activation"] => "wedding-party", slug.current in ["franchise", "trade-show-exhibitor"] => "events-trade-shows", slug.current in ["rehab-clinic", "photography-and-film"] => "photography-film", slug.current in ["hotel-spa", "retail-pop-up"] => "retail-pop-up-stores", slug.current in ["home-pt", "wedding-and-celebration"] => "religious-community", slug.current in ["training-academy", "education-and-training"] => "education-training", slug.current),
     summary,
     audience,
     "coverImage": coalesce(

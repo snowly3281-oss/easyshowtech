@@ -3,7 +3,10 @@ import { BlockContentIcon } from '@sanity/icons'
 import { mediaField } from 'sanity-plugin-media'
 
 const tierOptions = [
-  { title: '紧凑型 Compact', value: 'compact' },
+  { title: 'Starter', value: 'starter' },
+  { title: 'Standard', value: 'standard' },
+  { title: 'Large / Premium', value: 'large' },
+  { title: '紧凑型 Compact（旧）', value: 'compact' },
   { title: '标准推荐 Recommended', value: 'recommended' },
   { title: '扩展型 Expanded', value: 'expanded' },
 ]
@@ -28,6 +31,8 @@ export const solutionPackage = defineType({
     { name: 'delivery', title: '交付、平面图与文件' },
   ],
   fields: [
+    defineField({name: 'scenarioConfiguration', title: '场景推荐配置', type: 'boolean', group: 'overview', description: '人工核对产品和参考数量后开启。场景页只展示开启此项的配置，不将旧设备配置自动当成展示产品方案。'}),
+    defineField({name: 'environment', title: '使用环境', type: 'string', group: 'overview', options: {list: ['indoor', 'outdoor', 'both']}}),
     defineField({
       name: 'title',
       title: '配置单名称',

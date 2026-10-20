@@ -4,6 +4,8 @@ import cloudflare from '@astrojs/cloudflare';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 
+import {solutionScenarios} from './src/data/solutionScenarios.ts';
+
 import tailwindcss from '@tailwindcss/vite';
 
 // https://astro.build/config
@@ -12,6 +14,7 @@ export default defineConfig({
   // (BaseLayout uses Astro.site). Filtered catalog URLs canonicalize to
   // https://easyshowtech.com/products.
   site: 'https://easyshowtech.pages.dev',
+  redirects: Object.fromEntries(solutionScenarios.flatMap(s => s.aliases.map(alias => [`/solutions/${alias}`, {status: 301, destination: `/solutions/${s.slug}`} ]))),
 
 
   // English remains at the root; the four approved additional languages use
@@ -39,7 +42,8 @@ export default defineConfig({
         return (
           !new Set(['/warranty', '/returns', '/shipping', '/thank-you']).has(
             pathname,
-          ) && !pathname.startsWith('/configurations/')
+          ) && !pathname.startsWith('/configurations/') &&
+          !solutionScenarios.some(s => s.aliases.some(alias => pathname.endsWith(`/solutions/${alias}`)))
         );
       },
     }),
@@ -127,6 +131,8 @@ export default defineConfig({
       // exist. Eager pre-bundling makes the dependency graph stable before the
       // first request. Remove this list when upgrading to Astro 7 + adapter 14.
       include: [
+        '@sanity/visual-editing',
+        '@sanity/visual-editing/react',
         // Adapter 13.7's own Workerd pre-bundle list. `noDiscovery` prevents
         // the adapter from injecting it, so keep the list explicit and stable.
         '@astrojs/cloudflare/image-service-workerd',
@@ -179,11 +185,6 @@ export default defineConfig({
         '@sanity/image-url',
         'groq',
         '@portabletext/to-html',
-      ],
-      // Include @sanity/visual-editing to fix lodash ESM/CJS interop issues
-      include: [
-        '@sanity/visual-editing',
-        '@sanity/visual-editing/react',
       ],
     },
   }

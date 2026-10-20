@@ -1,3 +1,4 @@
+import {canonicalSolutionSlug} from './data/solutionScenarios'
 import { PUBLIC_SITE_INDEXING_ENABLED } from 'astro:env/client'
 import { defineMiddleware } from 'astro:middleware'
 
@@ -10,6 +11,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const canonicalUrl = new URL(context.url)
     canonicalUrl.hostname = 'easyshowtech.pages.dev'
     return context.redirect(canonicalUrl.toString(), 301)
+  }
+
+  const match = context.url.pathname.match(/^(\/(?:es|fr|de|it))?\/solutions\/([^/]+)\/?$/)
+  if (match) {
+    const canonical = canonicalSolutionSlug(match[2])
+    if (canonical !== match[2]) {
+      const target = new URL(context.url)
+      target.pathname = `${match[1] ?? ''}/solutions/${canonical}`
+      return context.redirect(target.toString(), 301)
+    }
   }
 
   const response = await next()

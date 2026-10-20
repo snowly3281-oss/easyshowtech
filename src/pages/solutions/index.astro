@@ -1,4 +1,5 @@
 ---
+import {solutionScenarios} from '../../data/solutionScenarios';
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import PageBuilder from "../../components/blocks/PageBuilder.astro";
 import Icon from "../../components/Icon.astro";
@@ -24,14 +25,18 @@ const [solutions, page] = await Promise.all([
   getSitePage("solutions", locale),
 ]);
 
-const list = solutions ?? [];
+const list = solutionScenarios.map(scenario => ({
+  slug: scenario.slug,
+  title: scenario.title,
+  summary: scenario.intro,
+}));
 const eyebrow = page?.hero?.eyebrow || t("Solutions");
 const pageTitle =
-  page?.hero?.heading || page?.title || t("A complete studio starts with the room.");
+  page?.hero?.heading || page?.title || t("Display solutions built around your scenario.");
 const pageIntro =
   page?.hero?.subheading ||
   page?.introduction ||
-  t("Choose your setting to see a recommended equipment mix, area range and a faster route to a confirmed quote.");
+  t("Choose your setting to explore product combinations, custom printing and a tailored quote.");
 const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
 const metaTitle = page?.seo?.metaTitle || `${pageTitle} — EasyShow`;
 const metaDescription = page?.seo?.metaDescription || pageIntro;
@@ -80,14 +85,14 @@ const metaDescription = page?.seo?.metaDescription || pageIntro;
   <section class="section band on-paper">
     <div class="container solutions-cta">
       <div>
-        <p class="eyebrow">{t("Floor-plan service")}</p>
-        <h2>{t("Prefer us to choose the equipment?")}</h2>
+        <p class="eyebrow">{t("Custom display planning")}</p>
+        <h2>{t("Need help planning your display?")}</h2>
       </div>
       <div>
         <p>
-          {t("Upload the real room. Coral will review circulation, class capacity and equipment mix before preparing a tailored RFQ.")}
+          {t("Share your venue, artwork, reference quantities and event date to discuss a tailored display configuration.")}
         </p>
-        <a class="btn btn-coral" href={localizedPath("/contact?inquiry=floorplan", locale)}>{t("Upload a floor plan")}</a>
+        <a class="btn btn-coral" href={localizedPath("/contact", locale)}>{t("Request a solution")}</a>
       </div>
     </div>
   </section>

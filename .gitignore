@@ -32,3 +32,7 @@ sessions/
 # 临时调试脚本
 scripts/_inspect-all.mjs
 scripts/_inspect-sanity.mjs
+# Environment-specific credentials must never enter a release commit.
+.env.*
+!.env.example
+.dev.vars.*

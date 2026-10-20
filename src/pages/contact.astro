@@ -190,6 +190,15 @@ const phone = settings?.phone ?? siteSettings.phone;
             setHidden('[data-inq-upholstery]', uph)
             setHidden('[data-inq-kind]', inquiryKind)
             setHidden('[data-inq-source]', location.href)
+            if (solution) {
+              const configuration = params.get('configuration') ?? ''
+              const subject = form.querySelector('[data-inq-subject]') as HTMLInputElement | null
+              if (subject) subject.value = `Solution quote — ${solution}${configuration ? ` — ${configuration}` : ''}`
+              const message = form.querySelector('textarea[name="message"]') as HTMLTextAreaElement | null
+              if (message && !message.value) message.value = `Solution: ${solution}\n${configuration ? `Configuration: ${configuration}\n` : ''}Venue / indoor or outdoor:\nReference quantities:\nArtwork:\nDestination:\nEvent date:\n`
+              const banner = form.querySelector('[data-inq-prefill]') as HTMLElement | null
+              if (banner) { banner.textContent = [solution, configuration].filter(Boolean).join(' · '); banner.hidden = false }
+            }
             if (product) {
               const subj = form.querySelector('[data-inq-subject]') as HTMLInputElement | null
               if (subj) subj.value = `Quote request — ${product}`
