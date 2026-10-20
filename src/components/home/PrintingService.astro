@@ -26,6 +26,7 @@
 import type { HomeServicesQueryResult } from '../../sanity/sanity.types'
 import {localizedPath, resolveLocale} from '../../i18n/config'
 import {staticUi} from '../../i18n/static'
+import MediaBox from '../product/MediaBox.astro'
 
 interface Props {
   services?: HomeServicesQueryResult
@@ -85,36 +86,47 @@ const trimmedMaterials = (s: HomeServicesQueryResult[number]): string[] =>
             return (
               <li class="ps__card">
                 <a href={cardHref(s)} class="ps__link">
-                  <div class="ps__top">
-                    <span class="ps__num">{pad2(i)}</span>
-                    <span class="ps__rule" aria-hidden="true" />
+                  <div class="ps__media">
+                    <MediaBox
+                      source={s.cardImage}
+                      alt={s.cardImage?.alt ?? s.title}
+                      ratio="4 / 3"
+                      width={620}
+                    />
                   </div>
 
-                  <h3 class="ps__name">{s.title}</h3>
-
-                  {teaser && <p class="ps__teaser">{teaser}</p>}
-                  {s.shortDescription && <p class="ps__desc">{s.shortDescription}</p>}
-
-                  {mats.length > 0 ? (
-                    <ul class="ps__mats" aria-label={t('Supported materials')}>
-                      {mats.map((m) => (
-                        <li class="ps__mat">{m}</li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div class="ps__mats ps__mats--empty" aria-hidden="true">
-                      {/* Reserved placeholder so cards with no materials
-                          (e.g. Artwork Design & Setup) keep the same height
-                          as siblings and the rail doesn't stagger. */}
+                  <div class="ps__body">
+                    <div class="ps__top">
+                      <span class="ps__num">{pad2(i)}</span>
+                      <span class="ps__rule" aria-hidden="true" />
                     </div>
-                  )}
 
-                  <span class="ps__arrowico" aria-hidden="true">
-                    {t('View service')}
-                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                      <path d="M3 13 13 3M13 3H6M13 3v7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                  </span>
+                    <h3 class="ps__name">{s.title}</h3>
+
+                    {teaser && <p class="ps__teaser">{teaser}</p>}
+                    {s.shortDescription && <p class="ps__desc">{s.shortDescription}</p>}
+
+                    {mats.length > 0 ? (
+                      <ul class="ps__mats" aria-label={t('Supported materials')}>
+                        {mats.map((m) => (
+                          <li class="ps__mat">{m}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div class="ps__mats ps__mats--empty" aria-hidden="true">
+                        {/* Reserved placeholder so cards with no materials
+                            (e.g. Artwork Design & Setup) keep the same height
+                            as siblings and the rail doesn't stagger. */}
+                      </div>
+                    )}
+
+                    <span class="ps__arrowico" aria-hidden="true">
+                      {t('View service')}
+                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                        <path d="M3 13 13 3M13 3H6M13 3v7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                  </div>
                 </a>
               </li>
             )
@@ -235,7 +247,6 @@ const trimmedMaterials = (s: HomeServicesQueryResult[number]): string[] =>
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding: var(--space-6) var(--space-5) var(--space-5);
     color: inherit;
     text-decoration: none;
     transition: background 0.15s ease;
@@ -250,11 +261,32 @@ const trimmedMaterials = (s: HomeServicesQueryResult[number]): string[] =>
     color: var(--color-coral);
   }
 
+  /* Card media — sits flush with the top edge, fixed ratio, anchored. */
+  .ps__media {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--color-paper-2, #ece7dd);
+  }
+  .ps__media :global(.media) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .ps__body {
+    padding: var(--space-5) var(--space-5) var(--space-5);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
   .ps__top {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-4);
   }
   .ps__num {
     font-size: var(--text-eyebrow, 12px);
