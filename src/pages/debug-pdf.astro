@@ -1,7 +1,7 @@
 ---
-import { sanityClient } from '../../sanity/client'
-import { printingServiceBySlugQuery } from '../../sanity/queries/displayCatalog'
-import { urlFor } from '../../sanity/image'
+import { sanityClient } from '../sanity/client'
+import { printingServiceBySlugQuery } from '../sanity/queries/displayCatalog'
+import { urlFor } from '../sanity/image'
 
 const service = await sanityClient.fetch(
   printingServiceBySlugQuery,
