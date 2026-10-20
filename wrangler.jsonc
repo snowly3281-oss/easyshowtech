@@ -40,5 +40,9 @@
 
   "observability": {
     "enabled": true
+  },
+
+  "vars": {
+    "PUBLIC_SITE_INDEXING_ENABLED": "true"
   }
 }
