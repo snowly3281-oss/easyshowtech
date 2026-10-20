@@ -13,12 +13,23 @@ interface Props {
   width?: number
   height?: number
   ratio?: string
+  /** "cover" (default) crops to fill the box; "contain" shows the full image. */
+  objectFit?: 'cover' | 'contain'
   class?: string
   /** Local/static image URL to use when the Sanity asset is missing. */
   fallback?: string
 }
 
-const { source, alt, width = 1000, height, ratio = '4 / 3', class: className, fallback } = Astro.props
+const {
+  source,
+  alt,
+  width = 1000,
+  height,
+  ratio = '4 / 3',
+  objectFit = 'cover',
+  class: className,
+  fallback,
+} = Astro.props
 const asset = source?.asset ?? null
 const [ratioWidth, ratioHeight] = ratio
   .split('/')
@@ -27,7 +38,7 @@ const intrinsicHeight =
   height ??
   (Number.isFinite(ratioWidth) &&
   Number.isFinite(ratioHeight) &&
-  ratioWidth > 0
+    ratioWidth > 0
     ? Math.round((width * ratioHeight) / ratioWidth)
     : undefined)
 
@@ -50,7 +61,7 @@ const src = url ?? fallback ?? null
       height={intrinsicHeight}
       loading="lazy"
       decoding="async"
-      style={`aspect-ratio:${ratio}`}
+      style={`aspect-ratio:${ratio};object-fit:${objectFit}`}
     />
   ) : (
     <div class:list={['media media--ph', className]} role="img" aria-label={alt ?? 'Photography coming soon'} style={`aspect-ratio:${ratio}`} />
@@ -61,7 +72,7 @@ const src = url ?? fallback ?? null
   .media {
     display: block;
     width: 100%;
-    object-fit: cover;
+    background: var(--color-paper-2, #ece7dd);
   }
   .media--ph {
     background: var(--color-paper-2, #ece7dd);

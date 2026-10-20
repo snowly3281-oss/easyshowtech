@@ -58,7 +58,11 @@ export const homeSeriesQuery = defineQuery(`
     title,
     "slug": slug.current,
     shortDescription,
-    "cardImage": cardImage{ asset, alt },
+    "cardImage": cardImage{
+      asset,
+      alt,
+      "aspect": asset->metadata.dimensions.aspectRatio
+    },
     "skuCount": count(*[
       _type == "product" &&
       coalesce(language, "en") == $language &&

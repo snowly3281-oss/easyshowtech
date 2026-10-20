@@ -13,6 +13,28 @@ const { intro, series } = Astro.props
 const locale = resolveLocale(undefined, Astro.url.pathname)
 const t = (english: string) => staticUi(locale, english)
 const items = series ?? []
+
+/**
+ * Decide card image ratio:
+ *  - landscape asset (aspect >= 1) → 4 / 3, cropped with cover
+ *  - portrait asset (aspect < 1) → use the real ratio up to a sane max,
+ *    rendered with contain so the whole image is visible (no clipping of
+ *    tall products like flags or sign stands).
+ */
+function pickCardRatio(aspect: number | null | undefined): {
+  ratio: string
+  objectFit: 'cover' | 'contain'
+} {
+  if (typeof aspect !== 'number' || !Number.isFinite(aspect) || aspect <= 0) {
+    return { ratio: '4 / 3', objectFit: 'cover' }
+  }
+  if (aspect >= 1) {
+    return { ratio: '4 / 3', objectFit: 'cover' }
+  }
+  // Portrait: render at real aspect, contained, cap so it doesn't dwarf cards.
+  const safe = Math.max(0.5, Math.min(aspect, 0.85))
+  return { ratio: `${safe.toFixed(3)} / 1`, objectFit: 'contain' }
+}
 ---
 
 {
@@ -36,27 +58,36 @@ const items = series ?? []
       {/* Full-bleed carousel: the rail spans full width; padding aligns the
           first card with the container content, and cards bleed past both edges. */}
       <ul class="cat__rail" data-cat-rail>
-        {items.map((s) => (
-          <li class="cat__card">
-            <a href={`${localizedPath('/products', locale)}?series=${s.slug ?? ''}`} class="cat__link">
-              <MediaBox source={s.cardImage} alt={s.title} ratio="4 / 3" width={620} />
-              <div class="cat__body">
-                <p class="cat__name">{s.title}</p>
-                {s.shortDescription && <p class="cat__desc">{s.shortDescription}</p>}
-                <div class="cat__foot">
-                  <span class="cat__sku nums">
-                    {`${s.skuCount} ${s.skuCount === 1 ? 'SKU' : 'SKUs'}`}
-                  </span>
-                  <span class="cat__arrowico" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M4.5 11.5 11.5 4.5M11.5 4.5H6M11.5 4.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                  </span>
+        {items.map((s) => {
+          const card = pickCardRatio(s.cardImage?.aspect)
+          return (
+            <li class="cat__card">
+              <a href={`${localizedPath('/products', locale)}?series=${s.slug ?? ''}`} class="cat__link">
+                <MediaBox
+                  source={s.cardImage}
+                  alt={s.title}
+                  ratio={card.ratio}
+                  objectFit={card.objectFit}
+                  width={620}
+                />
+                <div class="cat__body">
+                  <p class="cat__name">{s.title}</p>
+                  {s.shortDescription && <p class="cat__desc">{s.shortDescription}</p>}
+                  <div class="cat__foot">
+                    <span class="cat__sku nums">
+                      {`${s.skuCount} ${s.skuCount === 1 ? 'SKU' : 'SKUs'}`}
+                    </span>
+                    <span class="cat__arrowico" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M4.5 11.5 11.5 4.5M11.5 4.5H6M11.5 4.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </span>
+                  </div>
                 </div>
-              </div>
-            </a>
-          </li>
-        ))}
+              </a>
+            </li>
+          )
+        })}
       </ul>
     </section>
   )
@@ -207,6 +238,14 @@ const items = series ?? []
   }
   .cat__link:hover {
     border-color: var(--color-coral);
+  }
+  /* Cap card-media height so a portrait product image (e.g. flag pole) can't
+     dwarf the rest of the carousel. Cover keeps the box full, contain lets
+     the image sit inside at its real aspect ratio. */
+  .cat__link :global(.media) {
+    max-height: 220px;
+    width: 100%;
+    object-fit: contain;
   }
   .cat__body {
     padding: var(--space-4);
