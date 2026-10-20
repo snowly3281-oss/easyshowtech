@@ -67,7 +67,8 @@ function pickCardRatio(aspect: number | null | undefined): {
                   source={s.cardImage}
                   alt={s.title}
                   ratio={card.ratio}
-                  objectFit={card.objectFit}
+                  objectFit={s.slug === 'chairs' ? 'contain' : card.objectFit}
+                  class={s.slug === 'chairs' ? 'cat__chair-image' : undefined}
                   width={620}
                 />
                 <div class="cat__body">
@@ -137,6 +138,7 @@ function pickCardRatio(aspect: number | null | undefined): {
 </script>
 
 <style>
+  :global(img.cat__chair-image) { background: #f5f2ed; }
   .cat__head {
     display: flex;
     justify-content: space-between;

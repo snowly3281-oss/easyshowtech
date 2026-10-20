@@ -1,0 +1,38 @@
+{
+  "purpose": "Image replacement audit only; not a Sanity import file",
+  "assetId": "image-fb0caf9d66397d584fc955ec6a99d9da12c3affb-1254x1254-png",
+  "assetUrl": "https://cdn.sanity.io/images/w8rk6k6z/production/fb0caf9d66397d584fc955ec6a99d9da12c3affb-1254x1254.png",
+  "localAsset": "/images/products/director-chair-black-silver-studio.png",
+  "changes": [
+    {
+      "documentId": "product.es-ch-001",
+      "revision": "gKQ1k1LHjCnkLEwKZw1qHa",
+      "field": "mainImage",
+      "previousImage": {
+        "_type": "image",
+        "alt": "Custom printed director's chair with natural wood frame and black teal graphic fabric",
+        "asset": {
+          "_ref": "image-27a950617e975d845cbfb2b0cf507e0e42472888-1312x1199-png",
+          "_type": "reference"
+        }
+      },
+      "newAssetId": "image-fb0caf9d66397d584fc955ec6a99d9da12c3affb-1254x1254-png",
+      "newAlt": "Tall director chair with a black fabric seat and backrest, silver metal frame and padded armrests"
+    },
+    {
+      "documentId": "series.chairs",
+      "revision": "GPqPjmhHkD02bVdiKLJdY4",
+      "field": "cardImage",
+      "previousImage": {
+        "_type": "image",
+        "alt": "Custom printed director's chair with natural wood frame and black teal graphic fabric",
+        "asset": {
+          "_ref": "image-27a950617e975d845cbfb2b0cf507e0e42472888-1312x1199-png",
+          "_type": "reference"
+        }
+      },
+      "newAssetId": "image-fb0caf9d66397d584fc955ec6a99d9da12c3affb-1254x1254-png",
+      "newAlt": "Tall director chair with a black fabric seat and backrest, silver metal frame and padded armrests"
+    }
+  ]
+}
