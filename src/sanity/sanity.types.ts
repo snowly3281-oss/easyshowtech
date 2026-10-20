@@ -3205,7 +3205,7 @@ export type ProductBySlugQueryResult = {
 
 // Source: ../src/sanity/queries/scenarioSolutions.ts
 // Variable: scenarioSolutionQuery
-// Query: *[_type == "solution" && coalesce(language, "en") == $language && (slug.current == $slug || slug.current in $aliases || _id == $documentId)]  | order((slug.current == $slug) desc)[0]{    _id, title, scenarioIntro, needs, howProductsWorkTogether, customizationOptions,    heroImage{asset, alt, caption}, combinationImage{asset, alt, caption},    gallery[]{_key, asset, alt, caption},    seo{metaTitle, metaDescription, ogImage{asset, alt}},    supportServices[]->{_id, title, "slug": slug.current, shortDescription, isActive},    relatedSolutions[]->{title, "slug": slug.current},    packages[scenarioConfiguration == true]{      _key, title, tier, summary, environment,      items[]{_key, role, quantityLabel, quantityNote, requirement, reason,        alternative->{title, "slug": slug.current, isActive},        product->{_id, title, "slug": slug.current, isActive, mainImage{asset, alt},          printingServices[]->{_id, title, "slug": slug.current, shortDescription, isActive}        }      }    }  }
+// Query: *[_type == "solution" && coalesce(language, "en") == $language && (slug.current == $slug || slug.current in $aliases || _id == $documentId)]  | order((slug.current == $slug) desc)[0]{    _id, title, scenarioIntro, needs, howProductsWorkTogether, customizationOptions,    "heroImage": select(      defined(heroImage.asset._ref) => heroImage{asset, alt, caption},      defined(coverImage.asset._ref) => coverImage{asset, alt, "caption": null},      pageBuilder[_type == "heroBlock"][0].backgroundImage{asset, alt, "caption": null}    ),    combinationImage{asset, alt, caption},    gallery[]{_key, asset, alt, caption},    seo{metaTitle, metaDescription, ogImage{asset, alt}},    supportServices[]->{_id, title, "slug": slug.current, shortDescription, isActive},    relatedSolutions[]->{title, "slug": slug.current},    packages[scenarioConfiguration == true]{      _key, title, tier, summary, environment,      items[]{_key, role, quantityLabel, quantityNote, requirement, reason,        alternative->{title, "slug": slug.current, isActive},        product->{_id, title, "slug": slug.current, isActive, mainImage{asset, alt},          printingServices[]->{_id, title, "slug": slug.current, shortDescription, isActive}        }      }    }  }
 export type ScenarioSolutionQueryResult = {
   _id: string;
   title: string | null;
@@ -3213,11 +3213,23 @@ export type ScenarioSolutionQueryResult = {
   needs: Array<string> | null;
   howProductsWorkTogether: string | null;
   customizationOptions: Array<string> | null;
-  heroImage: {
-    asset: SanityImageAssetReference | null;
-    alt: string | null;
-    caption: string | null;
-  } | null;
+  heroImage:
+    | {
+        asset: SanityImageAssetReference;
+        alt: string | null;
+        caption: null;
+      }
+    | {
+        asset: SanityImageAssetReference;
+        alt: string | null;
+        caption: string | null;
+      }
+    | {
+        asset: SanityImageAssetReference | null;
+        alt: string | null;
+        caption: null;
+      }
+    | null;
   combinationImage: {
     asset: SanityImageAssetReference | null;
     alt: string | null;
@@ -3726,7 +3738,7 @@ declare module "@sanity/client" {
     '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    isActive == true &&\n    defined(slug.current)\n  ]{ "slug": slug.current }\n': ProductPathsQueryResult;
     '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    isActive == true\n  ] | order(sortOrder asc, title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    sku,\n    summary,\n    "seriesTitle": series->title,\n    "seriesSlug": series->slug.current,\n    "serviceSlugs": printingServices[]->slug.current,\n    mainImage{ asset, alt },\n    priceDisplay,\n    price,\n    priceMin,\n    priceMax,\n    currency,\n    isFeatured,\n    sortOrder,\n  }\n': ProductListQueryResult;
     '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    slug.current == $slug &&\n    isActive == true\n  ][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    sku,\n    summary,\n    "seriesTitle": series->title,\n    "seriesSlug": series->slug.current,\n    "seriesDescription": series->description,\n    "serviceTitles": printingServices[]->title,\n    "serviceSlugs": printingServices[]->slug.current,\n    productionLeadTime,\n    priceDisplay,\n    price,\n    priceMin,\n    priceMax,\n    currency,\n    priceUnit,\n    moq,\n    warranty,\n    mainImage{ asset, alt },\n    galleryImages[]{ _key, image, alt, label },\n    keyFeatures[]{ _key, title, description },\n    keySpecs[]{ _key, label, value, note },\n    variants[]{ _key, variantName, sku, attributes, isDefault, image{ asset, alt } },\n    materials,\n    customizationOptions,\n    "printingServices": printingServices[]->{\n      _id,\n      title,\n      "slug": slug.current,\n      shortDescription,\n    },\n    description,\n    metaTitle,\n    metaDescription,\n    ogImage{ asset, alt },\n    brand,\n    mpn,\n    gtin13,\n    "related": select(\n      count(relatedProducts) > 0 => relatedProducts[]->{\n        _id, title, "slug": slug.current, sku,\n        "seriesTitle": series->title,\n        "seriesSlug": series->slug.current,\n        mainImage{ asset, alt },\n        priceDisplay, price, priceMin, priceMax, currency\n      },\n      *[\n        _type == "product" &&\n        coalesce(language, "en") == $language &&\n        isActive == true &&\n        series._ref == ^.series._ref &&\n        _id != ^._id\n      ] | order(sortOrder asc, title asc)[0...3]{\n        _id, title, "slug": slug.current, sku,\n        "seriesTitle": series->title,\n        "seriesSlug": series->slug.current,\n        mainImage{ asset, alt },\n        priceDisplay, price, priceMin, priceMax, currency\n      }\n    )\n  }\n': ProductBySlugQueryResult;
-    '\n  *[_type == "solution" && coalesce(language, "en") == $language && (slug.current == $slug || slug.current in $aliases || _id == $documentId)]\n  | order((slug.current == $slug) desc)[0]{\n    _id, title, scenarioIntro, needs, howProductsWorkTogether, customizationOptions,\n    heroImage{asset, alt, caption}, combinationImage{asset, alt, caption},\n    gallery[]{_key, asset, alt, caption},\n    seo{metaTitle, metaDescription, ogImage{asset, alt}},\n    supportServices[]->{_id, title, "slug": slug.current, shortDescription, isActive},\n    relatedSolutions[]->{title, "slug": slug.current},\n    packages[scenarioConfiguration == true]{\n      _key, title, tier, summary, environment,\n      items[]{_key, role, quantityLabel, quantityNote, requirement, reason,\n        alternative->{title, "slug": slug.current, isActive},\n        product->{_id, title, "slug": slug.current, isActive, mainImage{asset, alt},\n          printingServices[]->{_id, title, "slug": slug.current, shortDescription, isActive}\n        }\n      }\n    }\n  }\n': ScenarioSolutionQueryResult;
+    '\n  *[_type == "solution" && coalesce(language, "en") == $language && (slug.current == $slug || slug.current in $aliases || _id == $documentId)]\n  | order((slug.current == $slug) desc)[0]{\n    _id, title, scenarioIntro, needs, howProductsWorkTogether, customizationOptions,\n    "heroImage": select(\n      defined(heroImage.asset._ref) => heroImage{asset, alt, caption},\n      defined(coverImage.asset._ref) => coverImage{asset, alt, "caption": null},\n      pageBuilder[_type == "heroBlock"][0].backgroundImage{asset, alt, "caption": null}\n    ),\n    combinationImage{asset, alt, caption},\n    gallery[]{_key, asset, alt, caption},\n    seo{metaTitle, metaDescription, ogImage{asset, alt}},\n    supportServices[]->{_id, title, "slug": slug.current, shortDescription, isActive},\n    relatedSolutions[]->{title, "slug": slug.current},\n    packages[scenarioConfiguration == true]{\n      _key, title, tier, summary, environment,\n      items[]{_key, role, quantityLabel, quantityNote, requirement, reason,\n        alternative->{title, "slug": slug.current, isActive},\n        product->{_id, title, "slug": slug.current, isActive, mainImage{asset, alt},\n          printingServices[]->{_id, title, "slug": slug.current, shortDescription, isActive}\n        }\n      }\n    }\n  }\n': ScenarioSolutionQueryResult;
     '{\n  "products": *[_type == "product" && _id in $ids && isActive == true]{\n    _id, title, "slug": slug.current, isActive, mainImage{asset, alt},\n    printingServices[]->{_id, title, "slug": slug.current, shortDescription, isActive}\n  },\n  "support": *[_type == "service" && _id == "service.artwork-design-setup" && isActive == true]{\n    _id, title, "slug": slug.current, shortDescription, isActive\n  }\n}': ScenarioCatalogQueryResult;
     '\n  *[_type == "siteSettings"][0]{\n    showPrices, salesEmail, phone, whatsapp, responseTime, companyAddress,\n    frameFinishes[]{ _key, name, hex },\n    upholsteryColors[]{ _key, name, hex },\n    socialLinks[]{ _key, platform, label, url }\n  }\n': SiteSettingsQueryResult;
     '\n  *[\n    _type == "solution" &&\n    coalesce(language, "en") == $language &&\n    defined(slug.current)\n  ]{ "slug": slug.current }\n': SolutionPathsQueryResult;

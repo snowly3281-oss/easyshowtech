@@ -5,7 +5,12 @@ export const scenarioSolutionQuery = defineQuery(`
   *[_type == "solution" && coalesce(language, "en") == $language && (slug.current == $slug || slug.current in $aliases || _id == $documentId)]
   | order((slug.current == $slug) desc)[0]{
     _id, title, scenarioIntro, needs, howProductsWorkTogether, customizationOptions,
-    heroImage{asset, alt, caption}, combinationImage{asset, alt, caption},
+    "heroImage": select(
+      defined(heroImage.asset._ref) => heroImage{asset, alt, caption},
+      defined(coverImage.asset._ref) => coverImage{asset, alt, "caption": null},
+      pageBuilder[_type == "heroBlock"][0].backgroundImage{asset, alt, "caption": null}
+    ),
+    combinationImage{asset, alt, caption},
     gallery[]{_key, asset, alt, caption},
     seo{metaTitle, metaDescription, ogImage{asset, alt}},
     supportServices[]->{_id, title, "slug": slug.current, shortDescription, isActive},
