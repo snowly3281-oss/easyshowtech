@@ -80,12 +80,12 @@ export const productsParts: NavLink[] = [
 
 /* ---- Solutions menu ------------------------------------------------------ */
 export const solutionsByCustomer: NavLink[] = [
-  { label: "Wedding & Party", href: "/solutions/boutique-studio" },
-  { label: "Events & Trade Shows", href: "/solutions/franchise" },
-  { label: "Photography & Film", href: "/solutions/rehab-clinic" },
-  { label: "Retail & Pop-Up Stores", href: "/solutions/hotel-spa" },
-  { label: "Religious & Community", href: "/solutions/home-pt" },
-  { label: "Education & Training", href: "/solutions/training-academy" },
+  { label: "Wedding & Party",         href: "/solutions/event-activation" },
+  { label: "Events & Trade Shows",     href: "/solutions/trade-show-exhibitor" },
+  { label: "Photography & Film",       href: "/solutions/photography-and-film" },
+  { label: "Retail & Pop-Up Stores",  href: "/solutions/retail-pop-up" },
+  { label: "Religious & Community",    href: "/solutions/wedding-and-celebration" },
+  { label: "Education & Training",     href: "/solutions/education-and-training" },
 ];
 
 /* ---- Company dropdown --------------------------------------------------- */

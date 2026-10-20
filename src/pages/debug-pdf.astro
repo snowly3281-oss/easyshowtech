@@ -1,0 +1,28 @@
+---
+import { sanityClient } from '../../sanity/client'
+import { printingServiceBySlugQuery } from '../../sanity/queries/displayCatalog'
+import { urlFor } from '../../sanity/image'
+
+const service = await sanityClient.fetch(
+  printingServiceBySlugQuery,
+  { slug: 'custom-fabric-printing', language: 'en' },
+)
+
+const heroAsset = service?.heroImage?.asset
+const heroUrl = heroAsset ? urlFor(heroAsset).width(1920).height(1080).fit('crop').auto('format').url() : null
+
+const json = JSON.stringify({
+  service: service ? {
+    _id: service._id,
+    title: service.title,
+    heroImage: service.heroImage,
+    cardImage: service.cardImage,
+  } : null,
+  heroAssetType: typeof heroAsset,
+  heroAssetValue: heroAsset,
+  heroUrl,
+}, null, 2)
+---
+<html><head><meta charset="utf-8"><title>debug</title></head><body>
+<pre id="r">{json}</pre>
+</body></html>

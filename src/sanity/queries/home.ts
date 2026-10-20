@@ -41,57 +41,28 @@ export const homeQuery = defineQuery(`
 `)
 
 /**
- * Series for the home catalog carousel.
+ * Display-series for the home catalog carousel.
  *
- * After the three-tab refactor only product series are eligible for the
- * home strip; `kind == "service"` series live in the Printing tab and
- * `kind == "part"` series live in the Parts tab.
- *
- * Only series with at least one public product are useful navigation targets.
- * The count is derived from products so an operator never has to maintain a
- * second, stale number on the Series document.
+ * After the display-equipment refactor:
+ *   - kind filter is removed (all series are display-series)
+ *   - uses isActive == true instead of status == "published"
+ *   - uses sortOrder instead of order
  */
 export const homeSeriesQuery = defineQuery(`
   *[
     _type == "series" &&
     coalesce(language, "en") == $language &&
-    coalesce(kind, "product") == "product" &&
-    count(*[
-      _type == "product" &&
-      coalesce(language, "en") == $language &&
-      status == "published" &&
-      references(^._id)
-    ]) > 0
-  ] | order(order asc, title asc){
+    isActive == true
+  ] | order(sortOrder asc, title asc){
     _id,
     title,
     "slug": slug.current,
-    kind,
-    description,
-    "image": coalesce(
-      image,
-      (
-        *[
-          _type == "product" &&
-          coalesce(language, "en") == $language &&
-          status == "published" &&
-          references(^._id) &&
-          defined(mainImage.asset)
-        ] | order(order asc, title asc)
-      )[0].mainImage,
-      (
-        *[
-          _type == "product" &&
-          coalesce(language, "en") == $language &&
-          references(^._id) &&
-          defined(mainImage.asset)
-        ] | order(order asc, title asc)
-      )[0].mainImage
-    ){ asset, alt },
+    shortDescription,
+    "cardImage": cardImage{ asset, alt },
     "skuCount": count(*[
       _type == "product" &&
       coalesce(language, "en") == $language &&
-      status == "published" &&
+      isActive == true &&
       references(^._id)
     ])
   }
@@ -103,15 +74,16 @@ export const homeCatalogStatsQuery = defineQuery(`
     "publishedProducts": count(*[
       _type == "product" &&
       coalesce(language, "en") == "en" &&
-      status == "published"
+      isActive == true
     ]),
     "publishedSeries": count(*[
       _type == "series" &&
       coalesce(language, "en") == "en" &&
+      isActive == true &&
       count(*[
         _type == "product" &&
         coalesce(language, "en") == "en" &&
-        status == "published" &&
+        isActive == true &&
         references(^._id)
       ]) > 0
     ])
@@ -122,26 +94,24 @@ export const homeCatalogStatsQuery = defineQuery(`
  * Printing-service cards for the home carousel and the Header "By Service"
  * mega menu. Both consumers share this projection:
  *
- *   - Home: filters `displayInHomeCarousel == true`, sorts by `homeOrder`,
- *     shows up to 7 cards (the operator toggles extras off if needed).
- *   - Header: ignores the flag, sorts by `order`, lists every active service.
+ *   - Home: filters isActive == true, sorts by sortOrder.
+ *   - Header: same query, sorts by sortOrder.
  *
- * `coverImage` is projected with width 800 / auto-format so the carousel
- * uses the same optimized variant across reloads.
+ * After the display-equipment refactor the `service` type represents
+ * printing services (Custom Fabric Printing, Dye Sublimation, etc.).
  */
 export const homeServicesQuery = defineQuery(`
   *[
     _type == "service" &&
-    coalesce(language, "en") == $language
-  ] | order(order asc, title asc){
+    coalesce(language, "en") == $language &&
+    isActive == true
+  ] | order(sortOrder asc, title asc){
     _id,
     title,
     "slug": slug.current,
-    description,
-    order,
-    homeOrder,
-    displayInHomeCarousel,
-    "coverImage": coverImage{ asset, alt }
+    shortDescription,
+    sortOrder,
+    "cardImage": cardImage{ asset, alt }
   }
 `)
 
@@ -162,7 +132,7 @@ export const homeSolutionsQuery = defineQuery(`
     _type == "solution" &&
     coalesce(language, "en") == $language &&
     defined(slug.current)
-  ] | order(_createdAt asc){
+  ] | order(coalesce(sortOrder, 9999) asc, _createdAt asc){
     _id,
     title,
     "slug": slug.current,

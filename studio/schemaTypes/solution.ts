@@ -38,6 +38,14 @@ export const solution = defineType({
       name: "titleAsc",
       by: [{ field: "title", direction: "asc" }],
     },
+    {
+      title: "显示顺序",
+      name: "sortOrderAsc",
+      by: [
+        { field: "sortOrder", direction: "asc" },
+        { field: "_createdAt", direction: "asc" },
+      ],
+    },
   ],
   fields: [
     defineField({
@@ -58,6 +66,16 @@ export const solution = defineType({
       options: { source: "title", maxLength: 96 },
       validation: (rule) => rule.required(),
     }),
+    defineField({
+      name: "sortOrder",
+      title: "显示顺序",
+      type: "number",
+      group: "content",
+      description:
+        "数字越小越靠前。建议按 10、20、30 递增。同值时按创建时间排序。",
+      initialValue: 100,
+    }),
+
     mediaField({
       name: "coverImage",
       title: "首页卡片图 / 列表图",

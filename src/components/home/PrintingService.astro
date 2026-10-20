@@ -2,18 +2,28 @@
 /**
  * PrintingService.astro — Home page "Printing service" section.
  *
- * Data-driven from Sanity `service` documents. The carousel renders every
- * service where `displayInHomeCarousel == true`, ordered by `homeOrder`,
- * with `coverImage` (when present) and `description`. Clicking a card
- * sends the visitor to `/products?tab=printing&service=<slug>` so the
- * products page opens the Printing Service tab filtered to that category.
+ * Layout concept: a "capability grid" — five services laid out as a row of
+ * bold typographic cards (no product photos on the card, no card borders).
+ * Each card surfaces:
+ *     01  the small numbering (eyebrow)
+ *     02  the service title, set at h2-equivalent scale
+ *     03  the first benefit title (acts as a one-line "what you get")
+ *     04  the full shortDescription (single-line clamp)
+ *     05  the supportedMaterials list (when populated), shown as small tag chips
+ *     06  a "View details" link with arrow icon
  *
- * If no services come back from the CMS the section is hidden — it's
- * intentional that the carousel is content-controlled, never a hardcoded
- * fallback list.
+ * Visual differentiation from CatalogStrip (which uses product photos in 4:3
+ * boxes): no photographs on the service cards, larger type, no card borders.
+ * The grid stays inside the content container so it reads as a single unit;
+ * horizontal scroll only kicks in below 1200 px.
+ *
+ * Clicking a card sends the visitor to
+ *   /printing-services/<slug>
+ * so the dedicated service page opens (where the per-service imagery and
+ * full capability content live). The previous "/products?tab=printing&service"
+ * filter was removed because the detail page now hosts the headline copy.
  */
 import type { HomeServicesQueryResult } from '../../sanity/sanity.types'
-import { urlFor } from '../../sanity/image'
 import {localizedPath, resolveLocale} from '../../i18n/config'
 import {staticUi} from '../../i18n/static'
 
@@ -25,39 +35,25 @@ const { services = [] } = Astro.props
 const locale = resolveLocale(undefined, Astro.url.pathname)
 const t = (english: string) => staticUi(locale, english)
 
-// Show only services the operator has flagged for the home carousel.
-// Items without a `homeOrder` fall back to a stable high value so new
-// services appear at the end until the operator assigns one.
-const items = services
-  .filter((s) => s.displayInHomeCarousel !== false)
-  .slice()
-  .sort((a, b) => {
-    const ao = a.homeOrder ?? Number.POSITIVE_INFINITY
-    const bo = b.homeOrder ?? Number.POSITIVE_INFINITY
-    return ao - bo
-  })
-
+const items = services.slice()
 const pad2 = (n: number) => String(n + 1).padStart(2, '0')
 const eyebrow = t('What we produce')
 const heading = t('Printing service for every EasyShow product')
 const intro = t(
-  'Seven in-house print lines | Custom artwork + stock colorways | Production-ready files reviewed by our team',
+  'Five in-house print capabilities | Custom artwork + stock colorways | Production-ready file review included',
 )
 
-// URL for the card thumbnail (optional). Falls back to no image so the
-// card still has a frame, just without a photo.
-const thumbUrl = (s: HomeServicesQueryResult[number]): string | null => {
-  const asset = s.coverImage?.asset
-  if (!asset) return null
-  return urlFor(asset).width(800).height(600).fit('crop').auto('format').url()
-}
-const thumbAlt = (s: HomeServicesQueryResult[number]): string =>
-  s.coverImage?.alt ?? s.title ?? 'Printing service'
-
-// Card click target — encode the service slug so the products page opens
-// the Printing Service tab pre-filtered.
+// Card click target — send each card straight to its dedicated service page.
 const cardHref = (s: HomeServicesQueryResult[number]): string =>
-  `${localizedPath('/products', locale)}?tab=printing&service=${encodeURIComponent(s.slug ?? '')}`
+  `${localizedPath('/printing-services', locale)}/${encodeURIComponent(s.slug ?? '')}`
+
+// Pick the first benefit title to use as a one-line "what you get" teaser.
+const topBenefit = (s: HomeServicesQueryResult[number]): string | null =>
+  s.benefits?.[0]?.title ?? null
+
+// Take the first 3 materials as visual tag chips beneath the description.
+const trimmedMaterials = (s: HomeServicesQueryResult[number]): string[] =>
+  (s.supportedMaterials ?? []).slice(0, 3)
 ---
 
 {
@@ -73,51 +69,58 @@ const cardHref = (s: HomeServicesQueryResult[number]): string =>
               {t('View all services')} <span aria-hidden="true">→</span>
             </a>
           </div>
-          <div class="ps__nav">
+          <div class="ps__nav" aria-hidden="true">
             <button class="ps__arrow" data-ps-prev type="button" aria-label={t('Previous')} disabled>‹</button>
             <button class="ps__arrow" data-ps-next type="button" aria-label={t('Next')}>›</button>
           </div>
         </div>
-      </div>
 
-      {/* Full-bleed carousel. Cards may carry a cover image and a short
-          description that the operator authors in Sanity. */}
-      <ul class="ps__rail" data-ps-rail>
-        {items.map((s, i) => {
-          const url = thumbUrl(s)
-          return (
-            <li class="ps__card">
-              <a href={cardHref(s)} class="ps__link">
-                {url ? (
-                  <div class="ps__photo">
-                    <img
-                      src={url}
-                      alt={thumbAlt(s)}
-                      width="800"
-                      height="600"
-                      loading={i === 0 ? 'eager' : 'lazy'}
-                    />
-                  </div>
-                ) : (
-                  <div class="ps__photo ps__photo--empty" aria-hidden="true">
+        {/* Capability grid: 5 equal columns on desktop, scrollable below.
+            No product photos — pure typographic cards with a material chip
+            row, so it never feels like CatalogStrip. */}
+        <ul class="ps__rail" data-ps-rail>
+          {items.map((s, i) => {
+            const teaser = topBenefit(s)
+            const mats = trimmedMaterials(s)
+            return (
+              <li class="ps__card">
+                <a href={cardHref(s)} class="ps__link">
+                  <div class="ps__top">
                     <span class="ps__num">{pad2(i)}</span>
+                    <span class="ps__rule" aria-hidden="true" />
                   </div>
-                )}
-                <div class="ps__body">
-                  {url && <span class="ps__num">{pad2(i)}</span>}
-                  <p class="ps__name">{s.title}</p>
-                  {s.description && <p class="ps__desc">{s.description}</p>}
+
+                  <h3 class="ps__name">{s.title}</h3>
+
+                  {teaser && <p class="ps__teaser">{teaser}</p>}
+                  {s.shortDescription && <p class="ps__desc">{s.shortDescription}</p>}
+
+                  {mats.length > 0 ? (
+                    <ul class="ps__mats" aria-label={t('Supported materials')}>
+                      {mats.map((m) => (
+                        <li class="ps__mat">{m}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div class="ps__mats ps__mats--empty" aria-hidden="true">
+                      {/* Reserved placeholder so cards with no materials
+                          (e.g. Artwork Design & Setup) keep the same height
+                          as siblings and the rail doesn't stagger. */}
+                    </div>
+                  )}
+
                   <span class="ps__arrowico" aria-hidden="true">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M4.5 11.5 11.5 4.5M11.5 4.5H6M11.5 4.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    {t('View service')}
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                      <path d="M3 13 13 3M13 3H6M13 3v7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                   </span>
-                </div>
-              </a>
-            </li>
-          )
-        })}
-      </ul>
+                </a>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
     </section>
   )
 }
@@ -131,6 +134,8 @@ const cardHref = (s: HomeServicesQueryResult[number]): string =>
     const prev = document.querySelector('[data-ps-prev]')
     const next = document.querySelector('[data-ps-next]')
     function step(dir) {
+      // Scroll exactly one card: distance between the first two cards = card
+      // width + gap. Falls back gracefully with 0 or 1 card.
       const cards = rail.querySelectorAll('.ps__card')
       let w = rail.clientWidth * 0.8
       if (cards.length >= 2) {
@@ -207,33 +212,167 @@ const cardHref = (s: HomeServicesQueryResult[number]): string =>
     cursor: default;
   }
 
-  /* Full-bleed rail, same pattern as CatalogStrip. */
+  /* Capability grid. Stays inside the container so it reads as a single unit.
+     On <1200 px it falls back to a scrollable rail (matches CatalogStrip
+     behaviour for tablets/mobile). */
   .ps__rail {
-    --rail-gutter: var(--gutter-lg);
-    --rail-pad: max(var(--rail-gutter), calc((100% - var(--container-box)) / 2 + var(--rail-gutter)));
-    margin: var(--space-6) 0 0;
-    padding: 0 var(--rail-gutter) var(--space-3) var(--rail-pad);
     list-style: none;
+    margin: var(--space-7) 0 0;
+    padding: 0;
     display: grid;
     grid-auto-flow: column;
-    /* Each card around 240px; the rail auto-expands to fit up to ~7 cards
-       on wide screens and scrolls on narrower viewports. */
-    grid-auto-columns: minmax(220px, 1fr);
-    gap: var(--space-5);
-    overflow-x: auto;
-    scroll-snap-type: x proximity;
-    scroll-padding-inline-start: var(--rail-pad);
-    scrollbar-width: none;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 1px;
+    background: var(--color-ink-200, #e4e6ea);
+    border-top: 1px solid var(--color-ink-200, #e4e6ea);
+    border-bottom: 1px solid var(--color-ink-200, #e4e6ea);
   }
-  .ps__rail::-webkit-scrollbar {
-    display: none;
+
+  .ps__card {
+    background: #fff;
   }
+  .ps__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--space-6) var(--space-5) var(--space-5);
+    color: inherit;
+    text-decoration: none;
+    transition: background 0.15s ease;
+  }
+  .ps__link:hover {
+    background: var(--color-coral-tint, #fdecee);
+  }
+  .ps__link:hover .ps__name {
+    color: var(--color-coral);
+  }
+  .ps__link:hover .ps__arrowico {
+    color: var(--color-coral);
+  }
+
+  .ps__top {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+  }
+  .ps__num {
+    font-size: var(--text-eyebrow, 12px);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-coral);
+    font-weight: 600;
+    flex: none;
+  }
+  .ps__rule {
+    flex: 1;
+    height: 1px;
+    background: var(--color-ink-200, #e4e6ea);
+  }
+
+  .ps__name {
+    margin: 0 0 var(--space-4);
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--color-ink-900, #0e1013);
+    transition: color 0.15s ease;
+    /* Push to two lines if the title is long — keeps cards aligned. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ps__teaser {
+    margin: 0 0 var(--space-3);
+    font-size: var(--text-body-s);
+    font-weight: 500;
+    color: var(--color-ink-800, #1a1d22);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ps__desc {
+    margin: 0;
+    font-size: var(--text-caption, 13px);
+    color: var(--color-ink-600, #4b5059);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ps__mats {
+    list-style: none;
+    padding: 0;
+    margin: var(--space-5) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    /* Fixed min-height keeps card heights aligned even when a service has
+       no materials chips (e.g. Artwork Design & Setup). Approx. height of
+       one chip + its margin. */
+    min-height: 24px;
+  }
+  .ps__mats--empty {
+    min-height: 24px;
+  }
+  .ps__mat {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-ink-700, #2c3037);
+    background: var(--color-ink-100, #f5f6f8);
+    padding: 3px 8px;
+    border-radius: var(--radius-pill, 999px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  .ps__arrowico {
+    margin-top: auto;
+    padding-top: var(--space-5);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--text-body-s);
+    font-weight: 500;
+    color: var(--color-ink-900, #0e1013);
+    transition: color 0.15s ease;
+  }
+
+  /* Tablet — keep grid, drop to ~4 visible (horizontal scroll for overflow). */
   @media (max-width: 1279px) {
     .ps__rail {
-      --rail-gutter: var(--gutter-md);
+      grid-auto-flow: column;
       grid-auto-columns: 240px;
+      gap: var(--space-5);
+      background: transparent;
+      border-top: 0;
+      border-bottom: 0;
+      padding-bottom: var(--space-3);
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      scrollbar-width: none;
+    }
+    .ps__rail::-webkit-scrollbar {
+      display: none;
+    }
+    .ps__card {
+      scroll-snap-align: start;
+      border: 1px solid var(--color-ink-200, #e4e6ea);
+      border-radius: var(--radius-md, 6px);
     }
   }
+
+  /* Mobile — same rail, slightly narrower cards. */
   @media (max-width: 767px) {
     .ps__head {
       flex-direction: column;
@@ -243,88 +382,7 @@ const cardHref = (s: HomeServicesQueryResult[number]): string =>
       align-self: flex-end;
     }
     .ps__rail {
-      --rail-gutter: var(--gutter-sm);
-      grid-auto-columns: 75vw;
+      grid-auto-columns: 78vw;
     }
-  }
-
-  .ps__card {
-    scroll-snap-align: start;
-  }
-  .ps__link {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    background: #fff;
-    border: 1px solid var(--color-ink-200, #e2ddd3);
-    border-radius: var(--radius-md, 6px);
-    overflow: hidden;
-    transition: border-color 0.15s ease;
-    min-height: 132px;
-  }
-  .ps__link:hover {
-    border-color: var(--color-coral);
-  }
-  .ps__photo {
-    position: relative;
-    aspect-ratio: 4 / 3;
-    background: var(--color-paper-2, #ece7dd);
-    overflow: hidden;
-  }
-  .ps__photo img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .ps__photo--empty {
-    display: grid;
-    place-items: start start;
-    padding: var(--space-4);
-    background: linear-gradient(
-      135deg,
-      var(--color-paper-2, #ece7dd) 0%,
-      var(--color-paper-3, #d8d2c4) 100%
-    );
-  }
-  .ps__num {
-    font-size: var(--text-micro);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-wider);
-    color: var(--color-ink-400, #9a948a);
-    margin-bottom: var(--space-3);
-    display: block;
-  }
-  .ps__photo--empty .ps__num {
-    margin-bottom: 0;
-  }
-  .ps__body {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    padding: var(--space-4) var(--space-5) var(--space-5);
-    gap: var(--space-2);
-  }
-  .ps__name {
-    margin: 0;
-    font-weight: 600;
-    font-size: var(--text-h4);
-    line-height: 1.25;
-  }
-  .ps__desc {
-    margin: 0;
-    font-size: var(--text-body-s);
-    color: var(--color-ink-600, #555);
-    line-height: 1.45;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .ps__arrowico {
-    display: inline-flex;
-    color: var(--color-ink-900, #0e1013);
-    margin-top: auto;
-    align-self: flex-end;
   }
 </style>

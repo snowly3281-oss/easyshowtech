@@ -1,0 +1,147 @@
+---
+/**
+ * /printing-services — Printing service list page.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { fetchLocalizedList } from '../../i18n/config'
+import { printingServiceListQuery } from '../../sanity/queries/displayCatalog'
+import { getRawSiteSettings } from '../../sanity/settings'
+import type { SiteSettingsData } from '../../sanity/content'
+import type { Locale } from '../../i18n/config'
+import { siteSettings } from '../../config/site'
+
+const locale = (Astro.props.locale as Locale) ?? 'en'
+const t = (key: string) => key
+
+const [services, settings] = await Promise.all([
+  fetchLocalizedList(printingServiceListQuery, {}, locale, (s) => s.slug ?? ''),
+  getRawSiteSettings(),
+])
+
+const pageTitle = 'Printing Services'
+const metaTitle = `${pageTitle} — ${siteSettings.brand}`
+const metaDescription =
+  'Five in-house printing capabilities: custom fabric printing, dye sublimation, logo printing, large-format printing and artwork setup. Full-service display equipment manufacturing.'
+---
+
+<BaseLayout locale={locale} title={metaTitle} description={metaDescription}>
+  <section class="section">
+    <div class="container">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="/">{t('Home')}</a>
+        <span aria-hidden="true">/</span>
+        <span>{pageTitle}</span>
+      </nav>
+      <h1 class="page-title">{pageTitle}</h1>
+      <p class="page-intro">
+        From custom fabric printing to large-format graphics, our five in-house
+        printing capabilities cover every branding need for display equipment.
+        Production-ready artwork support included.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--alt">
+    <div class="container">
+      <div class="ps-grid">
+        {services.map((service) => (
+          <article class="ps-card">
+            <a href={`/printing-services/${service.slug}`} class="ps-card__link">
+              {service.cardImage?.asset ? (
+                <div class="ps-card__img">
+                  <img
+                    src={`https://cdn.sanity.io/images/w8rk6k6z/production/${service.cardImage.asset._ref.replace('image-', '').replace(/-(\w+)$/, '.$1').replace(/-/g, '/')}`}
+                    alt={service.cardImage.alt ?? service.title}
+                    width="800"
+                    height="600"
+                    loading="lazy"
+                  />
+                </div>
+              ) : (
+                <div class="ps-card__img ps-card__img--empty">
+                  <span class="ps-card__placeholder">{service.title}</span>
+                </div>
+              )}
+              <div class="ps-card__body">
+                <h2 class="ps-card__title">{service.title}</h2>
+                {service.shortDescription && (
+                  <p class="ps-card__desc">{service.shortDescription}</p>
+                )}
+                <span class="ps-card__cta">
+                  Learn more <span aria-hidden="true">→</span>
+                </span>
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .crumbs {
+    display: flex;
+    gap: var(--space-2);
+    font-size: var(--text-body-s);
+    color: var(--color-ink-400, #9a948a);
+    margin-bottom: var(--space-3);
+  }
+  .crumbs a:hover { color: var(--color-coral); }
+  .page-title { margin: var(--space-2) 0 0; }
+  .page-intro {
+    margin: var(--space-3) 0 0;
+    max-width: 60ch;
+    color: var(--color-ink-600, #555);
+  }
+  .ps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-6);
+  }
+  .ps-card__link {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    border: 1px solid var(--color-ink-200, #e2ddd3);
+    border-radius: var(--radius-md, 6px);
+    overflow: hidden;
+    transition: border-color 0.15s ease;
+    text-decoration: none;
+    color: inherit;
+  }
+  .ps-card__link:hover { border-color: var(--color-coral); }
+  .ps-card__img { aspect-ratio: 4/3; background: var(--color-paper-2, #ece7dd); overflow: hidden; }
+  .ps-card__img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ps-card__img--empty {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--color-paper-2, #ece7dd) 0%, var(--color-paper-3, #d8d2c4) 100%);
+  }
+  .ps-card__placeholder {
+    font-size: var(--text-h4);
+    font-weight: 600;
+    color: var(--color-ink-400, #9a948a);
+    padding: var(--space-5);
+    text-align: center;
+  }
+  .ps-card__body { padding: var(--space-5); display: flex; flex-direction: column; flex: 1; }
+  .ps-card__title { margin: 0; font-size: var(--text-h4); font-weight: 600; }
+  .ps-card__desc {
+    margin: var(--space-3) 0 0;
+    font-size: var(--text-body-s);
+    color: var(--color-ink-600, #555);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .ps-card__cta {
+    margin-top: var(--space-4);
+    font-size: var(--text-body-s);
+    font-weight: 600;
+    color: var(--color-coral);
+  }
+  @media (max-width: 640px) {
+    .ps-grid { grid-template-columns: 1fr; }
+  }
+</style>

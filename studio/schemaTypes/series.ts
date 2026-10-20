@@ -3,34 +3,31 @@ import { TagIcon } from "@sanity/icons";
 import { mediaField } from "sanity-plugin-media";
 
 /**
- * Series — first axis of the triple-axis product taxonomy.
+ * Series — display-equipment product category taxonomy.
  *
- * Each Series belongs to exactly ONE of the three front-end tabs:
+ * Each Series drives the `/products?series=<slug>` filtered view.
+ * All display-series have `kind = "product"` — they live in the
+ * "Products catalog" tab. Parts & printing-service series are managed
+ * through separate document types.
  *
- *   - `product`              → "Products catalog" tab (default — most common)
- *   - `service`              → "Printing Service" tab
- *   - `part`                 → "Parts & accessories" tab (e.g. "Reformer Springs"
- *                              used as a parent series for related parts)
- *
- * The kind is a hard gate: the front-end GROQ for `homeSeriesQuery` filters
- * by `kind == "product"`, and the products list scopes by tab. A single
- * series never appears in two tabs.
- *
- * The slug drives the `/products?series=…` filtered view.
+ * Slugs must stay stable: changing a slug breaks all product URLs that
+ * reference it and any bookmarked or indexed search links.
  */
 export const series = defineType({
   name: "series",
   title: "产品系列",
   type: "document",
   icon: TagIcon,
+  groups: [
+    { name: "content", title: "基础内容", default: true },
+    { name: "media", title: "图片" },
+    { name: "seo", title: "SEO" },
+  ],
   orderings: [
     {
-      title: "导航顺序",
-      name: "navigationOrder",
-      by: [
-        { field: "order", direction: "asc" },
-        { field: "title", direction: "asc" },
-      ],
+      title: "显示顺序",
+      name: "sortOrder",
+      by: [{ field: "sortOrder", direction: "asc" }],
     },
     {
       title: "名称 A–Z",
@@ -43,93 +40,123 @@ export const series = defineType({
       name: "title",
       title: "系列名称",
       type: "string",
-      description: '客户可见的产品系列名称，例如 "Wood Maple"。',
+      group: "content",
+      description: '客户可见的产品系列名称，例如 "Aluminum Tents"。',
       validation: (rule) => rule.required(),
     }),
     defineField({
       name: "slug",
-      title: "网址标识 Slug",
+      title: "Slug（网址标识）",
       type: "slug",
+      group: "content",
       description:
-        '用于产品筛选网址，例如 "wood-maple"。发布后不要随意修改。',
+        "用于 URL 筛选，例如 `aluminum-tent`。发布后不要随意修改。",
       options: { source: "title", maxLength: 96 },
       validation: (rule) => rule.required(),
     }),
     defineField({
-      name: "kind",
-      title: "所属 Tab",
-      type: "string",
-      description:
-        "决定这个系列显示在前端的哪个 Tab。整机选「产品」；印刷服务选「印刷」；配件系列选「零件」。",
-      options: {
-        list: [
-          { title: "产品（Products catalog）", value: "product" },
-          { title: "印刷服务（Printing Service）", value: "service" },
-          { title: "零件（Parts & accessories）", value: "part" },
-        ],
-        layout: "radio",
-      },
-      initialValue: "product",
-      validation: (rule) => rule.required(),
+      name: "shortDescription",
+      title: "简短介绍",
+      type: "text",
+      group: "content",
+      rows: 2,
+      description: "显示在分类卡片，建议 40–80 个字符。",
     }),
     defineField({
       name: "description",
-      title: "系列简介",
+      title: "详细介绍",
       type: "text",
-      rows: 3,
-      description: "显示在系列筛选页和首页产品系列卡片中，建议 40–120 个字符。",
+      group: "content",
+      rows: 4,
+      description: "显示在系列详情页，建议 120–300 个字符。",
+    }),
+    defineField({
+      name: "sortOrder",
+      title: "显示顺序",
+      type: "number",
+      group: "content",
+      description:
+        "数字越小越靠前。建议按 10、20、30 递增。",
+    }),
+    defineField({
+      name: "isActive",
+      title: "在前台显示",
+      type: "boolean",
+      group: "content",
+      description: "关闭后该系列不出现在筛选器和分类入口。",
+      initialValue: true,
     }),
     mediaField({
-      name: "image",
-      title: "系列代表图",
+      name: "cardImage",
+      title: "分类卡片图片",
       type: "image",
-      mediaTags: ["scope-series", "role-featured"],
+      group: "media",
+      mediaTags: ["scope-series", "role-card"],
       description:
-        "显示在首页产品系列轮播和系列入口中。推荐 4:3 横图（至少 1200×900 px）；使用竖图时请调整图片焦点，避免主体被裁切。",
+        "显示在首页产品系列轮播和产品列表筛选器卡片。推荐 4:3 横图。",
       options: { hotspot: true },
       fields: [
         defineField({
           name: "alt",
-          title: "替代文字 Alt",
+          title: "替代文字",
           type: "string",
-          description: "简要描述图片内容，便于无障碍访问和 SEO。",
+          description: "简要描述图片内容。",
         }),
       ],
     }),
+    mediaField({
+      name: "heroImage",
+      title: "系列详情页 Hero 图片",
+      type: "image",
+      group: "media",
+      mediaTags: ["scope-series", "role-hero"],
+      description: "显示在系列详情页顶部。推荐 16:9 横图。",
+      options: { hotspot: true },
+      fields: [
+        defineField({
+          name: "alt",
+          title: "替代文字",
+          type: "string",
+        }),
+      ],
+    }),
+    // SEO group
     defineField({
-      name: "order",
-      title: "显示顺序",
-      type: "number",
+      name: "metaTitle",
+      title: "SEO 标题",
+      type: "string",
+      group: "seo",
       description:
-        "数字越小越靠前。建议按 10、20、30 递增，方便以后插入新系列。",
+        "留空则默认使用系列名称。控制在 50–60 个字符。",
     }),
     defineField({
-      name: "skuLabel",
-      title: "产品数量标签",
-      type: "string",
+      name: "metaDescription",
+      title: "SEO 描述",
+      type: "text",
+      group: "seo",
+      rows: 2,
       description:
-        '可选。首页系列卡片的小标签，例如 "16 SKUs"。留空时自动统计该系列产品数量。',
+        "显示在搜索引擎结果中。控制在 120–160 个字符。",
     }),
   ],
   preview: {
     select: {
       title: "title",
       slug: "slug.current",
-      kind: "kind",
-      media: "image",
+      sortOrder: "sortOrder",
+      media: "cardImage",
+      isActive: "isActive",
     },
-    prepare: ({ title, slug, kind, media }) => {
-      const kindLabel =
-        kind === "service"
-          ? "印刷服务"
-          : kind === "part"
-            ? "零件"
-            : "产品";
-      return {
-        title: title || "未命名系列",
-        subtitle: `${kindLabel}${slug ? ` · ${slug}` : ""}`,
-        media,
-      };
-    },
+    prepare: ({ title, slug, sortOrder, media, isActive }) => ({
+      title: title || "未命名系列",
+      subtitle: [
+        slug ? `/${slug}` : null,
+        sortOrder != null ? `#${sortOrder}` : null,
+        isActive === false ? "已隐藏" : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      media,
+    }),
   },
 });

@@ -1,0 +1,84 @@
+/**
+ * IMPORT TEMPLATE — EasyShow Content Catalog
+ * ==========================================
+ * Sheet 1: services    — 印刷服务分类
+ * Sheet 2: series      — 产品系列
+ * Sheet 3: products   — 产品
+ *
+ * ⚠️ 全量覆盖模式：运行后会自动删除同类型现有文档！
+ *
+ * 使用方法：
+ *   1. 填写 CSV 文件（参考下方字段说明）
+ *   2. 将文件保存到项目根目录，如 catalog-import.csv
+ *   3. 运行：node studio/scripts/import-catalog.mjs
+ *
+ * 注意事项：
+ *   - 图片列暂时留空，后续在 Sanity Studio 中手动上传
+ *   - reference 字段用 slug 填写，脚本会自动查 _id
+ *   - kind: product / service / part（决定出现在哪个 Tab）
+ *   - language: 参考现有文档，建议统一用 en 或 zh
+ */
+
+# ============================================================
+# SHEET 1: services
+# ============================================================
+# 字段说明：
+#   slug           唯一标识（英文，用于 URL，建议 kebab-case）
+#   title_en       英文名称
+#   title_es       西班牙语名称（可选，留空则与 en 相同）
+#   title_fr       法语名称（可选）
+#   title_de       德语名称（可选）
+#   title_it       意大利语名称（可选）
+#   description    卡片描述（英文，建议 40-120 字符）
+#   order          显示顺序（Header / 筛选，数字越小越靠前）
+#   home_order     首页轮播顺序（数字越小越靠前）
+#   display_in_home  是否在首页轮播显示（true/false）
+
+slug,title_en,title_es,title_fr,title_de,title_it,description,order,home_order,display_in_home
+custom-canopy,Branded Canopies,Carpas personalizadas,Tentes personnalisées,Markenzelte,Tendoni personalizzati,Turnkey custom-printed canopy solutions for events and retail.,10,10,true
+
+
+# ============================================================
+# SHEET 2: series
+# ============================================================
+# 字段说明：
+#   slug           唯一标识（英文，用于 URL）
+#   title          系列名称（英文）
+#   kind           属于哪个 Tab：product / service / part
+#   description    系列简介（英文，建议 40-120 字符）
+#   order          显示顺序（数字越小越靠前）
+
+slug,title,kind,description,order
+wood-oak,Wood Oak,product,Premium solid oak Pilates equipment with classic finish.,10
+wood-maple,Wood Maple,product,Professional-grade maple wood Pilates reformers.,20
+aluminum-frame,Aluminum Frame,product,Lightweight and durable aluminum Pilates equipment.,30
+
+
+# ============================================================
+# SHEET 3: products
+# ============================================================
+# 字段说明：
+#   sku            产品唯一型号（必填，用于 upsert 判断）
+#   title          产品名称（英文）
+#   slug           网址标识（留空则自动从 title 生成）
+#   status         published / draft / archived（默认 published）
+#   catalog_type   equipment / accessory / spare_part（默认 equipment）
+#   series_slug    关联的产品系列 slug（留空则不关联）
+#   service_slugs  关联的印刷服务 slug，多个用分号分隔（留空则不关联）
+#   production_status  in_production / made_to_order / discontinued（默认 in_production）
+#   price_display  show / range / quote（默认 quote）
+#   price          精确价格（仅 price_display=show 时填写）
+#   price_min      最低价格（仅 price_display=range 时填写）
+#   price_max      最高价格（仅 price_display=range 时填写）
+#   currency       USD / EUR / GBP / CNY（默认 USD）
+#   moq            最小起订量，如 "10 units"
+#   lead_time      生产周期，如 "6-8 wks"
+#   warranty       质保期限，如 "10 years"
+#   summary        产品摘要（英文，建议 1-2 句话）
+#   key_specs      核心参数（格式：value|unit|label;value|unit|label）
+#   variants       材质变体（格式：name|skuSuffix|isDefault|description|name2|skuSuffix2|...）
+#   main_image     图片留空，后续在 Studio 中手动上传
+
+sku,title,status,catalog_type,series_slug,service_slugs,production_status,price_display,price,currency,moq,lead_time,warranty,summary,key_specs
+ELEVENT-O-001,Studio Reformer Pro - Oak,published,equipment,wood-oak,,in_production,quote,,,,,,Professional reformer with solid oak frame.,
+ELEVENT-M-001,Studio Reformer Pro - Maple,published,equipment,wood-maple,,in_production,quote,,,,,,Premium maple reformer for professional studios.,

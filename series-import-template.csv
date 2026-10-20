@@ -1,0 +1,18 @@
+# Series Import Template
+# ========================
+# 7 canonical display-equipment series. Do NOT change slugs.
+# Columns marked [REQUIRED] must have values.
+# Columns marked [OPTIONAL] can be left blank.
+# Columns marked [DO NOT EDIT] are fixed values.
+#
+# Run: node studio/scripts/import-series.mjs --dry-run
+#      node studio/scripts/import-series.mjs --write
+
+slug,title,shortDescription,description,cardImage,heroImage,sortOrder,isActive,metaTitle,metaDescription
+aluminum-tent,Aluminum Tents,Lightweight,corrosion-resistant event tents in various sizes for outdoor promotions.,,10,true,Aluminum Tents — EasyShow,Lightweight aluminum frame event tents. Custom sizes and full-color printing.
+steel-tent,Steel Tents,Heavy-duty steel frame tents for large-scale outdoor events and long-term installations.,,20,true,Steel Tents — EasyShow,Heavy-duty steel frame tents for large events and semi-permanent use.
+popup-walls,Pop Up Walls,Portable pop-up display walls for trade shows,retail and events.,,30,true,Pop Up Display Walls — EasyShow,Portable pop-up walls for trade shows,retail displays and event backdrops.
+backdrops,Backdrops,Custom printed backdrops for photography,events,retail and brand activations.,,40,true,Custom Display Backdrops — EasyShow,Custom printed backdrops for events,photography,retail and brand activations.
+flags-system,Flags System,Outdoor promotional flag banners and flagpole systems for brand visibility.,,50,true,Promotional Flag Systems — EasyShow,Outdoor flag banners and flagpole systems.
+sign-display,Sign and Display,Custom signs,banners and point-of-purchase displays for retail and events.,,60,true,Custom Signs & Display — EasyShow,Custom signs,banners and point-of-purchase displays.
+chairs,Chairs,Branded event chairs and seating solutions with custom printing and logo placement.,,70,true,Branded Event Chairs — EasyShow,Custom printed event chairs and branded seating solutions.

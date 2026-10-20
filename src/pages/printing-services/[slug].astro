@@ -1,0 +1,255 @@
+---
+/**
+ * /printing-services/[slug] — Printing service detail page.
+ */
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { sanityClient } from '../../sanity/client'
+import { printingServiceBySlugQuery, printingServiceListQuery } from '../../sanity/queries/displayCatalog'
+import { fetchLocalized, resolveLocale } from '../../i18n/config'
+import { siteSettings } from '../../config/site'
+import type { Locale } from '../../../i18n/config'
+import { urlFor } from '../../sanity/image'
+
+export async function getStaticPaths() {
+  const services = await sanityClient.fetch<{ slug: string }[]>(
+    printingServiceListQuery,
+    { language: 'en' },
+  )
+  return (services ?? [])
+    .filter((s) => s.slug)
+    .map((s) => ({ params: { slug: s.slug } }))
+}
+
+const locale = (Astro.props.locale as Locale) ?? 'en'
+const slug = Astro.params.slug as string
+
+const service = await fetchLocalized(
+  printingServiceBySlugQuery,
+  { slug },
+  locale,
+)
+
+if (!service) return Astro.rewrite('/404')
+
+const metaTitle = service.metaTitle ?? `${service.title} — ${siteSettings.brand}`
+const metaDescription = service.metaDescription ?? service.shortDescription ?? undefined
+
+const heroImageUrl = service.heroImage?.asset
+  ? urlFor(service.heroImage.asset).width(1920).height(1080).fit('crop').auto('format').url()
+  : null
+---
+
+<BaseLayout locale={locale} title={metaTitle} description={metaDescription}>
+  <!-- Hero -->
+  {heroImageUrl && (
+    <section class="ps-hero">
+      <img src={heroImageUrl} alt={service.heroImage?.alt ?? service.title} width="1920" height="1080" />
+    </section>
+  )}
+
+  <section class="section">
+    <div class="container">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="/">{locale === 'en' ? 'Home' : 'Home'}</a>
+        <span aria-hidden="true">/</span>
+        <a href="/printing-services">Printing Services</a>
+        <span aria-hidden="true">/</span>
+        <span>{service.title}</span>
+      </nav>
+
+      <div class="ps-layout">
+        <div class="ps-main">
+          <h1 class="ps-title">{service.title}</h1>
+          {service.shortDescription && (
+            <p class="ps-short-desc">{service.shortDescription}</p>
+          )}
+          {service.description && (
+            <div class="ps-body">
+              <p>{service.description}</p>
+            </div>
+          )}
+
+          {service.benefits && service.benefits.length > 0 && (
+            <div class="ps-section">
+              <h2>Key Benefits</h2>
+              <ul class="ps-benefits">
+                {service.benefits.map((b) => (
+                  <li class="ps-benefit">
+                    <h3>{b.title}</h3>
+                    {b.description && <p>{b.description}</p>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {service.supportedMaterials && service.supportedMaterials.length > 0 && (
+            <div class="ps-section">
+              <h2>Supported Materials</h2>
+              <div class="ps-tags">
+                {service.supportedMaterials.map((m) => (
+                  <span class="ps-tag">{m}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {service.suitableApplications && service.suitableApplications.length > 0 && (
+            <div class="ps-section">
+              <h2>Suitable Applications</h2>
+              <div class="ps-tags">
+                {service.suitableApplications.map((a) => (
+                  <span class="ps-tag">{a}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {service.processSteps && service.processSteps.length > 0 && (
+            <div class="ps-section">
+              <h2>Our Process</h2>
+              <ol class="ps-steps">
+                {service.processSteps.map((step) => (
+                  <li class="ps-step">
+                    <span class="ps-step__num">{step.stepNumber}</span>
+                    <div>
+                      <h3>{step.title}</h3>
+                      {step.description && <p>{step.description}</p>}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {service.artworkRequirements && (
+            <div class="ps-section ps-section--note">
+              <h2>Artwork Requirements</h2>
+              <p>{service.artworkRequirements}</p>
+            </div>
+          )}
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="ps-sidebar">
+          <div class="ps-cta">
+            <h3>Ready to start?</h3>
+            <p>Tell us about your project and we'll recommend the right printing approach.</p>
+            <a class="btn btn-coral" href="/contact">Get a quote</a>
+          </div>
+
+          {service.relatedProducts && service.relatedProducts.length > 0 && (
+            <div class="ps-related">
+              <h3>Related Products</h3>
+              <ul class="ps-related-list">
+                {service.relatedProducts.map((p) => (
+                  <li>
+                    <a href={`/products/${p.slug}`} class="ps-related-item">
+                      {p.mainImage?.asset && (
+                        <div class="ps-related__img">
+                          <img
+                            src={urlFor(p.mainImage.asset).width(200).height(150).fit('crop').auto('format').url()}
+                            alt={p.title}
+                            width="200"
+                            height="150"
+                            loading="lazy"
+                          />
+                        </div>
+                      )}
+                      <div>
+                        <p class="ps-related__name">{p.title}</p>
+                        {p.summary && <p class="ps-related__summary">{p.summary}</p>}
+                      </div>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Hero — show the FULL image (no crop), centered on a soft page-coloured
+     backdrop. The Sanity-uploaded hero assets are small landscape PNGs with
+     whitespace padding, so object-fit:cover ends up showing mostly empty
+     space; contain keeps the entire picture visible and looks intentional. */
+  .ps-hero {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--color-paper-2, #ece7dd);
+    display: grid;
+    place-items: center;
+  }
+  .ps-hero img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+  }
+  .crumbs {
+    display: flex; gap: var(--space-2); font-size: var(--text-body-s);
+    color: var(--color-ink-400, #9a948a); margin-bottom: var(--space-3);
+  }
+  .crumbs a:hover { color: var(--color-coral); }
+  .ps-layout {
+    display: grid; grid-template-columns: 1fr 300px; gap: var(--space-8);
+    margin-top: var(--space-6);
+  }
+  .ps-title { margin: 0; font-size: var(--text-h2); }
+  .ps-short-desc { margin: var(--space-4) 0 0; font-size: var(--text-body-l); color: var(--color-ink-600); }
+  .ps-body { margin-top: var(--space-6); font-size: var(--text-body-l); line-height: 1.6; }
+  .ps-section { margin-top: var(--space-7); }
+  .ps-section h2 { font-size: var(--text-h3); margin: 0 0 var(--space-4); }
+  .ps-section--note {
+    background: var(--color-paper-2, #ece7dd); padding: var(--space-5);
+    border-radius: var(--radius-md); margin-top: var(--space-7);
+  }
+  .ps-section--note p { margin: 0; font-size: var(--text-body-s); line-height: 1.6; }
+  .ps-benefits { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-4); }
+  .ps-benefit { padding-left: var(--space-5); border-left: 3px solid var(--color-coral); }
+  .ps-benefit h3 { margin: 0; font-size: var(--text-h4); }
+  .ps-benefit p { margin: var(--space-2) 0 0; font-size: var(--text-body); color: var(--color-ink-600); }
+  .ps-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .ps-tag {
+    padding: 5px 14px; border: 1px solid var(--color-ink-200); border-radius: 999px;
+    font-size: var(--text-body-s); background: var(--color-paper, #f7f4ee);
+  }
+  .ps-steps { list-style: none; margin: 0; padding: 0; counter-reset: steps; display: flex; flex-direction: column; gap: var(--space-5); }
+  .ps-step {
+    display: flex; gap: var(--space-4); align-items: flex-start;
+  }
+  .ps-step__num {
+    width: 40px; height: 40px; border-radius: 50%; background: var(--color-coral);
+    color: #fff; font-weight: 700; font-size: var(--text-body);
+    display: grid; place-items: center; flex-shrink: 0;
+  }
+  .ps-step h3 { margin: 0; font-size: var(--text-h4); }
+  .ps-step p { margin: var(--space-2) 0 0; font-size: var(--text-body); color: var(--color-ink-600); }
+  .ps-sidebar { display: flex; flex-direction: column; gap: var(--space-6); }
+  .ps-cta {
+    background: var(--color-ink-900); color: #fff; padding: var(--space-6);
+    border-radius: var(--radius-md);
+  }
+  .ps-cta h3 { margin: 0; font-size: var(--text-h4); color: #fff; }
+  .ps-cta p { margin: var(--space-3) 0 0; font-size: var(--text-body-s); color: rgba(255,255,255,0.7); line-height: 1.5; }
+  .ps-cta .btn { margin-top: var(--space-4); }
+  .ps-related { background: var(--color-paper-2, #ece7dd); padding: var(--space-5); border-radius: var(--radius-md); }
+  .ps-related h3 { margin: 0 0 var(--space-4); font-size: var(--text-h4); }
+  .ps-related-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
+  .ps-related-item { display: flex; gap: var(--space-3); text-decoration: none; color: inherit; }
+  .ps-related-item:hover .ps-related__name { color: var(--color-coral); }
+  .ps-related__img { width: 64px; height: 48px; flex-shrink: 0; border-radius: var(--radius-sm); overflow: hidden; background: var(--color-paper-3); }
+  .ps-related__img img { width: 100%; height: 100%; object-fit: cover; }
+  .ps-related__name { margin: 0; font-size: var(--text-body-s); font-weight: 600; }
+  .ps-related__summary { margin: var(--space-1) 0 0; font-size: var(--text-micro); color: var(--color-ink-400); }
+  @media (max-width: 900px) {
+    .ps-layout { grid-template-columns: 1fr; }
+  }
+</style>

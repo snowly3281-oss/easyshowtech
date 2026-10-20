@@ -39,10 +39,10 @@ const items = series ?? []
         {items.map((s) => (
           <li class="cat__card">
             <a href={`${localizedPath('/products', locale)}?series=${s.slug ?? ''}`} class="cat__link">
-              <MediaBox source={s.image} alt={s.title} ratio="4 / 3" width={620} />
+              <MediaBox source={s.cardImage} alt={s.title} ratio="4 / 3" width={620} />
               <div class="cat__body">
                 <p class="cat__name">{s.title}</p>
-                {s.description && <p class="cat__desc">{s.description}</p>}
+                {s.shortDescription && <p class="cat__desc">{s.shortDescription}</p>}
                 <div class="cat__foot">
                   <span class="cat__sku nums">
                     {`${s.skuCount} ${s.skuCount === 1 ? 'SKU' : 'SKUs'}`}

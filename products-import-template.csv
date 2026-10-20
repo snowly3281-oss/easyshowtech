@@ -1,0 +1,28 @@
+# Products Import Template
+# ========================
+# Import display equipment products. Map series_slug and printing_service_slugs
+# to existing Sanity document slugs.
+#
+# REQUIRED columns: title, series_slug, summary
+# OPTIONAL columns: leave blank if not applicable
+#
+# ARRAY FIELDS use semicolon separator:
+#   - printing_service_slugs: separate multiple services with ;
+#   - materials: separate multiple values with ;
+#   - customization_options: separate multiple values with ;
+#
+# BOOLEAN: true / false
+# PRICE MODE: show / range / quote
+#
+# Run: node studio/scripts/import-products.mjs --dry-run
+#      node studio/scripts/import-products.mjs --write
+
+sku,title,series_slug,summary,description,mainImage,galleryImages,keyFeatures,keySpecs,variants,printing_service_slugs,customization_options,materials,moq,production_lead_time,price_display,price,price_min,price_max,currency,sort_order,is_featured,is_active,meta_title,meta_description
+ES-ALT-10X20,10x20ft Aluminum Event Tent,aluminum-tent,Lightweight 10x20ft aluminum frame tent for outdoor events and promotions. Easy 2-person setup in under 30 minutes.,,,,,"Size: 10 x 20 ft;Max wind: 60 km/h;Frame: Aluminum alloy;Fabric: 600D polyester",,,Logo printing;Custom size;Color matching,Aluminum alloy;600D polyester,50,7-15 days,quote,,,,,,
+ES-ALT-10X15,10x15ft Aluminum Event Tent,aluminum-tent,Compact 10x15ft aluminum tent perfect for smaller outdoor spaces and pop-up events.,,,,,,,,Logo printing;Custom size,Aluminum alloy;600D polyester,50,7-15 days,quote,,,,,,
+ES-STL-20X30,20x30ft Steel Event Tent,steel-tent,Heavy-duty 20x30ft steel frame tent for large events,warehouses and semi-permanent installations.,,,,,,,,Size: 20 x 30 ft;Max wind: 80 km/h;Frame: Hot-dip galvanized steel,Custom size;Logo printing;Reinforced corners,Galvanized steel;850D PVC,20,15-21 days,quote,,,,,,
+ES-POP-8X8,8x8ft Pop Up Display Wall,popup-walls,Portable 8x8ft pop-up wall for trade shows and retail displays. Sets up in 5 minutes without tools.,,,,,,,,Size: 8 x 8 ft;Frame: Aluminum;Graphic: Dye-sublimation fabric,Custom graphic printing;Curved frame option,Aluminum;Polyester fabric,100,5-10 days,quote,,,,,,
+ES-BD-10X10,10x10ft Tension Fabric Backdrop,backdrops,10x10ft tension fabric backdrop with dye-sublimation printing. Wrinkle-free stretch fabric.,,,,,,,,Size: 10 x 10 ft;Print: Dye-sublimation;Material: Stretch polyester,Custom graphic;Double-sided printing,Stretch polyester,200,5-10 days,quote,,,,,,
+ES-FLG-TD-L,Teardrop Flag Banner - Large,flags-system,Large teardrop flag banner for outdoor promotions. Wind-resistant design with ground spike or cross-base.,,,,,,,,Size: Large (3-4m);Material: Polyester 115D;Print: Dye-sublimation,Custom logo printing,Polyester 115D;Fiberglass pole,100,5-10 days,quote,,,,,,
+ES-SGN-AC-4X8,4x8ft Aluminum Composite Sign,sign-display,Durable 4x8ft aluminum composite sign panel. Suitable for outdoor signage and exhibition graphics.,,,,,,,,Size: 4 x 8 ft;Material: Aluminum composite 3mm;Finish: Matte or glossy,Custom printing;Drilled holes;Standoffs,Aluminum composite,50,7-10 days,quote,,,,,,
+ES-CHR-ALU-BK,Aluminum Folding Event Chair - Black,chairs,Lightweight aluminum folding chair with custom seat printing. Stackable design,holds up to 150kg.,,,,,,,,Size: 56 x 58 x 87 cm;Weight: 3.2 kg;Load: 150 kg,Seat printing;Logo embroidery;Custom color,Aluminum alloy;Polyester fabric,200,10-15 days,quote,,,,,,

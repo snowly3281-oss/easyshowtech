@@ -42,8 +42,12 @@ const productPartLabel = (label: string) =>
 // itself so an unfinished translation still renders something usable.
 const serviceLabel = (s: HomeServicesQueryResult[number]) =>
   s.title ?? s.slug ?? "";
-const serviceHref = (s: HomeServicesQueryResult[number]) =>
-  `${localizedPath("/products", locale)}?tab=printing&service=${encodeURIComponent(s.slug ?? "")}`;
+// Printing service detail pages live at /printing-services/<slug>; see
+// src/pages/printing-services/[slug].astro. The dropdown label points to the
+// /printing-services index so visitors land on the catalogue first.
+const printingServicesIndexHref = (locale: Locale) => localizedPath("/printing-services", locale);
+const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =>
+  `${localizedPath("/printing-services", locale)}/${encodeURIComponent(s.slug ?? "")}`;
 ---
 
 <header class="site-header">
@@ -85,15 +89,36 @@ const serviceHref = (s: HomeServicesQueryResult[number]) =>
             {productsSeries.map((l) => <a href={localizeHref(l.href)} class="mega-link">{t(l.label)}</a>)}
           </div>
           <div class="mega-col">
-            <p class="mega-head">{ui(locale, "byService")}</p>
-            {printingServices.map((s) => (
-              <a href={serviceHref(s)} class="mega-link">{serviceLabel(s)}</a>
-            ))}
-          </div>
-          <div class="mega-col">
             <p class="mega-head">{ui(locale, "partsAccessories")}</p>
             {productsParts.map((l) => <a href={localizeHref(l.href)} class="mega-link">{productPartLabel(l.label)}</a>)}
           </div>
+        </div>
+      </div>
+
+      <!-- Printing Service: lifted out of Products, lives between Products
+           and Solutions. Label links to the /printing-services index; the
+           drop-down lists each service's detail route. -->
+      <div class="nav-item" data-nav-item>
+        <a
+          href={printingServicesIndexHref(locale)}
+          class="nav-link"
+          id="printingTrigger"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="printingMenu"
+          data-nav-trigger
+        >
+          {ui(locale, "byService")} <span class="chev" aria-hidden="true">▾</span>
+        </a>
+        <div
+          class="dropdown simple"
+          id="printingMenu"
+          aria-labelledby="printingTrigger"
+          data-dropdown
+        >
+          {printingServices.map((s) => (
+            <a href={serviceDetailHref(s, locale)} class="mega-link">{serviceLabel(s)}</a>
+          ))}
         </div>
       </div>
 
@@ -177,12 +202,15 @@ const serviceHref = (s: HomeServicesQueryResult[number]) =>
         <a href={localizeHref("/products")} class="m-link">{ui(locale, "allProducts")}</a>
         <p class="m-sub">{ui(locale, "bySeries")}</p>
         {productsSeries.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
-        <p class="m-sub">{ui(locale, "byService")}</p>
-        {printingServices.map((s) => (
-          <a href={serviceHref(s)} class="m-link">{serviceLabel(s)}</a>
-        ))}
         <p class="m-sub">{ui(locale, "partsAccessories")}</p>
         {productsParts.map((l) => <a href={localizeHref(l.href)} class="m-link">{productPartLabel(l.label)}</a>)}
+      </details>
+      <details class="m-group">
+        <summary>{ui(locale, "byService")}</summary>
+        <a href={printingServicesIndexHref(locale)} class="m-link">{ui(locale, "byService")}</a>
+        {printingServices.map((s) => (
+          <a href={serviceDetailHref(s, locale)} class="m-link">{serviceLabel(s)}</a>
+        ))}
       </details>
       <details class="m-group">
         <summary>{ui(locale, "solutions")}</summary>

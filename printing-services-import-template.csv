@@ -1,0 +1,13 @@
+# Printing Services Import Template
+# ==================================
+# 5 canonical printing services. Do NOT change slugs.
+#
+# Run: node studio/scripts/import-printing-services.mjs --dry-run
+#      node studio/scripts/import-printing-services.mjs --write
+
+slug,title,shortDescription,sortOrder,isActive,supportedMaterials,suitableApplications
+custom-fabric-printing,Custom Fabric Printing,Full-color custom printing on polyester and specialty fabrics. Dye-sublimation and UV printing.,10,true,"Polyester fabric;Canvas;Spandex;Performance fabric","Event tents;Trade show backdrops;Promotional flags;Retail fabric displays"
+dye-sublimation-printing,Dye Sublimation Printing,High-definition dye-sublimation printing for polyester fabrics. Photographic color quality with soft-handle finish.,20,true,"Polyester 170-300g;Tension fabric;Polyester mesh","Tension fabric backdrops;Stretch displays;Sports apparel displays;Indoor-outdoor banners"
+custom-logo-printing,Custom Logo Printing,Logo and brand printing on existing products — tents,chairs,flags and banners.,30,true,"Polyester tent fabric;Vinyl;Aluminum panels;Chair covers","Branded event tents;Corporate chair covers;Logo flags;Sponsor signage"
+large-format-printing,Large-Format Printing,Wide-format UV and solvent printing for vinyl,PVC,mesh and rigid substrates up to 5 meters wide.,40,true,"PVC banner vinyl;Mesh banner;Canvas;PVC board;Aluminum composite","Building wraps;Stage backdrops;Vehicle graphics;Retail window graphics"
+artwork-design-setup,Artwork Design & Setup,Professional print-ready file preparation,graphic design and pre-press services.,50,true,,Multi-language graphic adaptation;Logo vectorization;Template customization
