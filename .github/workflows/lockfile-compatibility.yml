@@ -32,3 +32,6 @@ jobs:
 
       - name: Verify lockfile with the exact npm version
         run: npm run lock:check
+
+      - name: Verify Studio lockfile with npm 10
+        run: npx --yes npm@10.9.2 --prefix studio ci --dry-run --ignore-scripts --no-audit --no-fund

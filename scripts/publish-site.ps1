@@ -39,7 +39,7 @@ try {
   Invoke-Checked 'npm.cmd' @('run', 'build')
 
   if (@($plan.selected).Count -gt 0) {
-    Invoke-Checked 'git' (@('add', '--') + @($plan.selected))
+    Invoke-Checked 'git' (@('--literal-pathspecs', 'add', '--') + @($plan.selected))
     Invoke-Checked 'git' @('diff', '--cached', '--check')
     Invoke-Checked 'git' @('commit', '-m', $Message)
   }

@@ -48,3 +48,10 @@ test('ignores unrelated runs and waits for the matching commit', async () => {
   const run = await waitForWorkflow({repository: 'owner/repo', commit: sha, ...quiet, fetchFn: async () => ({ok: true, json: async () => ({workflow_runs: ++count === 1 ? [{head_sha: 'b'.repeat(40), status: 'completed', conclusion: 'success'}] : [{head_sha: sha, id: 42, status: 'completed', conclusion: 'success'}]})})})
   assert.equal(run.id, 42)
 })
+test('a manual rebuild for the same commit is not confused with its push deployment', async () => {
+  const run = await waitForWorkflow({repository: 'owner/repo', commit: sha, ...quiet, fetchFn: async () => ({ok: true, json: async () => ({workflow_runs: [
+    {head_sha: sha, event: 'workflow_dispatch', id: 99, status: 'completed', conclusion: 'success'},
+    {head_sha: sha, event: 'push', id: 42, status: 'completed', conclusion: 'success'},
+  ]})})})
+  assert.equal(run.id, 42)
+})

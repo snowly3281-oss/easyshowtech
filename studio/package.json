@@ -40,6 +40,7 @@
     "@sanity/icons": "^3.7.4",
     "@sanity/locale-zh-hans": "^2.1.35",
     "@sanity/vision": "^6.7.0",
+    "easyshowtech": "file:..",
     "papaparse": "^5.5.4",
     "react": "^19.2.2",
     "react-dom": "^19.2.2",

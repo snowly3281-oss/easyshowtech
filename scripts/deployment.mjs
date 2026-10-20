@@ -43,12 +43,14 @@ export async function waitForWorkflow({repository, commit, fetchFn = defaultFetc
   if (!/^[\w.-]+\/[\w.-]+$/.test(repository ?? '') || !/^[a-f0-9]{40}$/.test(commit ?? '')) throw new Error('Invalid repository or commit.')
   let lastState = ''
   for (let attempt = 0; attempt < attempts; attempt++) {
-    const response = await fetchFn(`https://api.github.com/repos/${repository}/actions/workflows/deploy.yml/runs?head_sha=${commit}&event=push&per_page=5`, {
-      headers: {Accept: 'application/vnd.github+json', 'User-Agent': 'Easyshow-Publisher', ...(process.env.GH_TOKEN ? {Authorization: `Bearer ${process.env.GH_TOKEN}`} : {})},
+    // Recent-run listing avoids delayed indexing by head_sha immediately after a
+    // push. A unique request key prevents an empty first result being cached.
+    const response = await fetchFn(`https://api.github.com/repos/${repository}/actions/workflows/deploy.yml/runs?per_page=10&poll=${Date.now()}-${attempt}`, {
+      headers: {Accept: 'application/vnd.github+json', 'Cache-Control': 'no-cache', 'User-Agent': 'Easyshow-Publisher', ...(process.env.GH_TOKEN ? {Authorization: `Bearer ${process.env.GH_TOKEN}`} : {})},
     })
     if (!response.ok) throw new Error(`Cannot read deployment status (HTTP ${response.status}). Check https://github.com/${repository}/actions`)
     const data = await response.json()
-    const run = (data.workflow_runs ?? []).find(entry => entry.head_sha === commit)
+    const run = (data.workflow_runs ?? []).find(entry => entry.head_sha === commit && (!entry.event || entry.event === 'push'))
     const state = run ? `${run.status}:${run.conclusion ?? ''}` : 'waiting for GitHub'
     if (state !== lastState) { log(run ? `${state} — ${run.html_url}` : state); lastState = state }
     if (run?.status === 'completed') {
