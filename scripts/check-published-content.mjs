@@ -3,6 +3,7 @@ import {createClient} from '@sanity/client'
 try { process.loadEnvFile() } catch (error) { if (error.code !== 'ENOENT') throw error }
 
 try {
+  if (process.env.CI && !process.env.SANITY_READ_TOKEN) throw new Error('Configure the SANITY_READ_TOKEN GitHub Actions secret before publishing.')
   const client = createClient({
     projectId: process.env.PUBLIC_SANITY_PROJECT_ID || 'w8rk6k6z',
     dataset: process.env.PUBLIC_SANITY_DATASET || 'production',
@@ -19,6 +20,6 @@ try {
   console.log(`Published content accessible: ${counts.products} products, ${counts.solutions} solutions, ${counts.services} services.`)
 } catch (error) {
   // Never dump request objects: they can contain authorization headers.
-  console.error(`Content check failed: ${error.message}`)
+  console.error(`::error title=Published Sanity content::Content check failed: ${error.message}`)
   process.exitCode = 1
 }

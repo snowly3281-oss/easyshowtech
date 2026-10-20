@@ -27,10 +27,8 @@ jobs:
       PUBLIC_SITE_INDEXING_ENABLED: 'true'
       PUBLIC_DEPLOY_COMMIT: ${{ github.sha }}
       PUBLIC_DEPLOY_RUN_ID: ${{ github.run_id }}
-      # Prefer a dedicated Viewer token. The already-configured Studio deployment
-      # credential keeps existing installations working until that token is added.
-      # This variable is server-only; never use a PUBLIC_ prefix for it.
-      SANITY_READ_TOKEN: ${{ secrets.SANITY_READ_TOKEN || secrets.SANITY_AUTH_TOKEN }}
+      # Server-only Viewer credential; never prefix this variable with PUBLIC_.
+      SANITY_READ_TOKEN: ${{ secrets.SANITY_READ_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

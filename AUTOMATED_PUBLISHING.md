@@ -24,7 +24,7 @@ GitHub Actions：https://github.com/snowly3281-oss/easyshowtech/actions/workflow
 
 本项目数据集在无鉴权时查询到 0 个产品/方案，本地使用 SANITY_READ_TOKEN 才能读到内容。因此构建会先检查产品、方案和服务均可读，空内容会阻止发布。
 
-现有 GitHub secrets：SANITY_AUTH_TOKEN、CLOUDFLARE_API_TOKEN、CLOUDFLARE_ACCOUNT_ID。优先添加专用 Viewer 权限的 SANITY_READ_TOKEN；在它未配置时，CI 复用已有 SANITY_AUTH_TOKEN 执行服务端读取，使当前部署链路可以直接运行。密钥不使用 PUBLIC_ 前缀，不写入 Git，也不在日志中打印。
+GitHub secrets：SANITY_READ_TOKEN 用于读取已发布内容，SANITY_AUTH_TOKEN 用于部署 Studio，CLOUDFLARE_API_TOKEN 和 CLOUDFLARE_ACCOUNT_ID 用于部署 Worker。需要将本地可用的读取密钥加密保存到仓库的 SANITY_READ_TOKEN，或在 GitHub Settings → Secrets and variables → Actions 中手动添加。它与 Studio 部署密钥分开使用。密钥不使用 PUBLIC_ 前缀，不写入 Git，也不在日志中打印。
 
 `.nvmrc` 与部署流程统一使用 Node 22.23.2 / npm 10.9.2；依赖按 package-lock 安装。
 
