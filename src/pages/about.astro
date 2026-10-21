@@ -184,9 +184,7 @@ const workshop = [t("Display product preparation"), t("Printing & fabric prepara
           <span class="eyebrow">{t("The founder")}</span>
           <h2 class="sec-h">{t("Founder of {brand} – Chris").replace("{brand}", siteSettings.brand)}</h2>
         </div>
-        <p class="sec-intro">
-          {t("Chris leads EasyShow with a focus on connecting product selection, printed graphics and delivery requirements, so your brand has a clear path from the first brief to the finished display.")}
-        </p>
+
       </div>
 
       <div class="founder">
@@ -201,6 +199,9 @@ const workshop = [t("Display product preparation"), t("Printing & fabric prepara
           />
         </div>
         <div class="founder-body">
+          <p class="founder-intro">
+            {t("Chris leads EasyShow with a focus on connecting product selection, printed graphics and delivery requirements, so your brand has a clear path from the first brief to the finished display.")}
+          </p>
           <p class="founder-quote">
             {t("“A successful display brings the product and the brand together. My goal at EasyShow is to make every requirement clear, from the frame and printed graphic to the way it is packed and delivered.”")}
           </p>
@@ -361,10 +362,12 @@ const workshop = [t("Display product preparation"), t("Printing & fabric prepara
   .principle-d { margin-top: var(--space-3); color: var(--color-ink-600); }
 
   /* ---- founder ---- */
-  .founder { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: var(--space-7); margin-top: var(--space-6); align-items: end; }
+  .founder { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: var(--space-7); margin-top: var(--space-6); align-items: center; }
   @media (max-width: 900px) { .founder { grid-template-columns: 1fr; } }
   .founder-photo { aspect-ratio: 3 / 4; border-radius: var(--radius-md); overflow: hidden; }
   .founder-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .founder-intro { color: var(--color-ink-600); margin-bottom: var(--space-5); }
+  .founder-body { max-width: 68ch; }
   .founder-quote { font-size: var(--text-h3); font-weight: 600; color: var(--color-ink-900); line-height: 1.3; letter-spacing: -0.01em; }
   .founder-copy { margin-top: var(--space-4); color: var(--color-ink-600); }
   .founder-name { margin-top: var(--space-5); font-weight: 600; color: var(--color-ink-900); }
