@@ -21,9 +21,7 @@ import {
   type VerifiedValue,
 } from "../sanity/pages";
 import type {OemPageQueryResult} from "../sanity/sanity.types";
-import {homeQuery} from "../sanity/queries/home";
-import {urlFor} from "../sanity/image";
-import type {HomeData, SolutionBlock} from "../sanity/content";
+import type {SolutionBlock} from "../sanity/content";
 import {fetchLocalized, localizedPath, resolveLocale} from "../i18n/config";
 import {staticUi} from "../i18n/static";
 
@@ -32,15 +30,10 @@ const locale = resolveLocale(
   Astro.originPathname || Astro.url.pathname,
 );
 const t = (english: string) => staticUi(locale, english);
-const [siteSettings, oemContent, homeContent] = await Promise.all([
+const [siteSettings, oemContent] = await Promise.all([
   getSiteSettings(),
   fetchLocalized<OemPageQueryResult>(oemPageQuery, {}, locale),
-  fetchLocalized<HomeData>(homeQuery, {}, locale),
 ]);
-const factoryImage = homeContent?.factory?.image;
-const factoryImageUrl = factoryImage?.asset
-  ? urlFor(factoryImage.asset).width(1400).auto("format").url()
-  : "/factory/home-realfactory-01.webp";
 const oemBlocks = (oemContent?.pageBuilder ?? []) as SolutionBlock[];
 const oemHero = oemBlocks.find(
   (block): block is Extract<SolutionBlock, {_type: "heroBlock"}> =>
@@ -219,13 +212,14 @@ const faqs = [
         </div>
         <div class="hero-media">
           <img
-            src={factoryImageUrl}
-            alt={factoryImage?.alt || t("EasyShow OEM manufacturing and customization overview")}
+            src="/factory/oem-factory-workflow-concept.webp"
+            alt={t("Concept illustration of display equipment printing, sewing, frame assembly, quality inspection, warehousing, packing and dispatch")}
             width="1672"
             height="941"
             loading="eager"
             fetchpriority="high"
           />
+          <p class="hero-image-note">{t("AI-generated production workflow concept")}</p>
         </div>
       </div>
 
@@ -621,8 +615,10 @@ const faqs = [
   .hero-h { margin-top: var(--space-4); color: var(--color-white); font-size: var(--text-h1); font-weight: 600; line-height: var(--lh-tight); letter-spacing: var(--tracking-tight); }
   .hero-sub { margin-top: var(--space-4); color: var(--color-ink-200); }
   .hero-cta { display: flex; gap: var(--space-3); margin-top: var(--space-6); flex-wrap: wrap; }
-  .hero-media { border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1672 / 941; }
+  .hero-media { position: relative; border-radius: var(--radius-md); overflow: hidden; aspect-ratio: 1672 / 941; }
   .hero-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .hero-image-note { position: absolute; right: 10px; bottom: 10px; margin: 0; padding: 5px 8px; border-radius: 4px; background: rgba(26, 37, 53, 0.82); color: #fff; font-size: 11px; line-height: 1.4; }
 
   /* ---- stat row ---- */
   .stat-row {
