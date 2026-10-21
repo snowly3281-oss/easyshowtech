@@ -13,7 +13,7 @@ export default defineConfig({
   // Production origin — makes <link rel="canonical"> / og:url absolute
   // (BaseLayout uses Astro.site). Filtered catalog URLs canonicalize to
   // https://easyshowtech.com/products.
-  site: 'https://easyshowtech.pages.dev',
+  site: 'https://easyshowtech.com',
   redirects: Object.fromEntries(solutionScenarios.flatMap(s => s.aliases.map(alias => [`/solutions/${alias}`, {status: 301, destination: `/solutions/${s.slug}`} ]))),
 
 

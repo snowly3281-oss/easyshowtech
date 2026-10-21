@@ -1,10 +1,18 @@
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
-import {verifyDeployment, waitForWorkflow, solutionSlugs} from './deployment.mjs'
+import {verifyDeployment, waitForWorkflow, solutionSlugs, verifyIndexability} from './deployment.mjs'
 import {isReleasePath, createReleasePlan} from './release-plan.mjs'
 
 const sha = 'a'.repeat(40)
 const quiet = {sleep: async () => {}, log: () => {}}
+const publicPage = url => {
+  const path = new URL(url).pathname
+  const body = path === '/robots.txt' ? 'User-agent: *\nAllow: /\nSitemap: https://easyshowtech.com/sitemap-index.xml' :
+    path === '/' ? '<h1>Home</h1><link rel="canonical" href="https://easyshowtech.com/">' :
+    path === '/sitemap-index.xml' ? '<loc>https://easyshowtech.com/sitemap-0.xml</loc>' :
+    path === '/sitemap-0.xml' ? '<loc>https://easyshowtech.com/</loc>' : '<h1>Solution</h1>'
+  return {ok: true, headers: new Headers(), text: async () => body}
+}
 const marker = (commit = sha, runId = '42') => ({ok: true, json: async () => ({commit, runId})})
 test('new website files are included while credentials and unrelated changes are excluded', () => {
   const plan = createReleasePlan({changed: ['src/pages/index.astro', 'dev.log', 'agent-debug.html'], untracked: ['src/data/new.ts', '.env', 'MEMORY.md', 'public/key.pem', 'studio/.env.production']})
@@ -19,9 +27,9 @@ test('pre-staged unrelated files block publishing instead of being bundled into 
 test('accepts only the intended commit and run, then checks all solution pages', async () => {
   const requests = []
   await verifyDeployment({commit: sha, runId: '42', ...quiet, fetchFn: async url => {
-    requests.push(String(url)); return String(url).includes('deployment.json') ? marker() : {ok: true, text: async () => '<h1>Solution</h1>'}
+    requests.push(String(url)); return String(url).includes('deployment.json') ? marker() : publicPage(url)
   }})
-  assert.equal(requests.length, solutionSlugs.length + 1)
+  assert.equal(requests.length, solutionSlugs.length + 5)
 })
 test('does not accept an older successful deployment', async () => {
   await assert.rejects(verifyDeployment({commit: sha, attempts: 1, ...quiet, fetchFn: async () => marker('b'.repeat(40))}), /different deployment/)
@@ -34,7 +42,7 @@ test('a missing solution page fails release verification', async () => {
 })
 test('retries propagation and eventually verifies', async () => {
   let count = 0
-  await verifyDeployment({commit: sha, attempts: 2, ...quiet, fetchFn: async url => String(url).includes('deployment.json') ? marker(++count === 1 ? 'b'.repeat(40) : sha) : {ok: true, text: async () => '<h1>'}})
+  await verifyDeployment({commit: sha, attempts: 2, ...quiet, fetchFn: async url => String(url).includes('deployment.json') ? marker(++count === 1 ? 'b'.repeat(40) : sha) : publicPage(url)})
   assert.equal(count, 2)
 })
 test('rejects invalid commit before making any requests', async () => {
@@ -54,4 +62,11 @@ test('a manual rebuild for the same commit is not confused with its push deploym
     {head_sha: sha, event: 'push', id: 42, status: 'completed', conclusion: 'success'},
   ]})})})
   assert.equal(run.id, 42)
+})
+
+test('rejects global noindex headers even when robots allows crawling', async () => {
+  await assert.rejects(verifyIndexability({origin: new URL('https://easyshowtech.com'), fetchFn: async url => ({...publicPage(url), headers: new Headers({'X-Robots-Tag': 'noindex, nofollow'})})}), /X-Robots-Tag/)
+})
+test('rejects sitemap indexes pointing to the old preview domain', async () => {
+  await assert.rejects(verifyIndexability({origin: new URL('https://easyshowtech.com'), fetchFn: async url => new URL(url).pathname === '/sitemap-index.xml' ? {ok: true, text: async () => '<loc>https://easyshowtech.pages.dev/sitemap-0.xml</loc>'} : publicPage(url)}), /outside the production domain/)
 })

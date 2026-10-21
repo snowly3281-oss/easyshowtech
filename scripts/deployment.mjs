@@ -8,6 +8,29 @@ export const solutionSlugs = [
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 const defaultFetch = (url, options = {}) => fetch(url, {...options, signal: AbortSignal.timeout(20_000)})
 
+export async function verifyIndexability({origin, fetchFn = defaultFetch}) {
+  const read = async path => {
+    const response = await fetchFn(new URL(path, origin))
+    if (!response.ok) throw new Error(`Indexing check failed: ${path} HTTP ${response.status}`)
+    if (/noindex|none/i.test(response.headers?.get('x-robots-tag') ?? '')) throw new Error(`Indexing blocked by X-Robots-Tag: ${path}`)
+    return response.text()
+  }
+  const robots = await read('/robots.txt')
+  if (/^Disallow:\s*\/\s*$/im.test(robots)) throw new Error('robots.txt blocks the entire site')
+  if (!robots.includes(`Sitemap: ${origin.origin}/sitemap-index.xml`)) throw new Error('robots.txt must advertise the production sitemap')
+  const html = await read('/')
+  if (/<meta\b[^>]*name=["'](?:robots|googlebot)["'][^>]*content=["'][^"']*(?:noindex|none)/i.test(html)) throw new Error('Homepage contains a noindex meta tag')
+  if (!html.includes(`rel="canonical" href="${origin.origin}/"`)) throw new Error('Homepage canonical does not use the production domain')
+  const index = await read('/sitemap-index.xml')
+  const maps = [...index.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => new URL(match[1]))
+  if (!maps.length || maps.some(url => url.origin !== origin.origin)) throw new Error('Sitemap index points outside the production domain')
+  for (const map of maps) {
+    const xml = await read(map.pathname)
+    const urls = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => new URL(match[1]))
+    if (!urls.length || urls.some(url => url.origin !== origin.origin)) throw new Error('Sitemap contains URLs outside the production domain')
+  }
+}
+
 export async function verifyDeployment({commit, runId, baseUrl = 'https://easyshowtech.com', attempts = 24, fetchFn = defaultFetch, sleep = delay, log = console.log}) {
   if (!/^[a-f0-9]{40}$/.test(commit ?? '')) throw new Error('Expected a full Git commit SHA.')
   const origin = new URL(baseUrl)
@@ -26,6 +49,7 @@ export async function verifyDeployment({commit, runId, baseUrl = 'https://easysh
         const page = await fetchFn(new URL(`/solutions/${slug}?verify=${commit}`, origin))
         if (!page.ok || !(await page.text()).includes('<h1')) throw new Error(`Solution page failed verification: ${slug}`)
       }
+      await verifyIndexability({origin, fetchFn})
       log(`Verified ${origin.origin}: ${commit.slice(0, 12)} (${solutionSlugs.length} solution pages).`)
       return marker
     } catch (error) {
