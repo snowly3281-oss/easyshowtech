@@ -49,7 +49,7 @@ const pageTitle =
   t("Your brand. Our factory. Your design stays yours.");
 const pageIntro =
   oemHero?.subheading ||
-  t("Build a private-label Display equipment range with specifications, commercial terms and confidentiality requirements documented in writing.");
+  t("Create branded tents, backdrops, flags, display stands and event chairs. Bring your product requirements and artwork together in one documented OEM brief.");
 const metaTitle =
   oemContent?.seo?.metaTitle || t("OEM services — EasyShow");
 const metaDescription = oemContent?.seo?.metaDescription || pageIntro;
@@ -63,9 +63,6 @@ const leadTime = getConfirmedValue(commercialFacts.leadTime);
 const activeClients = getConfirmedValue(commercialFacts.activeClients);
 const toolingQuote = getConfirmedValue(commercialFacts.toolingQuote);
 const ndaTerm = getConfirmedValue(commercialFacts.ndaTerm);
-const brandedSpringColour = getConfirmedValue(
-  commercialFacts.brandedSpringColour,
-);
 const certificationScope = getConfirmedValue(
   commercialFacts.certificationScope,
 );
@@ -84,7 +81,7 @@ const toolingOwnership = getConfirmedValue(
 );
 
 const steps = [
-  { n: "01", t: t("Inquiry"), d: t("Share brand, target volume and references.") },
+  { n: "01", t: t("Inquiry"), d: t("Share your display products, use scenario, quantities and delivery destination.") },
   {
     n: "02",
     t: t("Confidentiality"),
@@ -92,16 +89,16 @@ const steps = [
       ndaTerm ||
       t("Agree confidentiality requirements before sensitive design files move."),
   },
-  { n: "03", t: t("Design & spec"), d: t("We co-finalise design, materials, finishes.") },
+  { n: "03", t: t("Design & spec"), d: t("Confirm the selected products, materials, sizes and graphic requirements.") },
   {
     n: "04",
-    t: t("Tooling quote"),
-    d: toolingQuote || t("Confirm tooling scope, ownership and quoted cost."),
+    t: t("Artwork & quotation"),
+    d: t("Review artwork files and confirm printing, quantities, packaging and quoted costs."),
   },
-  { n: "05", t: t("Tooling & sample"), d: t("We cut tooling and build a sample.") },
-  { n: "06", t: t("Sample approval"), d: t("You inspect and sign off; changes logged.") },
-  { n: "07", t: t("Production"), d: t("Production against the approved sample and specification.") },
-  { n: "08", t: t("QC & delivery"), d: t("Full QC, branded packaging, export & freight.") },
+  { n: "05", t: t("Proof & sample review"), d: t("Agree the artwork proof and any required sample, with costs and timing confirmed.") },
+  { n: "06", t: t("Sample approval"), d: t("Approve the final artwork, specification and any agreed sample; record changes.") },
+  { n: "07", t: t("Production"), d: t("Produce the agreed display products and graphics against the approved specification.") },
+  { n: "08", t: t("QC & delivery"), d: t("Review agreed quality checks, packing details and shipping arrangements.") },
 ];
 
 const compare = [
@@ -184,12 +181,12 @@ const ndaNotice =
 
 const faqs = [
   { q: t("How is my design handled?"), a: `${ndaNotice} ${t("Final IP, access, ownership and non-supply terms are stated in the applicable written OEM agreement.")}` },
-  { q: t("What's the minimum order?"), a: standardMoq ? t("The currently approved standard MOQ is {standardMoq}{flexibleMoq}. Your quotation confirms the quantity for the selected product and customisation.").replace("{standardMoq}", standardMoq).replace("{flexibleMoq}", flexibleMoq ? `; ${t("lower-volume terms are")} ${flexibleMoq}` : "") : t("Minimum quantities depend on product, tooling and customisation scope. The applicable MOQ is confirmed in your written quotation.") },
-  { q: t("Who owns the tooling?"), a: toolingOwnership || t("Tooling ownership, storage, permitted use and any transfer arrangements are confirmed in writing before tooling begins.") },
-  { q: t("How long does the whole process take?"), a: leadTime ? t("The currently approved indicative lead-time statement is {leadTime}. The final schedule starts from the milestone stated in your quotation.").replace("{leadTime}", leadTime) : t("The schedule depends on design review, tooling, sample approval, production quantity and destination. We confirm the applicable lead time in writing after reviewing the specification.") },
-  { q: t("What exactly can I customise?"), a: t("Logo and wordmark, frame colour and finish, upholstery, packaging, hardware finish, accessories and documentation. We won't alter anything safety-critical or certified.") },
+  { q: t("What's the minimum order?"), a: standardMoq ? t("The currently approved standard MOQ is {standardMoq}{flexibleMoq}. Your quotation confirms the quantity for the selected product and customisation.").replace("{standardMoq}", standardMoq).replace("{flexibleMoq}", flexibleMoq ? `; ${t("lower-volume terms are")} ${flexibleMoq}` : "") : t("Minimum quantities depend on the selected display products, printing and customisation scope. The applicable quantity is confirmed in your written quotation.") },
+  { q: t("How are artwork and custom tooling handled?"), a: toolingOwnership || t("Artwork usage and file handover are agreed for your project. If a product requires custom tooling, we confirm its cost, ownership and permitted use in writing before work begins.") },
+  { q: t("How long does the whole process take?"), a: leadTime ? t("The currently approved indicative lead-time statement is {leadTime}. The final schedule starts from the milestone stated in your quotation.").replace("{leadTime}", leadTime) : t("The schedule depends on product selection, artwork approval, any agreed samples, order quantity and destination. We confirm production and shipping timing in your quotation.") },
+  { q: t("What exactly can I customise?"), a: t("Start with tents, backdrops, flags, display walls, stands or event chairs. We review branded graphics, fabric panels, product configuration, compatible accessories and packaging for the selected items. Each option is subject to product and material compatibility.") },
   { q: t("Which certifications apply?"), a: certificationScope || t("Certification and compliance scope varies by product, market and customisation. We identify the documents applicable to the quoted configuration before order confirmation.") },
-  { q: t("Can I get a sample before committing?"), a: t("Yes. We cut tooling and build a sample for you to inspect and sign off; every requested change is logged before production begins.") },
+  { q: t("Can I get a sample before committing?"), a: t("Tell us whether you need an artwork proof, material reference or product sample. We confirm availability, sample costs and timing for your selected products before proceeding.") },
 ];
 ---
 
@@ -273,38 +270,36 @@ const faqs = [
     <div class="container">
       <div class="head">
         <span class="eyebrow">{t("Customisation")}</span>
-        <h2 class="head-h">{t("Customisation, with honest limits.")}</h2>
+        <h2 class="head-h">{t("Your brand, across every display.")}</h2>
         <p class="body-l head-sub">
-          {t("You can make it unmistakably your brand. But some things we won't touch — because they're what keep the equipment safe. That line is the point.")}
+          {t("Plan your product selection, printed graphics and packaging together. Available options depend on the selected product, material and printing method; we confirm the details before production.")}
         </p>
       </div>
 
       <div class="cust-grid">
         <div class="card">
-          <div class="card-head coral"><Icon name="palette" size={20} /><span class="card-title">{t("What we customise")}</span></div>
+          <div class="card-head coral"><Icon name="palette" size={20} /><span class="card-title">{t("Branding & display options")}</span></div>
           <ul class="checklist two">
-            <li><Icon name="check" size={16} /> {t("Logo & wordmark placement")}</li>
-            <li><Icon name="check" size={16} /> {t("Frame colour & finish")}</li>
-            <li><Icon name="check" size={16} /> {t("Upholstery colour & material")}</li>
-            <li><Icon name="check" size={16} /> {t("Packaging & unboxing")}</li>
-            <li><Icon name="check" size={16} /> {t("Hardware finish")}</li>
-            <li><Icon name="check" size={16} /> {t("Accessory selection")}</li>
-            <li><Icon name="check" size={16} /> {t("Manuals & documentation")}</li>
-            {brandedSpringColour && (
-              <li><Icon name="check" size={16} /> {brandedSpringColour}</li>
-            )}
+            <li><Icon name="check" size={16} /> {t("Logo placement & branded graphics")}</li>
+            <li><Icon name="check" size={16} /> {t("Tent, backdrop, flag & display configurations")}</li>
+            <li><Icon name="check" size={16} /> {t("Printed fabric panels & replacement graphics")}</li>
+            <li><Icon name="check" size={16} /> {t("Packaging, labels & packing requirements")}</li>
+            <li><Icon name="check" size={16} /> {t("Artwork layout, colours & print setup")}</li>
+            <li><Icon name="check" size={16} /> {t("Compatible bases, hardware & carry bags")}</li>
+            <li><Icon name="check" size={16} /> {t("Private-label product & assembly information")}</li>
+
           </ul>
         </div>
         <div class="card muted">
-          <div class="card-head"><Icon name="shield" size={20} /><span class="card-title">{t("What we won't change")}</span></div>
+          <div class="card-head"><Icon name="shield" size={20} /><span class="card-title">{t("What we confirm before production")}</span></div>
           <ul class="dashlist">
-            <li>{t("Core safety-critical structure")}</li>
-            <li>{t("Certified spring system & resistance")}</li>
-            <li>{t("Load-bearing frame geometry")}</li>
-            <li>{t("Tested weld & joint points")}</li>
-            <li>{t("Anything that voids certification")}</li>
+            <li>{t("Frame, graphic and accessory compatibility")}</li>
+            <li>{t("Fabric choice and applicable printing method")}</li>
+            <li>{t("Finished dimensions and artwork print area")}</li>
+            <li>{t("Setup, anchoring and intended use conditions")}</li>
+            <li>{t("Any required testing or compliance documents")}</li>
           </ul>
-          <p class="caption muted-note">{t("These aren't limitations — they're why your clients stay safe.")}</p>
+          <p class="caption muted-note">{t("Structural changes, special materials and performance claims require a separate review. The agreed specification and quotation define the final scope.")}</p>
         </div>
       </div>
     </div>
@@ -319,7 +314,7 @@ const faqs = [
           {leadTime ? `${t("Eight steps.")} ${leadTime}.` : t("Eight steps. A documented path.")}
         </h2>
         <p class="body-l head-sub">
-          {t("A predictable path from first email to delivered, branded equipment. (Timeline indicative.)")}
+          {t("From display requirements and print-ready artwork to approved production, packing and dispatch. Your quotation confirms the schedule.")}
         </p>
       </div>
       <ol class="steps">
@@ -341,13 +336,13 @@ const faqs = [
           <span class="eyebrow">{t("Commercial checklist")}</span>
           <h2 class="head-h">{t("Put the decision criteria side by side.")}</h2>
           <p class="body-l head-sub">
-            {t("Coral values below are client-confirmed. Ask every shortlisted supplier to confirm the same criteria in writing.")}
+            {t("Compare the confirmed scope for your EasyShow project. Ask shortlisted suppliers to confirm the same requirements in writing.")}
           </p>
         </div>
         <div class="cmp">
           <div class="cmp-row cmp-head">
             <span class="cmp-k">{t("Decision criteria")}</span>
-            <span class="cmp-a"><span class="dot"></span> Coral OEM</span>
+            <span class="cmp-a"><span class="dot"></span> EasyShow OEM</span>
             <span class="cmp-b">{t("Your comparison")}</span>
           </div>
           {compare.map((row) => (
@@ -385,7 +380,7 @@ const faqs = [
     <div class="container">
       <div class="head">
         <span class="eyebrow">{t("Start here")}</span>
-        <h2 class="head-h">{t("Tell us what you're building.")}</h2>
+        <h2 class="head-h">{t("Tell us what you need to display.")}</h2>
         <p class="body-l head-sub">
           {t("Share as much as you're comfortable with.")} {ndaNotice}
         </p>
@@ -445,7 +440,7 @@ const faqs = [
                 name="message"
                 rows="4"
                 required
-                placeholder={t("Tell us about your brand, design or requirements...")}
+                placeholder={t("Tell us which display products you need, quantities, sizes, artwork requirements, event or use scenario, and delivery destination...")}
               ></textarea>
             </div>
 
@@ -511,7 +506,7 @@ const faqs = [
       <div class="final">
         <span class="eyebrow">{t("Not ready yet?")}</span>
         <h2 class="band-h">{t("Not ready for a full inquiry yet?")}</h2>
-        <p class="body-l band-sub">{t("Ask a real factory specialist about MOQ, tooling, IP terms and the right next step for your brand.")}</p>
+        <p class="body-l band-sub">{t("Discuss product selection, artwork, printing options, quantities and shipping requirements with the EasyShow team.")}</p>
         <div class="final-cta">
           <a href={localizedPath("/contact", locale)} class="btn btn-coral">{t("Talk to Chris directly")} <Icon name="chat" size={18} /></a>
         </div>
