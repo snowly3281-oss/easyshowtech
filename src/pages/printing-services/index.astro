@@ -3,6 +3,7 @@
  * /printing-services — Printing service list page.
  */
 import BaseLayout from '../../layouts/BaseLayout.astro'
+import { urlFor } from '../../sanity/image'
 import { fetchLocalizedList } from '../../i18n/config'
 import { printingServiceListQuery } from '../../sanity/queries/displayCatalog'
 import { getRawSiteSettings } from '../../sanity/settings'
@@ -50,7 +51,7 @@ const metaDescription =
               {service.cardImage?.asset ? (
                 <div class="ps-card__img">
                   <img
-                    src={`https://cdn.sanity.io/images/w8rk6k6z/production/${service.cardImage.asset._ref.replace('image-', '').replace(/-(\w+)$/, '.$1').replace(/-/g, '/')}`}
+                    src={urlFor(service.cardImage.asset).width(800).height(600).fit('crop').auto('format').url()}
                     alt={service.cardImage.alt ?? service.title}
                     width="800"
                     height="600"
