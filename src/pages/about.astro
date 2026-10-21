@@ -1,4 +1,4 @@
-﻿---
+---
 /**
  * About — bespoke page layout with its operator-facing page header, SEO and
  * optional supporting sections managed in Sanity.
@@ -29,7 +29,7 @@ const pageTitle =
 const pageIntro =
   page?.hero?.subheading ||
   page?.introduction ||
-  t("We design and build Display equipment in Suzhou for studios, clinics and distributors.");
+  t("We bring display products and custom printing together for events, retail, photography, community spaces and distributors.");
 const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
 const metaTitle = page?.seo?.metaTitle || t("About — {brand}").replace("{brand}", siteSettings.brand);
 const metaDescription = page?.seo?.metaDescription || pageIntro;
@@ -44,9 +44,9 @@ const heroImageAlt =
   t("The EasyShow factory floor in Suzhou");
 
 const principles = [
-  { n: "01", icon: "factory", t: t("Our own factory"), d: t("We design and build in-house — no trading middlemen, with full control over quality and lead times.") },
-  { n: "02", icon: "award", t: t("Studio-grade quality"), d: t("Engineered and tested against leading global brands.") },
-  { n: "03", icon: "layers", t: t("Wholesale + OEM"), d: t("A standard catalogue plus full private-label, from a low MOQ.") },
+  { n: "01", icon: "factory", t: t("Our own factory"), d: t("Discuss product, print and production requirements with the team handling your project.") },
+  { n: "02", icon: "award", t: t("Products & graphics together"), d: t("Match the selected display system with compatible graphics, materials and accessories.") },
+  { n: "03", icon: "layers", t: t("Wholesale + OEM"), d: t("Explore catalogue products and private-label options, with quantities and customisation confirmed for your project.") },
 ];
 
 const aboutFacts = page?.aboutFacts;
@@ -97,7 +97,7 @@ const milestones = (aboutFacts?.milestones ?? [])
   }));
 const countriesServed = getConfirmedValue(aboutFacts?.countriesServed);
 
-const workshop = [t("Machining floor"), t("Joinery & finishing"), t("Final assembly")];
+const workshop = [t("Display product preparation"), t("Printing & fabric preparation"), t("Final assembly")];
 ---
 
 <BaseLayout
@@ -163,7 +163,7 @@ const workshop = [t("Machining floor"), t("Joinery & finishing"), t("Final assem
     <div class="container">
       <span class="eyebrow">{t("Principles")}</span>
       <h2 class="sec-h">{t("What we build on.")}</h2>
-      <p class="body-l sec-sub">{t("Three commitments that shape every reformer we ship — and every relationship behind it.")}</p>
+      <p class="body-l sec-sub">{t("Three commitments behind our display products, printed graphics and customer relationships.")}</p>
       <div class="principles">
         {principles.map((p) => (
           <article class="principle">
@@ -185,19 +185,27 @@ const workshop = [t("Machining floor"), t("Joinery & finishing"), t("Final assem
           <h2 class="sec-h">{t("Founder of {brand} – Chris").replace("{brand}", siteSettings.brand)}</h2>
         </div>
         <p class="sec-intro">
-          {t("Chris started Coral and still walks the factory floor every morning — so you deal with the people who actually build your equipment.")}
+          {t("Chris leads EasyShow with a focus on connecting product selection, printed graphics and delivery requirements, so your brand has a clear path from the first brief to the finished display.")}
         </p>
       </div>
 
       <div class="founder">
-        {/* TODO: add founder portrait (static image) */}
-        <div class="founder-photo ph" aria-hidden="true"><Icon name="user" size={28} /></div>
+        <div class="founder-photo">
+          <img
+            src="/factory/chris-office-portrait.webp"
+            alt={t("Chris Qian, founder of EasyShow, seated at his office desk")}
+            width="1086"
+            height="1448"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
         <div class="founder-body">
           <p class="founder-quote">
-            {t("“I started Coral because I was tired of watching good studios get sold mediocre equipment by people who'd never set foot on a factory floor.”")}
+            {t("“A successful display brings the product and the brand together. My goal at EasyShow is to make every requirement clear, from the frame and printed graphic to the way it is packed and delivered.”")}
           </p>
           <p class="founder-copy">
-            {t("We build everything ourselves, in Suzhou: I walk the line every morning — I know who cut the wood and who wrapped the upholstery. Whether you buy one reformer or private-label a full range, you deal with the people who actually make it. That's the company I wanted to build.")}
+            {t("Whether you need a branded tent, a fabric backdrop, flags, display stands or event chairs, I want our team to start with where and how you will use them. We bring product configurations, artwork and printing requirements into one brief, then confirm materials, quantities, packing and delivery details with you. For wholesale and OEM projects, the aim is the same: a practical display solution that represents your brand, with the agreed details documented before production.")}
           </p>
           <p class="founder-name">Chris</p>
           <p class="caption">{t("Founder, {brand}").replace("{brand}", siteSettings.brand)}</p>
@@ -222,7 +230,7 @@ const workshop = [t("Machining floor"), t("Joinery & finishing"), t("Final assem
           <h2 class="sec-h">{t("Built under one roof.")}</h2>
         </div>
         <div class="sec-intro-block">
-          <p class="sec-intro">{t("Design, machining, joinery, finishing, assembly and QC — all in our own building in Suzhou. Audits and visits welcome.")}</p>
+          <p class="sec-intro">{t("See how product preparation, printed graphics, assembly, quality checks and packing fit into your display project. Contact us to discuss a factory visit.")}</p>
           <a href={localizedPath("/factory", locale)} class="btn btn-coral btn-sm intro-btn">{t("Take the factory tour")}</a>
         </div>
       </div>
@@ -355,7 +363,8 @@ const workshop = [t("Machining floor"), t("Joinery & finishing"), t("Final assem
   /* ---- founder ---- */
   .founder { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: var(--space-7); margin-top: var(--space-6); align-items: end; }
   @media (max-width: 900px) { .founder { grid-template-columns: 1fr; } }
-  .founder-photo { aspect-ratio: 3 / 4; border-radius: var(--radius-md); }
+  .founder-photo { aspect-ratio: 3 / 4; border-radius: var(--radius-md); overflow: hidden; }
+  .founder-photo img { display: block; width: 100%; height: 100%; object-fit: contain; }
   .founder-quote { font-size: var(--text-h3); font-weight: 600; color: var(--color-ink-900); line-height: 1.3; letter-spacing: -0.01em; }
   .founder-copy { margin-top: var(--space-4); color: var(--color-ink-600); }
   .founder-name { margin-top: var(--space-5); font-weight: 600; color: var(--color-ink-900); }
