@@ -33,15 +33,8 @@ const pageIntro =
 const pageBlocks = (page?.sections ?? []) as SolutionBlock[];
 const metaTitle = page?.seo?.metaTitle || t("About — {brand}").replace("{brand}", siteSettings.brand);
 const metaDescription = page?.seo?.metaDescription || pageIntro;
-const heroBackgroundImage = page?.hero?.backgroundImage as
-  | {asset?: unknown; alt?: string}
-  | undefined;
-const heroImage = heroBackgroundImage?.asset
-  ? urlFor(heroBackgroundImage as any).width(1200).height(900).fit("crop").auto("format").url()
-  : "/factory/home-realfactory-02.webp";
-const heroImageAlt =
-  heroBackgroundImage?.alt ||
-  t("The EasyShow factory floor in Suzhou");
+const heroImage = "/factory/canopy-frames-workshop-enhanced.webp";
+const heroImageAlt = t("Rows of folded aluminum canopy frames inside the EasyShow workshop");
 
 const principles = [
   { n: "01", icon: "factory", t: t("Our own factory"), d: t("Discuss product, print and production requirements with the team handling your project.") },
@@ -104,9 +97,21 @@ const workshop = [t("Display product preparation"), t("Printing & fabric prepara
   locale={locale}
   title={metaTitle}
   description={metaDescription}
+  preloadImage={heroImage}
 >
-  <!-- HERO (left) -->
-  <section class="section">
+  <!-- Full-width factory photo with the homepage poster scrim. -->
+  <section class="section about-hero">
+        <figure class="hero-media">
+          <img
+            src={heroImage}
+            alt={heroImageAlt}
+            width="1672"
+            height="941"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </figure>
+    <div class="hero-overlay" aria-hidden="true"></div>
     <div class="container">
       <span class="eyebrow">{eyebrow}</span>
       <div class="hero">
@@ -119,16 +124,7 @@ const workshop = [t("Display product preparation"), t("Printing & fabric prepara
             <a href={localizedPath("/factory", locale)} class="btn btn-outline">{t("Visit our factory")}</a>
           </div>
         </div>
-        <figure class="hero-media">
-          <img
-            src={heroImage}
-            alt={heroImageAlt}
-            width="1200"
-            height="900"
-            loading="eager"
-            fetchpriority="high"
-          />
-        </figure>
+
       </div>
     </div>
   </section>
@@ -324,15 +320,24 @@ const workshop = [t("Display product preparation"), t("Printing & fabric prepara
   .on-dark { color: var(--color-white); }
   .on-dark-sub { color: var(--color-ink-200); }
 
-  /* ---- hero (left + media) ---- */
-  .hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--space-8); align-items: center; margin-top: var(--space-5); }
-  @media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: var(--space-6); } }
-  .hero-h { font-size: var(--text-h1); font-weight: 600; line-height: var(--lh-tight); letter-spacing: var(--tracking-tight); }
-  .hero-sub { margin-top: var(--space-4); color: var(--color-ink-600); max-width: 46ch; }
+  /* ---- full-width factory poster ---- */
+  .about-hero { position: relative; isolation: isolate; overflow: hidden; min-height: clamp(600px, 46vw, 780px); display: flex; align-items: center; background: var(--color-navy); color: #fff; }
+  .about-hero > .container { position: relative; z-index: 2; }
+  .about-hero .eyebrow { color: #fff; opacity: 0.85; }
+  .hero { display: block; margin-top: var(--space-5); }
+  .hero-copy { max-width: 880px; }
+  .hero-h { font-size: var(--text-h1); font-weight: 600; line-height: var(--lh-tight); letter-spacing: var(--tracking-tight); color: #fff; }
+  .hero-sub { margin-top: var(--space-4); color: rgba(255,255,255,0.8); max-width: 46ch; }
   .hero-cta { display: flex; gap: var(--space-3); margin-top: var(--space-6); flex-wrap: wrap; }
-  .hero-media { border-radius: var(--radius-md); overflow: hidden; }
-  .hero-media img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; border-radius: var(--radius-md); }
-  .hero-media figcaption { margin-top: var(--space-2); }
+  .hero-cta .btn-outline { color: #fff; border-color: rgba(255,255,255,0.4); background: transparent; }
+  .hero-cta .btn-outline:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
+  .hero-media { position: absolute; inset: 0; z-index: 0; margin: 0; }
+  .hero-media img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+  .hero-overlay { position: absolute; inset: 0; z-index: 1; background: rgba(14,16,19,0.62); }
+  @media (max-width: 767px) {
+    .about-hero { min-height: 620px; }
+    .hero-media img { object-position: 60% center; }
+  }
 
   /* ---- section heads (left, optional right intro) ---- */
   .sec-head { display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--space-7); align-items: end; }
