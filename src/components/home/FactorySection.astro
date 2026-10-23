@@ -24,11 +24,11 @@ const localizedCtaHref = ctaHref.startsWith('/') ? localizedPath(ctaHref, locale
       <div class="container fac">
         <div class="fac__media">
           <MediaBox
-            source={data.image}
-            alt={data.image?.alt ?? data.heading}
+
+            alt={t('Factory technician working on production equipment')}
             ratio="16 / 9"
             width={900}
-            fallback="/factory/home-realfactory-01.webp"
+            fallback="/factory/factory-worker-enhanced.webp"
           />
         </div>
         <div class="fac__body">
