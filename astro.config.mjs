@@ -4,6 +4,7 @@ import cloudflare from '@astrojs/cloudflare';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 
+import {legacyRedirects} from './src/data/legacyRedirects.ts';
 import {solutionScenarios} from './src/data/solutionScenarios.ts';
 
 import tailwindcss from '@tailwindcss/vite';
@@ -14,7 +15,10 @@ export default defineConfig({
   // (BaseLayout uses Astro.site). Filtered catalog URLs canonicalize to
   // https://easyshowtech.com/products.
   site: 'https://easyshowtech.com',
-  redirects: Object.fromEntries(solutionScenarios.flatMap(s => s.aliases.map(alias => [`/solutions/${alias}`, {status: 301, destination: `/solutions/${s.slug}`} ]))),
+  redirects: {
+    ...Object.fromEntries(solutionScenarios.flatMap(s => s.aliases.map(alias => [`/solutions/${alias}`, {status: 301, destination: `/solutions/${s.slug}`} ]))),
+    ...Object.fromEntries(Object.entries(legacyRedirects).map(([path, destination]) => [path, {status: 301, destination}])),
+  },
 
 
   // English remains at the root; the four approved additional languages use

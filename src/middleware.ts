@@ -1,3 +1,4 @@
+import {legacyRedirect} from './data/legacyRedirects'
 import {canonicalSolutionSlug} from './data/solutionScenarios'
 import { PUBLIC_SITE_INDEXING_ENABLED } from 'astro:env/client'
 import { defineMiddleware } from 'astro:middleware'
@@ -11,6 +12,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const canonicalUrl = new URL(context.url)
     canonicalUrl.hostname = 'easyshowtech.pages.dev'
     return context.redirect(canonicalUrl.toString(), 301)
+  }
+
+  const legacyDestination = legacyRedirect(context.url.pathname)
+  if (legacyDestination) {
+    const target = new URL(legacyDestination, context.url)
+    // Retain incoming tracking parameters without replacing the target series.
+    context.url.searchParams.forEach((value, key) => {
+      if (!target.searchParams.has(key)) target.searchParams.append(key, value)
+    })
+    return context.redirect(target.toString(), 301)
   }
 
   const match = context.url.pathname.match(/^(\/(?:es|fr|de|it))?\/solutions\/([^/]+)\/?$/)

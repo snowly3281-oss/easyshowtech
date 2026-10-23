@@ -1,12 +1,15 @@
+import {legacyRedirects, legacyRedirect} from '../src/data/legacyRedirects.ts'
 import {test} from 'node:test'
 import assert from 'node:assert/strict'
-import {verifyDeployment, waitForWorkflow, solutionSlugs, verifyIndexability} from './deployment.mjs'
+import {verifyDeployment, waitForWorkflow, solutionSlugs, verifyIndexability, verifyLegacyRedirects} from './deployment.mjs'
 import {isReleasePath, createReleasePlan} from './release-plan.mjs'
 
 const sha = 'a'.repeat(40)
 const quiet = {sleep: async () => {}, log: () => {}}
 const publicPage = url => {
   const path = new URL(url).pathname
+  const destination = legacyRedirect(path)
+  if (destination) return {status: 301, headers: new Headers({location: new URL(destination, url).href})}
   const body = path === '/robots.txt' ? 'User-agent: *\nAllow: /\nSitemap: https://easyshowtech.com/sitemap-index.xml' :
     path === '/' ? '<h1>Home</h1><link rel="canonical" href="https://easyshowtech.com/">' :
     path === '/sitemap-index.xml' ? '<loc>https://easyshowtech.com/sitemap-0.xml</loc>' :
@@ -29,7 +32,7 @@ test('accepts only the intended commit and run, then checks all solution pages',
   await verifyDeployment({commit: sha, runId: '42', ...quiet, fetchFn: async url => {
     requests.push(String(url)); return String(url).includes('deployment.json') ? marker() : publicPage(url)
   }})
-  assert.equal(requests.length, solutionSlugs.length + 5)
+  assert.equal(requests.length, solutionSlugs.length + 5 + Object.keys(legacyRedirects).length * 2)
 })
 test('does not accept an older successful deployment', async () => {
   await assert.rejects(verifyDeployment({commit: sha, attempts: 1, ...quiet, fetchFn: async () => marker('b'.repeat(40))}), /different deployment/)
@@ -69,4 +72,17 @@ test('rejects global noindex headers even when robots allows crawling', async ()
 })
 test('rejects sitemap indexes pointing to the old preview domain', async () => {
   await assert.rejects(verifyIndexability({origin: new URL('https://easyshowtech.com'), fetchFn: async url => new URL(url).pathname === '/sitemap-index.xml' ? {ok: true, text: async () => '<loc>https://easyshowtech.pages.dev/sitemap-0.xml</loc>'} : publicPage(url)}), /outside the production domain/)
+})
+
+test('legacy mappings accept trailing slashes and leave unknown URLs alone', () => {
+  assert.equal(legacyRedirect('/about-us/'), '/about/')
+  assert.equal(legacyRedirect('/about-us'), '/about/')
+  assert.equal(legacyRedirect('/product/unknown/'), undefined)
+  assert.equal(legacyRedirect('/product-category/fabric-stand/80x200cm/'), '/products?series=sign-display')
+})
+test('a 404 at a legacy URL fails deployment verification', async () => {
+  await assert.rejects(verifyLegacyRedirects({origin: new URL('https://easyshowtech.com'), fetchFn: async () => ({status: 404, headers: new Headers()})}), /permanently redirect/)
+})
+test('a broken catalogue destination fails legacy migration verification', async () => {
+  await assert.rejects(verifyLegacyRedirects({origin: new URL('https://easyshowtech.com'), fetchFn: async url => legacyRedirect(new URL(url).pathname) ? publicPage(url) : {ok: false}}), /destination is unavailable/)
 })

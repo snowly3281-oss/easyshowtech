@@ -1,3 +1,4 @@
+import {legacyRedirects} from '../src/data/legacyRedirects.ts'
 import {pathToFileURL} from 'node:url'
 
 export const solutionSlugs = [
@@ -31,6 +32,20 @@ export async function verifyIndexability({origin, fetchFn = defaultFetch}) {
   }
 }
 
+export async function verifyLegacyRedirects({origin, fetchFn = defaultFetch}) {
+  for (const [path, destination] of Object.entries(legacyRedirects)) {
+    const response = await fetchFn(new URL(`${path}/`, origin), {redirect: 'manual'})
+    const location = response.headers?.get('location')
+    if (response.status !== 301 || !location || new URL(location, origin).href !== new URL(destination, origin).href) {
+      throw new Error(`Legacy URL must permanently redirect to its catalogue destination: ${path}`)
+    }
+    const target = await fetchFn(new URL(destination, origin))
+    if (!target.ok || /noindex|none/i.test(target.headers?.get('x-robots-tag') ?? '') || !(await target.text()).includes('<h1')) {
+      throw new Error(`Legacy redirect destination is unavailable or blocked: ${destination}`)
+    }
+  }
+}
+
 export async function verifyDeployment({commit, runId, baseUrl = 'https://easyshowtech.com', attempts = 24, fetchFn = defaultFetch, sleep = delay, log = console.log}) {
   if (!/^[a-f0-9]{40}$/.test(commit ?? '')) throw new Error('Expected a full Git commit SHA.')
   const origin = new URL(baseUrl)
@@ -50,6 +65,7 @@ export async function verifyDeployment({commit, runId, baseUrl = 'https://easysh
         if (!page.ok || !(await page.text()).includes('<h1')) throw new Error(`Solution page failed verification: ${slug}`)
       }
       await verifyIndexability({origin, fetchFn})
+      await verifyLegacyRedirects({origin, fetchFn})
       log(`Verified ${origin.origin}: ${commit.slice(0, 12)} (${solutionSlugs.length} solution pages).`)
       return marker
     } catch (error) {
