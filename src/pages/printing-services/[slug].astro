@@ -36,7 +36,9 @@ if (!service) return Astro.rewrite('/404')
 const metaTitle = service.metaTitle ?? `${service.title} — ${siteSettings.brand}`
 const metaDescription = service.metaDescription ?? service.shortDescription ?? undefined
 
-const heroImageUrl = service.heroImage?.asset
+const heroImageUrl = slug === 'custom-logo-printing'
+  ? '/images/canopy-h-logo.webp'
+  : service.heroImage?.asset
   ? urlFor(service.heroImage.asset).width(1000).auto('format').url()
   : null
 ---
