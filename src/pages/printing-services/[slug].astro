@@ -66,7 +66,7 @@ const heroImageUrl = service.heroImage?.asset
         )}
       </header>
 
-      <div class="ps-layout">
+      <div class:list={['ps-layout', {'ps-layout--single': !service.relatedProducts?.length}]} >
         <div class="ps-main">
           {service.description && (
             <div class="ps-body">
@@ -136,12 +136,8 @@ const heroImageUrl = service.heroImage?.asset
         </div>
 
         <!-- Sidebar -->
-        <aside class="ps-sidebar">
-          <div class="ps-cta">
-            <h3>Ready to start?</h3>
-            <p>Tell us about your project and we'll recommend the right printing approach.</p>
-            <a class="btn btn-coral" href="/contact">Get a quote</a>
-          </div>
+        {service.relatedProducts?.length > 0 && <aside class="ps-sidebar">
+
 
           {service.relatedProducts && service.relatedProducts.length > 0 && (
             <div class="ps-related">
@@ -171,8 +167,15 @@ const heroImageUrl = service.heroImage?.asset
               </ul>
             </div>
           )}
-        </aside>
+        </aside>}
       </div>
+      <section class="ps-cta" aria-label="Request a printing quote">
+        <div>
+          <h2>Plan your printing project</h2>
+          <p>Share your display products, quantities, artwork requirements and delivery destination. We will review the suitable printing options with you.</p>
+        </div>
+        <a class="btn btn-coral" href="/contact">Get a quote</a>
+      </section>
     </div>
   </section>
 </BaseLayout>
@@ -180,8 +183,8 @@ const heroImageUrl = service.heroImage?.asset
 <style>
   .ps-header { margin-top: var(--space-6); }
   .ps-header--image { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: var(--space-7); align-items: center; }
-  .ps-hero { width: 100%; height: clamp(240px, 25vw, 360px); margin: 0; padding: var(--space-3); border-radius: var(--radius-md); overflow: hidden; background: var(--color-paper-2, #ece7dd); }
-  .ps-hero img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .ps-hero { width: 100%; height: clamp(240px, 25vw, 360px); margin: 0; padding: 0; border-radius: var(--radius-md); overflow: hidden; background: transparent; }
+  .ps-hero img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.045); display: block; }
   @media (max-width: 767px) {
     .ps-header--image { grid-template-columns: 1fr; gap: var(--space-5); }
     .ps-hero { height: clamp(210px, 60vw, 300px); }
@@ -196,6 +199,7 @@ const heroImageUrl = service.heroImage?.asset
     display: grid; grid-template-columns: 1fr 300px; gap: var(--space-8);
     margin-top: var(--space-6);
   }
+  .ps-layout--single { grid-template-columns: minmax(0, 1fr); max-width: 960px; }
   .ps-title { margin: 0; font-size: var(--text-h2); }
   .ps-short-desc { margin: var(--space-4) 0 0; font-size: var(--text-body-l); color: var(--color-ink-600); }
   .ps-body { margin-top: var(--space-6); font-size: var(--text-body-l); line-height: 1.6; }
@@ -231,9 +235,12 @@ const heroImageUrl = service.heroImage?.asset
     background: var(--color-ink-900); color: #fff; padding: var(--space-6);
     border-radius: var(--radius-md);
   }
-  .ps-cta h3 { margin: 0; font-size: var(--text-h4); color: #fff; }
+  .ps-cta h2 { margin: 0; font-size: var(--text-h4); color: #fff; }
   .ps-cta p { margin: var(--space-3) 0 0; font-size: var(--text-body-s); color: rgba(255,255,255,0.7); line-height: 1.5; }
-  .ps-cta .btn { margin-top: var(--space-4); }
+  .ps-cta { display: flex; align-items: center; justify-content: space-between; gap: var(--space-6); margin-top: var(--space-8); }
+  .ps-cta p { max-width: 68ch; }
+  .ps-cta .btn { flex-shrink: 0; margin: 0; }
+  @media (max-width: 767px) { .ps-cta { flex-direction: column; align-items: flex-start; } }
   .ps-related { background: var(--color-paper-2, #ece7dd); padding: var(--space-5); border-radius: var(--radius-md); }
   .ps-related h3 { margin: 0 0 var(--space-4); font-size: var(--text-h4); }
   .ps-related-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-3); }
