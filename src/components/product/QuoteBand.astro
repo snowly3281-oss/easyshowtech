@@ -17,7 +17,7 @@ const phone = settings?.phone ?? '+86 139 2197 4459'
 const contacts = [
   { label: t('Sales'), value: email, href: `mailto:${email}` },
   { label: t('Phone'), value: phone, href: `tel:${phone.replace(/\s+/g, '')}` },
-  { label: t('Min. order'), value: localizeCountDuration(locale, moq ?? '1 unit')!, href: null },
+  { label: t('Min. order'), value: moq ? localizeCountDuration(locale, moq)! : t('Confirmed in your quotation'), href: null },
 ]
 ---
 
@@ -25,9 +25,9 @@ const contacts = [
   <div class="container quote__inner">
     <div class="quote__lead">
       <p class="eyebrow quote__eyebrow">{t('Request a quote')}</p>
-      <h2 class="quote__title">{t("Let's spec your studio.")}</h2>
+      <h2 class="quote__title">{t("Let's plan your display project.")}</h2>
       <p class="quote__intro">
-        {t("Send us your model list and quantities 鈥?we'll reply within one business day with unit pricing, lead times and freight to your door.")}
+        {t("Tell us which display products you need, the quantities and sizes, any artwork or printing requirements, and your delivery destination. We will review your brief and confirm pricing, production timing and shipping options in your quotation.")}
       </p>
       <a class="btn quote__btn" href={localizedPath('/contact', locale)}>{t('Request a quote')}</a>
     </div>
