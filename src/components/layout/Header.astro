@@ -92,6 +92,11 @@ const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =
             <p class="mega-head">{ui(locale, "partsAccessories")}</p>
             {productsParts.map((l) => <a href={localizeHref(l.href)} class="mega-link">{productPartLabel(l.label)}</a>)}
           </div>
+          <a class="catalog-menu" href={localizeHref('/design-catalog/')}>
+            <img src="/images/backdrops/demo-2.webp" alt="Floral backdrop design preview" width="96" height="72" loading="lazy" />
+            <span><strong>Backdrop Design Catalog</strong><small>Browse designs for your custom backdrop.</small></span>
+            <span class="catalog-menu-arrow">Browse designs →</span>
+          </a>
         </div>
       </div>
 
@@ -199,11 +204,12 @@ const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =
     <div class="container mobile-inner">
       <details class="m-group">
         <summary>{ui(locale, "products")}</summary>
-        <a href={localizeHref("/products")} class="m-link">{ui(locale, "allProducts")}</a>
         <p class="m-sub">{ui(locale, "bySeries")}</p>
         {productsSeries.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
         <p class="m-sub">{ui(locale, "partsAccessories")}</p>
         {productsParts.map((l) => <a href={localizeHref(l.href)} class="m-link">{productPartLabel(l.label)}</a>)}
+        <a class="m-link catalog-mobile" href={localizeHref('/design-catalog/')}><strong>Backdrop Design Catalog</strong><small>Browse designs for your custom backdrop. →</small></a>
+        <a href={localizeHref('/products')} class="m-link">{ui(locale, 'allProducts')}</a>
       </details>
       <details class="m-group">
         <summary>{ui(locale, "byService")}</summary>
@@ -228,6 +234,9 @@ const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =
 </header>
 
 <style>
+ .catalog-menu{flex:0 0 100%;width:100%;box-sizing:border-box;display:flex;align-items:center;gap:16px;border-top:1px solid var(--color-ink-200);padding:16px;background:#f2eee7;border-radius:8px;text-decoration:none;color:var(--color-ink-900)}
+ .catalog-menu img{width:80px;height:60px;object-fit:cover;border-radius:5px}.catalog-menu strong,.catalog-menu small{display:block}.catalog-menu small{margin-top:5px;font-size:13px;color:var(--color-ink-600)}.catalog-menu-arrow{margin-left:auto;color:#e60026;font-size:14px;white-space:nowrap}.catalog-menu:hover{background:#ebe5db}.catalog-mobile{border-top:1px solid var(--color-ink-200);margin-top:12px}.catalog-mobile small{display:block;margin-top:5px;font-size:13px}
+
   /* Layout/positioning only — all colours/type/spacing come from global.css tokens. */
   .site-header {
     position: sticky;

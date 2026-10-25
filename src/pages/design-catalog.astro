@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import BackdropCatalog, {type BackdropDesign} from '../components/solution/BackdropCatalog'
+import {sanityClient} from '../sanity/client'
+import {localizedPath,type Locale} from '../i18n/config'
+const locale=(Astro.props.locale as Locale) ?? 'en'
+const designs=await sanityClient.fetch<BackdropDesign[]>(`*[_type == "backdropDesign" && isActive == true && rightsConfirmed == true && defined(image.asset->url) && defined(code)] | order(sortOrder asc,code asc){code,title,category,"alt":coalesce(image.alt,title),"image":image.asset->url,"thumbnail":image.asset->url}`)
+const prepared=designs.map(d=>({...d,thumbnail:d.thumbnail+'?w=600&auto=format',image:d.image+'?w=1600&auto=format'}))
+---
+<BaseLayout locale={locale} title="Backdrop Design Catalog — EASY SHOW" description="Browse backdrop artwork by design code and style. Preview your favourites, download a selection image and send EasyShow your preferred size and quantity.">
+ <div class="container catalog-intro"><nav aria-label="Breadcrumb"><a href={localizedPath('/',locale)}>Home</a> / <span>Backdrop Design Catalog</span></nav><h1>Choose your backdrop design</h1><p>Choose your artwork here, then confirm the backdrop size, material, frame and quantity with our team. Example designs are labelled in their names.</p></div>
+ <BackdropCatalog designs={prepared} contactPath={localizedPath('/contact',locale)} client:load />
+</BaseLayout>
+<style>.catalog-intro{padding-block:28px 0}.catalog-intro nav{font-size:14px;color:var(--color-ink-600)}.catalog-intro h1{margin-top:24px;font-size:clamp(30px,4vw,48px)}.catalog-intro p{max-width:75ch;line-height:1.6;margin-top:20px}</style>

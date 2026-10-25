@@ -8,6 +8,7 @@
  */
 export const prerender = false;
 
+import DesignCatalogPage from "../design-catalog.astro";
 import HomePage from "../index.astro";
 import AboutPage from "../about.astro";
 import FactoryPage from "../factory.astro";
@@ -44,6 +45,7 @@ let found = locale !== "en";
 
 if (found) {
   if (route === "") Page = HomePage;
+  else if (route === "design-catalog") Page = DesignCatalogPage;
   else if (route === "about") Page = AboutPage;
   else if (route === "factory") Page = FactoryPage;
   else if (route === "contact") Page = ContactPage;

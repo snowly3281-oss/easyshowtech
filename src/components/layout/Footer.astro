@@ -92,6 +92,7 @@ const brand = siteSettings.brand;
       <div class="footer-col">
         <p class="footer-head">{ui(locale, "products")}</p>
         {footerProducts.map((l) => <a href={localizeHref(l.href)} class="footer-link">{t(l.label)}</a>)}
+        <a href={localizeHref("/design-catalog/")} class="footer-link">Backdrop Design Catalog</a>
       </div>
       <div class="footer-col">
         <p class="footer-head">{ui(locale, "solutions")}</p>
