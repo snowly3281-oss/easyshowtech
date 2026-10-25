@@ -59,16 +59,22 @@ function pickCardRatio(aspect: number | null | undefined): {
           first card with the container content, and cards bleed past both edges. */}
       <ul class="cat__rail" data-cat-rail>
         {items.map((s) => {
-          const card = pickCardRatio(s.cardImage?.aspect)
+          const sceneImages: Record<string, string> = {
+              chairs: '/images/products/director-chair-event-scene.webp',
+              'flags-system': '/images/products/flags-landscape.webp',
+              'sign-display': '/images/products/sign-display-landscape.webp',
+            }
+            const scene = sceneImages[s.slug ?? '']
+            const card = pickCardRatio(scene ? 4 / 3 : s.cardImage?.aspect)
           return (
             <li class="cat__card">
               <a href={`${localizedPath('/products', locale)}?series=${s.slug ?? ''}`} class="cat__link">
                 <MediaBox
-                  source={s.slug === 'chairs' ? undefined : s.cardImage}
-                  fallback={s.slug === 'chairs' ? '/images/products/director-chair-event-scene.webp' : undefined}
+                  source={scene ? undefined : s.cardImage}
+                  fallback={scene}
                   alt={s.title}
                   ratio={card.ratio}
-                  objectFit={s.slug === 'chairs' ? 'cover' : card.objectFit}
+                  objectFit={scene ? 'cover' : card.objectFit}
                   class={s.slug === 'chairs' ? 'cat__chair-image' : undefined}
                   width={620}
                 />
