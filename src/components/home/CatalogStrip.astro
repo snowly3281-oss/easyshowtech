@@ -75,7 +75,7 @@ function pickCardRatio(aspect: number | null | undefined): {
                   alt={s.title}
                   ratio={card.ratio}
                   objectFit={scene ? 'cover' : card.objectFit}
-                  class={scene ? 'cat__scene-image' : undefined}
+                  class={'cat__scene-image'}
                   width={620}
                 />
                 <div class="cat__body">
@@ -145,7 +145,7 @@ function pickCardRatio(aspect: number | null | undefined): {
 </script>
 
 <style>
-  .cat__link :global(img.cat__scene-image) { max-height: none; height: auto; aspect-ratio: 4 / 3; }
+  .cat__link :global(img.cat__scene-image) { max-height: none; height: auto; }
   .cat__head {
     display: flex;
     justify-content: space-between;
