@@ -1,0 +1,12 @@
+{
+  "document": "service.large-format-printing",
+  "previous": {
+    "_type": "image",
+    "alt": "Large-Format Printing service concept image",
+    "asset": {
+      "_ref": "image-982bc57e9bf3d28734bca4206ea103ab16713044-723x318-png",
+      "_type": "reference"
+    }
+  },
+  "newAsset": "image-851df32f0ecccd5f338cad15b59811d90120c9b0-1891x831-webp"
+}
