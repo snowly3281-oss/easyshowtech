@@ -1,0 +1,12 @@
+{
+  "document": "service.custom-logo-printing",
+  "previous": {
+    "_type": "image",
+    "alt": "Custom Logo Printing service concept image",
+    "asset": {
+      "_ref": "image-1aa3e70abdb688158015a9f95c2db9e3e7ed11e2-492x330-png",
+      "_type": "reference"
+    }
+  },
+  "newAsset": "image-4eaa77762acb8ef8456f37249ebb4013abbd19ae-1531x1027-webp"
+}
