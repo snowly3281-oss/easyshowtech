@@ -64,10 +64,11 @@ function pickCardRatio(aspect: number | null | undefined): {
             <li class="cat__card">
               <a href={`${localizedPath('/products', locale)}?series=${s.slug ?? ''}`} class="cat__link">
                 <MediaBox
-                  source={s.cardImage}
+                  source={s.slug === 'chairs' ? undefined : s.cardImage}
+                  fallback={s.slug === 'chairs' ? '/images/products/director-chair-event-scene.webp' : undefined}
                   alt={s.title}
                   ratio={card.ratio}
-                  objectFit={s.slug === 'chairs' ? 'contain' : card.objectFit}
+                  objectFit={s.slug === 'chairs' ? 'cover' : card.objectFit}
                   class={s.slug === 'chairs' ? 'cat__chair-image' : undefined}
                   width={620}
                 />
