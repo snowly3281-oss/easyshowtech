@@ -1,7 +1,7 @@
 ---
 import type { ProductOemTerm } from '../../sanity/content'
 import type {Locale} from '../../i18n/config'
-import {localizeCountDuration, staticUi} from '../../i18n/static'
+import {staticUi} from '../../i18n/static'
 
 interface Props {
   terms?: ProductOemTerm[] | null
@@ -15,10 +15,10 @@ const t = (english: string) => staticUi(locale, english)
 // Only confirmed / generic rows here — payment, lead time, warranty and tooling
 // tiers stay out until the client confirms exact figures.
 const DEFAULT_TERMS: ProductOemTerm[] = [
-  { _key: 'd-moq', label: t('Min. order'), value: localizeCountDuration(locale, '1 unit')!, note: t('No minimum — mix models') },
-  { _key: 'd-pl', label: t('Private label'), value: t('Available'), note: t('Logo, colours, packaging') },
-  { _key: 'd-finish', label: t('Custom finishes'), value: t('Available'), note: t('Upholstery & wood tone') },
-  { _key: 'd-pack', label: t('Export packaging'), value: 'ISPM-15 pallets', note: t('Sea & air freight') },
+  { _key: 'd-moq', label: t('Order quantities'), value: t('Quoted by product'), note: t('Based on the selected model, quantity and customisation') },
+  { _key: 'd-pl', label: t('Branding & printing'), value: t('Your artwork, your brand'), note: t('Confirm logo placement, print area, colours and artwork files') },
+  { _key: 'd-config', label: t('Product configuration'), value: t('Matched to your use'), note: t('Review dimensions, fabric, frame and compatible accessories') },
+  { _key: 'd-pack', label: t('Packing & delivery'), value: t('Agreed for your order'), note: t('Confirm packaging, labels, destination and shipping options') },
 ]
 const items = terms && terms.length > 0 ? terms : DEFAULT_TERMS
 ---
@@ -29,9 +29,9 @@ const items = terms && terms.length > 0 ? terms : DEFAULT_TERMS
       <div class="container">
         <p class="eyebrow oem__eyebrow">{t('Wholesale & OEM')}</p>
         <div class="oem__head">
-          <h2 class="oem__title">{t('Built for studios that buy by the room.')}</h2>
+          <h2 class="oem__title">{t('Display products for your brand and business.')}</h2>
           <p class="oem__intro">
-            {t('Fit out a full studio or private-label the line under your own brand. We handle custom finishes, branded packaging and export logistics end to end.')}
+            {t('Source tents, backdrops, flags, display stands and event chairs for your projects or product range. We review product selection, branded graphics and packing requirements with you, then confirm the available options and commercial terms in your quotation.')}
           </p>
         </div>
         <dl class="oem__grid">
@@ -75,7 +75,7 @@ const items = terms && terms.length > 0 ? terms : DEFAULT_TERMS
   .oem__grid {
     margin: 0;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 1px;
     background: rgba(255, 255, 255, 0.12);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -108,4 +108,5 @@ const items = terms && terms.length > 0 ? terms : DEFAULT_TERMS
       grid-template-columns: repeat(2, 1fr);
     }
   }
+  @media (max-width: 480px) { .oem__grid { grid-template-columns: 1fr; } }
 </style>
