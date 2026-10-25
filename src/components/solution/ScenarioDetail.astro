@@ -1,4 +1,5 @@
 ---
+import BackdropCatalog, {type BackdropDesign} from './BackdropCatalog'
 import {solutionConfigurations} from '../../data/solutionConfigurations'
 import {scenarioCatalogQuery} from '../../sanity/queries/scenarioSolutions'
 import {sanityClient} from '../../sanity/client'
@@ -14,6 +15,8 @@ const t = (text: string) => staticUi(locale, text)
 const link = (path: string) => localizedPath(path, locale)
 const image = (value: NonNullable<ScenarioSolutionQueryResult>['heroImage']) => value?.asset ? urlFor(value.asset).width(1400).height(840).fit('crop').auto('format').url() : null
 const hero = image(content?.heroImage ?? null)
+const backdropDesigns = scenario.slug === 'photography-film' ? await sanityClient.fetch<BackdropDesign[]>(`*[_type == "backdropDesign" && isActive == true && rightsConfirmed == true && defined(image.asset) && defined(code)] | order(sortOrder asc, code asc){code,title,category,"alt":coalesce(image.alt,title),"image":image.asset->url,"thumbnail":image.asset->url}`) : []
+const preparedDesigns = backdropDesigns.map(d => ({...d, thumbnail: d.thumbnail + '?w=600&auto=format', image: d.image + '?w=1600&auto=format'}))
 const examples = solutionConfigurations[scenario.slug] ?? []
 const ids = [...new Set(examples.flatMap(pkg => pkg.items.flatMap(item => [item.productId, item.alternativeId].filter((id): id is string => Boolean(id)))))]
 const catalog = await sanityClient.fetch<ScenarioCatalogQueryResult>(scenarioCatalogQuery, {ids})
@@ -32,11 +35,12 @@ const customization = content?.customizationOptions?.length ? content.customizat
 ---
 <section class="section hero"><div class="container grid">
   <div><p class="eyebrow">{t('Solutions')}</p><h1>{scenario.title}</h1><p class="body-l">{content?.scenarioIntro || t(scenario.intro)}</p>
-    <div class="actions"><a class="btn btn-coral" href={request()}>{t('Get a custom solution')}</a><a class="btn btn-outline" href="#combination">{t('Explore the setup')}</a></div>
+    <div class="actions"><a class="btn btn-coral" href={request()}>{t('Get a custom solution')}</a><a class="btn btn-outline" href="#combination">{t('Explore the setup')}</a>{scenario.slug === 'photography-film' && <a class="btn btn-outline" href="#backdrop-catalog">Browse backdrop designs</a>}</div>
   </div>
   <figure>{hero ? <img src={hero} alt={content?.heroImage?.alt || scenario.title} width="1400" height="840" fetchpriority="high" /> : <img src="/solutions/scene-placeholder.svg" alt={t('Scenario image placeholder')} width="1400" height="840"/>}<figcaption>{hero ? content?.heroImage?.caption : t('Planning placeholder — replace with an approved scene image.')}</figcaption></figure>
 </div></section>
 <section class="section"><div class="container"><p class="eyebrow">{t('Scenario introduction')}</p><h2>{t('Plan around your setting')}</h2><p>{content?.scenarioIntro || t(scenario.intro)}</p><h3>{t('What this solution needs')}</h3><ul class="chips">{needs.map(need => <li>{t(need)}</li>)}</ul></div></section>
+{scenario.slug === 'photography-film' && <BackdropCatalog designs={preparedDesigns} contactPath={link('/contact')} client:load />}
 <section id="combination" class="section band"><div class="container"><h2>{t('Recommended product combination')}</h2><p>{t('Reference configurations guide the discussion. Final products and quantities are confirmed in your quote; these are not minimum order quantities.')}</p>
   {packages.length ? packages.map(pkg => <article class="package"><h3>{pkg.title}</h3><p>{pkg.summary}</p><div class="cards">{(pkg.items ?? []).filter(i => i.product?.isActive === true && i.product.slug).map(item => <article><p class="eyebrow">{item.role}</p><h4><a href={link('/products/' + item.product!.slug)}>{item.product!.title}</a></h4><p>{t(item.requirement || 'recommended')}</p>{item.quantityLabel && <p>{t('Typical setup')}: {item.quantityLabel}</p>}<p>{item.quantityNote}</p><p>{item.reason}</p>{item.alternative?.isActive === true && item.alternative.slug && <p>{t('Alternative')}: <a href={link('/products/' + item.alternative.slug)}>{item.alternative.title}</a></p>}</article>)}</div><a class="btn btn-outline" href={request(pkg)}>{t('Discuss this configuration')}</a></article>) : <><p>{t('Product roles to discuss — catalogue references and quantities await review.')}</p><ul class="chips">{scenario.planningProducts.map(name => <li>{name}</li>)}</ul><a href={link('/products')}>{t('Explore products')}</a></>}
   <h3>{t('How the products work together')}</h3><p>{content?.howProductsWorkTogether || t(scenario.together)}</p>

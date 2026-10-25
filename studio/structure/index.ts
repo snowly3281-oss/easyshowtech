@@ -74,6 +74,7 @@ const SINGLETONS = [
   "translationSettings",
 ];
 const EXPLICIT_TYPES = [
+  "backdropDesign",
   "product",
   "series",
   "service",
@@ -252,6 +253,7 @@ export const structure: StructureResolver = async (S, context) => {
   );
 
   const items = [
+    S.documentTypeListItem("backdropDesign").title("背景图案库 / Backdrop Designs").icon(ImagesIcon),
     // Site settings is deliberately the first operational entry.
     S.listItem()
       .id("site-settings")

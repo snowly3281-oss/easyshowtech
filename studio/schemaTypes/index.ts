@@ -1,3 +1,4 @@
+import {backdropDesign} from './backdropDesign';
 import {
   defineField,
   type SchemaTypeDefinition,
@@ -55,6 +56,7 @@ import {
  */
 const registeredTypes: SchemaTypeDefinition[] = [
   // Documents
+  backdropDesign,
   series,
   equipment,
   service,
