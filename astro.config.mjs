@@ -88,6 +88,7 @@ export default defineConfig({
   // server is still running) instead of silently grabbing the next port.
   server: { port: 4321 },
   vite: {
+    cacheDir: process.argv.includes('build') ? 'node_modules/.vite-build' : 'node_modules/.vite',
     // SSR: force @sanity/visual-editing to be bundled (avoid ESM/CJS interop issues)
     ssr: {
       noExternal: ['@sanity/visual-editing', '@sanity/visual-editing/react'],
@@ -135,6 +136,11 @@ export default defineConfig({
       // exist. Eager pre-bundling makes the dependency graph stable before the
       // first request. Remove this list when upgrading to Astro 7 + adapter 14.
       include: [
+        'react',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+        'react-dom',
+        'react-dom/server',
         '@sanity/visual-editing',
         '@sanity/visual-editing/react',
         // Adapter 13.7's own Workerd pre-bundle list. `noDiscovery` prevents

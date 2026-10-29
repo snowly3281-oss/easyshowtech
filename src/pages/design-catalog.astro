@@ -4,7 +4,7 @@ import BackdropCatalog, {type BackdropDesign} from '../components/solution/Backd
 import {sanityClient} from '../sanity/client'
 import {localizedPath,type Locale} from '../i18n/config'
 const locale=(Astro.props.locale as Locale) ?? 'en'
-const designs=await sanityClient.fetch<BackdropDesign[]>(`*[_type == "backdropDesign" && isActive == true && rightsConfirmed == true && defined(image.asset->url) && defined(code)] | order(sortOrder asc,code asc){code,title,category,"alt":coalesce(image.alt,title),"image":image.asset->url,"thumbnail":image.asset->url}`)
+const designs=await sanityClient.fetch<BackdropDesign[]>(`*[_type == "backdropDesign" && isActive == true && rightsConfirmed == true && defined(image.asset->url) && defined(code)] | order(sortOrder asc,code asc){code,title,description,category,"alt":coalesce(image.alt,title),"image":image.asset->url,"thumbnail":image.asset->url}`)
 const prepared=designs.map(d=>({...d,thumbnail:d.thumbnail+'?w=600&auto=format',image:d.image+'?w=1600&auto=format'}))
 ---
 <BaseLayout locale={locale} title="Backdrop Design Catalog — EASY SHOW" description="Browse backdrop artwork by design code and style. Preview your favourites, download a selection image and send EasyShow your preferred size and quantity.">

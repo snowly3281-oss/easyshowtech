@@ -15,7 +15,7 @@ const t = (text: string) => staticUi(locale, text)
 const link = (path: string) => localizedPath(path, locale)
 const image = (value: NonNullable<ScenarioSolutionQueryResult>['heroImage']) => value?.asset ? urlFor(value.asset).width(1400).height(840).fit('crop').auto('format').url() : null
 const hero = image(content?.heroImage ?? null)
-const backdropDesigns = scenario.slug === 'photography-film' ? await sanityClient.fetch<BackdropDesign[]>(`*[_type == "backdropDesign" && isActive == true && rightsConfirmed == true && defined(image.asset) && defined(code)] | order(sortOrder asc, code asc){code,title,category,"alt":coalesce(image.alt,title),"image":image.asset->url,"thumbnail":image.asset->url}`) : []
+const backdropDesigns = scenario.slug === 'photography-film' ? await sanityClient.fetch<BackdropDesign[]>(`*[_type == "backdropDesign" && isActive == true && rightsConfirmed == true && defined(image.asset) && defined(code)] | order(sortOrder asc, code asc){code,title,description,category,"alt":coalesce(image.alt,title),"image":image.asset->url,"thumbnail":image.asset->url}`) : []
 const preparedDesigns = backdropDesigns.map(d => ({...d, thumbnail: d.thumbnail + '?w=600&auto=format', image: d.image + '?w=1600&auto=format'}))
 const examples = solutionConfigurations[scenario.slug] ?? []
 const ids = [...new Set(examples.flatMap(pkg => pkg.items.flatMap(item => [item.productId, item.alternativeId].filter((id): id is string => Boolean(id)))))]
