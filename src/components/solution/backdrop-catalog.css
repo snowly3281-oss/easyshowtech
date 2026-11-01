@@ -34,6 +34,7 @@
  .bd-preview{padding:14px}
  .bd-empty{padding:22px}
  .bd-tools>p[role=status]{margin:0}
+ .bd-tools>p[role=status]{flex-basis:100%;text-align:right;margin-top:-8px}
  .bd-card strong,.bd-card>span:not(.bd-card__media),.bd-card small{margin-inline:10px}
  .bd-card__description{display:-webkit-box;padding:0 10px;margin-top:8px;overflow:hidden;color:#4f5662;font-size:12px;line-height:1.45;-webkit-box-orient:vertical;-webkit-line-clamp:3}
  .bd-card__hint{display:block}
