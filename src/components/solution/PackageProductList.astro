@@ -2,6 +2,7 @@
 import { urlFor } from '../../sanity/image'
 import { localizedPath, type Locale } from '../../i18n/config'
 import { staticUi } from '../../i18n/static'
+import { productDetailPath } from '../../lib/productRoutes'
 
 interface Props {
   items: any[]
@@ -38,7 +39,7 @@ const visibleItems = (items ?? []).filter(
           return (
             <li>
               {product?.slug && product.status === 'published' ? (
-                <a href={localizedPath(`/products/${product.slug}`, locale)}>
+                <a href={localizedPath(productDetailPath(product), locale)}>
                   <span class="package-products__thumb">
                     {imageUrl ? (
                       <img

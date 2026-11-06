@@ -38,6 +38,10 @@ export const solutionBySlugQuery = defineQuery(`
     seo{
       metaTitle,
       metaDescription,
+      canonicalUrl,
+      ogTitle,
+      ogDescription,
+      noIndex,
       ogImage{ asset, alt }
     },
     pageBuilder[]{
@@ -48,12 +52,12 @@ export const solutionBySlugQuery = defineQuery(`
         heading,
         subheading,
         backgroundImage{ asset, alt },
-        cta{ label, external, internal->{ _type, "slug": slug.current } }
+        cta{ label, external, internal->{ _type, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null) } }
       },
       _type == "ctaBlock" => {
         heading,
         body,
-        cta{ label, external, internal->{ _type, "slug": slug.current } }
+        cta{ label, external, internal->{ _type, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null) } }
       },
       _type == "textBlock" => {
         heading,
@@ -68,11 +72,32 @@ export const solutionBySlugQuery = defineQuery(`
       _id,
       title,
       "slug": slug.current,
+      productType,
+      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
       sku,
       mainImage{ asset, alt },
       priceDisplay,
       price,
       currency
+    },
+    "recommendedProducts": recommendedProducts[@->isActive == true]->{
+      _id,
+      title,
+      "slug": slug.current,
+      productType,
+      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
+      mainImage{ asset, alt }
+    },
+    "recommendedProductCategories": recommendedProductCategories[@->isActive == true]->{
+      title,
+      "slug": slug.current,
+      productType,
+      "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),
+      "hasProducts": count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0
+    },
+    "recommendedPrintingServices": recommendedPrintingServices[@->isActive == true]->{
+      title,
+      "slug": slug.current
     },
     packages[]{
       _key,
@@ -114,6 +139,8 @@ export const solutionBySlugQuery = defineQuery(`
             _id,
             title,
             "slug": slug.current,
+            productType,
+            "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
             sku,
             status,
             mainImage{ asset, alt }
@@ -130,6 +157,8 @@ export const solutionBySlugQuery = defineQuery(`
           _id,
           title,
           "slug": slug.current,
+          productType,
+          "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
           sku,
           status,
           mainImage{ asset, alt }
@@ -141,6 +170,8 @@ export const solutionBySlugQuery = defineQuery(`
           _id,
           title,
           "slug": slug.current,
+          productType,
+          "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
           sku,
           status,
           mainImage{ asset, alt }

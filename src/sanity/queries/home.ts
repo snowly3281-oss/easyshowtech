@@ -1,6 +1,6 @@
 import { defineQuery } from 'groq'
 
-const cta = `{ label, external, internal->{ _type, "slug": slug.current } }`
+const cta = `{ label, external, internal->{ _type, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null) } }`
 
 /**
  * The home singleton — bespoke editorial sections (explicit projection,
@@ -114,6 +114,8 @@ export const homeServicesQuery = defineQuery(`
     title,
     "slug": slug.current,
     shortDescription,
+    benefits[0]{title},
+    supportedMaterials[0...3],
     sortOrder,
     "cardImage": cardImage{ asset, alt }
   }

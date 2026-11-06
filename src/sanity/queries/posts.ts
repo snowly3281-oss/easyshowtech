@@ -95,6 +95,8 @@ export const postBySlugQuery = defineQuery(`
           _id,
           title,
           "slug": slug.current,
+          productType,
+          "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
           sku,
           summary,
           mainImage{ asset, alt }
@@ -122,12 +124,12 @@ export const postBySlugQuery = defineQuery(`
         primaryCta{
           label,
           external,
-          internal->{ _type, route, "slug": slug.current }
+          internal->{ _type, route, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null) }
         },
         secondaryCta{
           label,
           external,
-          internal->{ _type, route, "slug": slug.current }
+          internal->{ _type, route, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null) }
         }
       }
     },
@@ -142,6 +144,8 @@ export const postBySlugQuery = defineQuery(`
       _id,
       title,
       "slug": slug.current,
+      productType,
+      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
       sku,
       summary,
       mainImage{ asset, alt }

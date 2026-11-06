@@ -16,7 +16,7 @@
  *   ---
  *   import BaseLayout from "../layouts/BaseLayout.astro";
  *   ---
- *   <BaseLayout title="Easy Show  — Display equipment manufacturer">
+ *   <BaseLayout title="EasyShow — Custom Display Systems for Events, Retail & Promotions">
  *     <section class="section">
  *       <div class="container"> ...page content... </div>
  *     </section>
@@ -32,13 +32,13 @@ import RfqWidget from "../components/rfq/RfqWidget.astro";
 import SanityVisualEditing from "../components/SanityVisualEditing";
 import CookieBanner from "../components/legal/CookieBanner.astro";
 import { getSiteSettings } from "../sanity/settings";
-import { homeServicesQuery } from "../sanity/queries/home";
-import type { HomeServicesQueryResult } from "../sanity/sanity.types";
+import { headerNavigationQuery } from "../sanity/queries/productCategories";
+import { sanityClient } from "../sanity/client";
+import type { HeaderNavigationData, ProductCategoryMenuItem } from "../sanity/content";
 import {
   PUBLIC_SITE_INDEXING_ENABLED,
 } from "astro:env/client";
 import {
-  fetchLocalizedList,
   localizedPath,
   resolveLocale,
   SUPPORTED_LOCALES,
@@ -53,6 +53,9 @@ interface Props {
   description?: string;
   /** Absolute URL of the social share image (og:image). Optional. */
   ogImage?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  canonicalUrl?: string;
   /** Prevent private/temporary pages from entering search indexes. */
   noIndex?: boolean;
   /** Override the browser referrer policy for token-bearing private pages. */
@@ -67,6 +70,9 @@ const {
   title: explicitTitle,
   description: explicitDescription,
   ogImage,
+  ogTitle,
+  ogDescription,
+  canonicalUrl: explicitCanonicalUrl,
   noIndex = false,
   referrerPolicy,
   locale: explicitLocale,
@@ -80,26 +86,35 @@ const documentLocale = resolveLocale(
 const t = (english: string) => staticUi(documentLocale, english);
 const title =
   explicitTitle ||
-  t("Easy Show — Display equipment manufacturer");
+  t("EasyShow — Custom Display Systems for Events, Retail & Promotions");
 const description =
   explicitDescription ||
   t(
-    "Factory-direct Display equipment and OEM, built in our own Suzhou factory for Retailers, Wholesalers and Service Providers worldwide.",
+    "Factory-direct custom display systems for events, retail and promotions, with in-house printing and OEM support from our Suzhou factory.",
   );
 // Canonical URL (uses `site` from astro.config when set).
-const canonical = Astro.url?.pathname
+const canonical = explicitCanonicalUrl
+  ? new URL(explicitCanonicalUrl, Astro.site ?? Astro.url).toString()
+  : Astro.url?.pathname
   ? new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString()
   : undefined;
 const globalSettings = await getSiteSettings();
 const shouldNoIndex = noIndex || !PUBLIC_SITE_INDEXING_ENABLED;
 // Pull the Printing Service taxonomy once per request. Both the Header mega
 // menu ("By Service") and the home carousel consume the same list.
-const printingServices = await fetchLocalizedList<HomeServicesQueryResult[number]>(
-  homeServicesQuery,
-  {},
-  documentLocale,
-  (item) => item.slug,
-);
+const localizedNavigation = sanityClient.fetch<HeaderNavigationData>(headerNavigationQuery, {language: documentLocale});
+const englishNavigation = documentLocale === 'en'
+  ? localizedNavigation
+  : sanityClient.fetch<HeaderNavigationData>(headerNavigationQuery, {language: 'en'});
+const [localizedHeader, englishHeader] = await Promise.all([localizedNavigation, englishNavigation]);
+const mergeBySlug = <T extends {slug: string | null}>(english: T[] = [], localized: T[] = []) => {
+  const merged = new Map<string, T>();
+  for (const item of english) if (item.slug) merged.set(item.slug, item);
+  for (const item of localized) if (item.slug) merged.set(item.slug, item);
+  return [...merged.values()];
+};
+const printingServices = mergeBySlug(englishHeader?.services, localizedHeader?.services);
+const productCategories: ProductCategoryMenuItem[] = mergeBySlug(englishHeader?.productCategories, localizedHeader?.productCategories);
 const alternateLinks = SUPPORTED_LOCALES.map((locale) => ({
   locale,
   href: new URL(
@@ -152,8 +167,8 @@ const alternateLinks = SUPPORTED_LOCALES.map((locale) => ({
 
     <!-- Open Graph / social -->
     <meta property="og:type" content="website" />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content={ogTitle || title} />
+    <meta property="og:description" content={ogDescription || description} />
     {canonical && <meta property="og:url" content={canonical} />}
     {ogImage && <meta property="og:image" content={ogImage} />}
     <meta
@@ -194,7 +209,7 @@ const alternateLinks = SUPPORTED_LOCALES.map((locale) => ({
     <div id="route-progress" aria-hidden="true" transition:persist>
       <span id="route-progress__bar"></span>
     </div>
-    <Header locale={documentLocale} printingServices={printingServices} />
+    <Header locale={documentLocale} printingServices={printingServices} productCategories={productCategories} />
 
     <main>
       <slot />

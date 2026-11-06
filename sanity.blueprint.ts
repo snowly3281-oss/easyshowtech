@@ -8,7 +8,7 @@ export default defineBlueprint({
       event: {
         on: ['create', 'update'],
         filter:
-          '(_type in ["home","sitePage","oem","series","equipment","product","solution","post","postCategory","postTag"] && coalesce(language, "en") == "en" && !(_id in path("drafts.**"))) || (_type == "translationJob" && status == "pending")',
+          '(_type in ["home","sitePage","oem","series","equipment","product","productCategory","solution","post","postCategory","postTag"] && coalesce(language, "en") == "en" && !(_id in path("drafts.**"))) || (_type == "translationJob" && status == "pending")',
         projection:
           '{_id, _type, _rev, language, sourceId, status, targetLanguages}',
         resource: {

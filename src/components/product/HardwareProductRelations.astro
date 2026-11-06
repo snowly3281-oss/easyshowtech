@@ -1,0 +1,29 @@
+---
+import { localizedPath, type Locale } from '../../i18n/config'
+import { ui } from '../../i18n/ui'
+import { productDetailPath } from '../../lib/productRoutes'
+
+interface Props { product: any; locale?: Locale }
+const { product, locale = 'en' } = Astro.props as Props
+const displays = (product.relatedDisplays ?? []).filter((entry: any) => entry?.slug)
+---
+
+{displays.length ? (
+  <section class="section hardware-display-link">
+    <div class="container">
+      <p class="eyebrow">{ui(locale, 'customDisplays')}</p>
+      <h2>Need a complete custom display?</h2>
+      <p>Pair this hardware with a configured display product.</p>
+      <ul>{displays.map((entry: any) => <li><a href={localizedPath(productDetailPath(entry), locale)}>{entry.title} →</a></li>)}</ul>
+    </div>
+  </section>
+) : null}
+
+<style>
+  .hardware-display-link { padding-top:0; }
+  .eyebrow { color:var(--color-coral); font-size:var(--text-eyebrow); letter-spacing:var(--tracking-wide); text-transform:uppercase; }
+  .hardware-display-link h2 { margin:var(--space-2) 0; }
+  .hardware-display-link p { max-width:65ch; color:var(--color-ink-600); }
+  .hardware-display-link ul { display:flex; flex-wrap:wrap; gap:12px 24px; padding:0; list-style:none; }
+  .hardware-display-link a { color:var(--color-coral); font-weight:600; }
+</style>

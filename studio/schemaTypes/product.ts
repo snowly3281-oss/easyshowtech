@@ -131,6 +131,114 @@ export const product = defineType({
       validation: (rule) => rule.required().error("必须选择所属系列。"),
     }),
     defineField({
+      name: "productType",
+      title: "产品类型",
+      type: "string",
+      group: "classification",
+      description: "旧产品可暂时留空。新产品请选择类型；产品分类落地页的类型必须与此处一致。",
+      options: { list: [
+        { title: "Custom Displays", value: "customDisplay" },
+        { title: "Hardware & Frames", value: "hardware" },
+        { title: "Parts & Accessories", value: "partAccessory" },
+      ] },
+    }),
+    defineField({
+      name: "productCategory",
+      title: "产品分类落地页",
+      type: "reference",
+      group: "classification",
+      description: "可选。完成分类映射后再关联；不影响现有系列筛选。",
+      to: [{ type: "productCategory" }],
+      validation: rule => rule.custom(async (value, context) => {
+        if (!value) return true
+        const document = context.document as {productType?: string} | undefined
+        if (!document?.productType) return "选择产品分类前，请先选择产品类型。"
+        const category = await context.getClient({apiVersion: "2024-10-01"}).fetch<{productType?: string} | null>(
+          '*[_type == "productCategory" && _id == $id][0]{productType}',
+          {id: value._ref},
+        )
+        if (!category) return "所选产品分类不存在。"
+        return category.productType === document.productType || "产品类型必须与所选分类的类型一致。"
+      }),
+    }),
+    defineField({
+      name: "partsCategory",
+      title: "零件子分类（兼容旧数据）",
+      type: "reference",
+      group: "classification",
+      description: "零件与配件的细分筛选项；仅选择已确认的 partsCategory 文档。",
+      to: [{ type: "partsCategory" }],
+    }),
+    defineField({
+      name: "relatedHardware",
+      title: "相关硬件 / 框架",
+      type: "array",
+      group: "classification",
+      description: "可选结构化关联；仅选择确实配套的产品，不根据系列自动推断。",
+      of: [{ type: "reference", to: [{ type: "product" }] }],
+      validation: rule => rule.unique(),
+    }),
+    defineField({
+      name: "accessories",
+      title: "相关配件 / 零件",
+      type: "array",
+      group: "classification",
+      description: "可选结构化关联；只维护产品侧关系，前台可用反向引用查询。",
+      of: [{ type: "reference", to: [{ type: "product" }] }],
+      validation: rule => rule.unique(),
+    }),
+    defineField({
+      name: "relatedProducts",
+      title: "相关产品",
+      type: "array",
+      group: "classification",
+      description: "可选关联其他相关产品；请仅维护确有业务关系的一侧。",
+      of: [{ type: "reference", to: [{ type: "product" }] }],
+      validation: rule => rule.unique(),
+    }),
+    defineField({
+      name: "relatedSolutions",
+      title: "适用解决方案",
+      type: "array",
+      group: "classification",
+      description: "关联适用的场景页；前台可通过反向引用补充产品关系。",
+      of: [{ type: "reference", to: [{ type: "solution" }] }],
+      validation: rule => rule.unique(),
+    }),
+    defineField({
+      name: "faq",
+      title: "常见问题",
+      type: "array",
+      group: "content",
+      description: "填写已确认的产品信息；不要推测尺寸、兼容性、质保或认证。",
+      of: [defineArrayMember({
+        type: "object",
+        name: "productFaq",
+        fields: [
+          defineField({ name: "question", title: "问题", type: "string", validation: rule => rule.required() }),
+          defineField({ name: "answer", title: "回答", type: "text", rows: 3, validation: rule => rule.required() }),
+        ],
+        preview: { select: { title: "question" } },
+      })],
+    }),
+    defineField({
+      name: "oemTerms",
+      title: "批发与 OEM 信息",
+      type: "array",
+      group: "content",
+      description: "可选，仅填写已确认且适用于此产品的业务信息；留空时前台不显示该模块。",
+      of: [defineArrayMember({
+        type: "object",
+        name: "productOemTerm",
+        fields: [
+          defineField({ name: "label", title: "项目", type: "string", validation: rule => rule.required() }),
+          defineField({ name: "value", title: "说明", type: "string", validation: rule => rule.required() }),
+          defineField({ name: "note", title: "补充说明", type: "text", rows: 2 }),
+        ],
+        preview: { select: { title: "label", subtitle: "value" } },
+      })],
+    }),
+    defineField({
       name: "materials",
       title: "主要材料",
       type: "array",
@@ -519,7 +627,6 @@ export const product = defineType({
       title: "社交分享图片",
       type: "image",
       group: "seo",
-      mediaTags: ["role-share"],
       description: "分享到 LinkedIn 等平台时显示的预览图。建议 1200×630 px。",
       options: { hotspot: true },
       fields: [
@@ -529,6 +636,13 @@ export const product = defineType({
           type: "string",
         }),
       ],
+    }),
+    defineField({
+      name: "seo",
+      title: "SEO 设置（新）",
+      type: "seo",
+      group: "seo",
+      description: "新页面优先填写此对象；旧 SEO 字段继续兼容，确认前台迁移后再停用。",
     }),
   ],
 

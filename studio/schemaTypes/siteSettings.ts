@@ -171,11 +171,12 @@ export const siteSettings = defineType({
               description: '只有选择“其他平台”时才需要填写，例如 Vimeo。',
               hidden: ({parent}) => parent?.platform !== 'other',
               validation: (rule) =>
-                rule.custom((value, context) =>
-                  context.parent?.platform !== 'other' || value
+                rule.custom((value, context) => {
+                  const parent = context.parent as {platform?: string} | undefined
+                  return parent?.platform !== 'other' || value
                     ? true
-                    : '请填写自定义平台名称。',
-                ),
+                    : '请填写自定义平台名称。'
+                }),
             }),
             defineField({
               name: 'url',

@@ -1,0 +1,36 @@
+---
+import type {SolutionData} from '../../sanity/content'
+import {localizedPath, type Locale} from '../../i18n/config'
+import {productCategoryPath, productDetailPath} from '../../lib/productRoutes'
+
+interface Props {
+  solution: SolutionData
+  locale?: Locale
+}
+
+const {solution, locale = 'en'} = Astro.props
+const products = (solution.recommendedProducts ?? []).filter((item) => item?.slug)
+const categories = (solution.recommendedProductCategories ?? []).filter((item) => item?.slug && item.hasProducts)
+const services = (solution.recommendedPrintingServices ?? []).filter((item) => item?.slug)
+---
+
+{(products.length > 0 || categories.length > 0 || services.length > 0) && (
+  <section class="section solution-recommendations" aria-labelledby="solution-recommendations-title">
+    <div class="container">
+      <p class="eyebrow">Recommended for this solution</p>
+      <h2 id="solution-recommendations-title">Explore related products and services</h2>
+      {categories.length > 0 && <div class="recommendation-group"><h3>Product categories</h3><ul>{categories.map((category) => <li><a href={localizedPath(productCategoryPath(category!), locale)}>{category!.title}</a></li>)}</ul></div>}
+      {products.length > 0 && <div class="recommendation-group"><h3>Featured products</h3><ul>{products.map((product) => <li><a href={localizedPath(productDetailPath(product!), locale)}>{product!.title}</a></li>)}</ul></div>}
+      {services.length > 0 && <div class="recommendation-group"><h3>Printing services</h3><ul>{services.map((service) => <li><a href={localizedPath(`/printing-services/${service!.slug}`, locale)}>{service!.title}</a></li>)}</ul></div>}
+    </div>
+  </section>
+)}
+
+<style>
+  .solution-recommendations { background: var(--color-paper-2); }
+  .solution-recommendations h2 { margin: var(--space-2) 0 var(--space-5); }
+  .recommendation-group { margin-top: var(--space-4); }
+  .recommendation-group h3 { margin: 0 0 var(--space-2); font-size: var(--text-h5); }
+  .recommendation-group ul { display: flex; flex-wrap: wrap; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+  .recommendation-group a { color: var(--color-coral); }
+</style>

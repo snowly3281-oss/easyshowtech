@@ -3,6 +3,7 @@ import type { ProductCardData, SiteSettingsData } from '../../sanity/content'
 import { localizedPath, type Locale } from '../../i18n/config'
 import { ui, uiFormat } from '../../i18n/ui'
 import { formatPrice, getPricePresentation } from '../../lib/price'
+import { productDetailPath } from '../../lib/productRoutes'
 import MediaBox from './MediaBox.astro'
 
 interface Props {
@@ -26,6 +27,7 @@ const addedLabel = uiFormat(locale, 'addedProductToRfq', {
   data-series={product.seriesSlug ?? ''}
   data-service={(product.serviceSlugs ?? []).filter(Boolean).join(',')}
   data-catalog-type={product.catalogType ?? 'equipment'}
+  data-product-type={product.productType ?? ''}
   data-printing-service={(product.serviceSlugs ?? []).filter(Boolean).length > 0 ? 'true' : 'false'}
   data-parts-category={product.partsCategoryKey ?? ''}
   data-price-min={price?.min ?? ''}
@@ -34,7 +36,11 @@ const addedLabel = uiFormat(locale, 'addedProductToRfq', {
 >
   <a
     class="card__link"
-    href={localizedPath(`/products/${product.slug ?? ''}`, locale)}
+    href={localizedPath(productDetailPath({
+      slug: product.slug,
+      productType: product.productType,
+      productCategorySlug: product.productCategorySlug,
+    }), locale)}
   >
     <MediaBox source={product.mainImage} alt={product.title} ratio="1 / 1" width={560} />
     <div class="card__body">

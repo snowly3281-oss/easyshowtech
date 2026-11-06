@@ -1,5 +1,5 @@
 ---
-import type { ProductData, ProductSpecRow } from '../../sanity/content'
+import type { ProductData } from '../../sanity/content'
 import type {Locale} from '../../i18n/config'
 import {staticUi} from '../../i18n/static'
 
@@ -11,39 +11,39 @@ interface Props {
 const { product, locale = 'en' } = Astro.props
 const t = (english: string) => staticUi(locale, english)
 
-const groups: { label: string; rows: ProductSpecRow[] }[] = [
-  { label: t('Dimensions'), rows: product.specDimensions ?? [] },
-  { label: t('Weight & capacity'), rows: product.specWeight ?? [] },
-  { label: t('Mechanism'), rows: product.specMechanism ?? [] },
-  { label: t('Materials & accessories'), rows: product.specMaterials ?? [] },
-].filter((g) => g.rows.length > 0)
-
-const ref = [product.specRevision, product.material].filter(Boolean).join(' · ')
+const specs = product.keySpecs ?? []
+const features = product.keyFeatures ?? []
+const materials = product.materials ?? []
+const customizationOptions = product.customizationOptions ?? []
+const hasDetails = specs.length > 0 || features.length > 0 || materials.length > 0 || customizationOptions.length > 0
 ---
 
 {
-  groups.length > 0 && (
+  hasDetails && (
     <section class="section datasheet">
       <div class="container">
         <p class="eyebrow">{t('Technical specifications')}</p>
         <div class="datasheet__head">
           <h2 class="datasheet__title">{t('The full datasheet.')}</h2>
-          {ref && <p class="datasheet__ref nums">{ref}</p>}
+          {product.sku && <p class="datasheet__ref nums">{product.sku}</p>}
         </div>
         <div class="datasheet__groups">
-          {groups.map((g) => (
+          {specs.length > 0 && (
             <div class="specgroup">
-              <h3 class="specgroup__label">{g.label}</h3>
+              <h3 class="specgroup__label">{t('Technical specifications')}</h3>
               <dl class="specgroup__rows">
-                {g.rows.map((row) => (
+                {specs.map((row) => (
                   <div class="specrow">
                     <dt class="specrow__label">{row.label}</dt>
-                    <dd class="specrow__value nums">{row.value}</dd>
+                    <dd class="specrow__value nums">{row.value}{row.note && <small>{row.note}</small>}</dd>
                   </div>
                 ))}
               </dl>
             </div>
-          ))}
+          )}
+          {features.length > 0 && <div class="specgroup"><h3 class="specgroup__label">{t('Key features')}</h3><ul>{features.map((feature) => <li><strong>{feature.title}</strong>{feature.description && <p>{feature.description}</p>}</li>)}</ul></div>}
+          {materials.length > 0 && <div class="specgroup"><h3 class="specgroup__label">{t('Materials')}</h3><ul>{materials.map((material) => <li>{material}</li>)}</ul></div>}
+          {customizationOptions.length > 0 && <div class="specgroup"><h3 class="specgroup__label">{t('Customization options')}</h3><ul>{customizationOptions.map((option) => <li>{option}</li>)}</ul></div>}
         </div>
       </div>
     </section>

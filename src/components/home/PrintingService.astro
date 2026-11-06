@@ -50,7 +50,7 @@ const cardHref = (s: HomeServicesQueryResult[number]): string =>
 
 // Pick the first benefit title to use as a one-line "what you get" teaser.
 const topBenefit = (s: HomeServicesQueryResult[number]): string | null =>
-  s.benefits?.[0]?.title ?? null
+  s.benefits?.title ?? null
 
 // Take the first 3 materials as visual tag chips beneath the description.
 const trimmedMaterials = (s: HomeServicesQueryResult[number]): string[] =>
@@ -66,7 +66,7 @@ const trimmedMaterials = (s: HomeServicesQueryResult[number]): string[] =>
             <p class="eyebrow">{eyebrow}</p>
             <h2 class="ps__title">{heading}</h2>
             <p class="body-s ps__intro">{intro}</p>
-            <a class="btn btn-link ps__viewall" href={`${localizedPath('/products', locale)}?tab=printing`}>
+            <a class="btn btn-link ps__viewall" href={localizedPath('/printing-services', locale)}>
               {t('View all services')} <span aria-hidden="true">→</span>
             </a>
           </div>

@@ -1,44 +1,25 @@
 ---
-import type { ProductVariant } from '../../sanity/content'
+import type { ProductData } from '../../sanity/content'
 import type {Locale} from '../../i18n/config'
 import {staticUi} from '../../i18n/static'
 
 interface Props {
-  variants?: ProductVariant[] | null
+  materials?: ProductData['materials']
   locale?: Locale
 }
 
-const { variants, locale = 'en' } = Astro.props
+const { materials = [], locale = 'en' } = Astro.props
 const t = (english: string) => staticUi(locale, english)
-const items = variants ?? []
+const confirmedMaterials = materials ?? []
 ---
 
 {
-  items.length > 0 && (
+  confirmedMaterials.length > 0 && (
     <section class="section">
       <div class="container">
         <p class="eyebrow">{t('Materials & construction')}</p>
-        <div class="mat__head">
-          <h2 class="mat__title">{t('Cut, joined and finished by hand.')}</h2>
-          <p class="body-l mat__intro">
-            {t('Each frame is milled from kiln-dried hardwood, mortise-and-tenon joined, then hand-sanded through five grits and sealed with a low-VOC matte finish. Choose the species that fits your studio.')}
-          </p>
-        </div>
-        <ul class="mat__grid">
-          {items.map((v) => (
-            <li class="mat__card">
-              <span class="mat__swatch" style={v.swatchColor ? `background:${v.swatchColor}` : undefined} />
-              <div class="mat__body">
-                <p class="mat__name">
-                  {v.name}
-                  {v.isDefault && <span class="mat__badge">{t('Default')}</span>}
-                </p>
-                {v.description && <p class="mat__desc">{v.description}</p>}
-                <p class="mat__meta">{[v.janka, v.finish].filter(Boolean).join(' · ')}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div class="mat__head"><h2 class="mat__title">{t('Materials')}</h2></div>
+        {confirmedMaterials.length > 0 && <ul class="mat__materials">{confirmedMaterials.map((material) => <li>{material}</li>)}</ul>}
       </div>
     </section>
   )

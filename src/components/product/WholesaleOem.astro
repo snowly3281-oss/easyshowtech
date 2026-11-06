@@ -11,16 +11,7 @@ interface Props {
 const { terms, locale = 'en' } = Astro.props
 const t = (english: string) => staticUi(locale, english)
 
-// Company-wide OEM capabilities shown when a product has no per-product terms.
-// Only confirmed / generic rows here — payment, lead time, warranty and tooling
-// tiers stay out until the client confirms exact figures.
-const DEFAULT_TERMS: ProductOemTerm[] = [
-  { _key: 'd-moq', label: t('Order quantities'), value: t('Quoted by product'), note: t('Based on the selected model, quantity and customisation') },
-  { _key: 'd-pl', label: t('Branding & printing'), value: t('Your artwork, your brand'), note: t('Confirm logo placement, print area, colours and artwork files') },
-  { _key: 'd-config', label: t('Product configuration'), value: t('Matched to your use'), note: t('Review dimensions, fabric, frame and compatible accessories') },
-  { _key: 'd-pack', label: t('Packing & delivery'), value: t('Agreed for your order'), note: t('Confirm packaging, labels, destination and shipping options') },
-]
-const items = terms && terms.length > 0 ? terms : DEFAULT_TERMS
+const items = terms ?? []
 ---
 
 {
@@ -29,10 +20,7 @@ const items = terms && terms.length > 0 ? terms : DEFAULT_TERMS
       <div class="container">
         <p class="eyebrow oem__eyebrow">{t('Wholesale & OEM')}</p>
         <div class="oem__head">
-          <h2 class="oem__title">{t('Display products for your brand and business.')}</h2>
-          <p class="oem__intro">
-            {t('Source tents, backdrops, flags, display stands and event chairs for your projects or product range. We review product selection, branded graphics and packing requirements with you, then confirm the available options and commercial terms in your quotation.')}
-          </p>
+          <h2 class="oem__title">{t('Wholesale & OEM details')}</h2>
         </div>
         <dl class="oem__grid">
           {items.map((t) => (

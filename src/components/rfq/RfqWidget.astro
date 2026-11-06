@@ -16,7 +16,7 @@ const t = (english: string) => staticUi(locale, english)
 const whatsappDigits = whatsapp.replace(/\D/g, '').replace(/^00/, '')
 const generalWhatsappHref = whatsappDigits
   ? `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(
-      t('Hello EasyShow, I would like to discuss Display equipment for my project.'),
+      t('Hello EasyShow, I would like to discuss custom display systems for my project.'),
     )}`
   : localizedPath('/contact', locale)
 ---

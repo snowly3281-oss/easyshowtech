@@ -1,0 +1,24 @@
+---
+import ProductCategoryLanding from '../../../components/product/ProductCategoryLanding.astro'
+import { productCategoryBySlugQuery, productCategoryPathsQuery } from '../../../sanity/queries/productCategories'
+import { sanityClient } from '../../../sanity/client'
+import { fetchLocalized, resolveLocale } from '../../../i18n/config'
+
+export async function getStaticPaths() {
+  const categories = await sanityClient.fetch<Array<{slug: string | null; rootSlugAvailable: boolean}>>(
+    productCategoryPathsQuery,
+    {language: 'en', productType: 'customDisplay'},
+  )
+  return (categories ?? [])
+    .filter((category) => category.slug && !category.rootSlugAvailable)
+    .map((category) => ({params: {slug: category.slug!}}))
+}
+
+const props = Astro.props as {locale?: string; slug?: string}
+const locale = resolveLocale(props.locale, Astro.originPathname || Astro.url.pathname)
+const slug = props.slug ?? Astro.params.slug
+const category = await fetchLocalized<any>(productCategoryBySlugQuery, {slug: slug ?? ''}, locale)
+if (!category) return Astro.rewrite('/404')
+---
+
+<ProductCategoryLanding category={category} locale={locale} expectedType="customDisplay" />

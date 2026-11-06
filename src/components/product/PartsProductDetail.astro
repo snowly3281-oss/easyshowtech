@@ -3,6 +3,7 @@ import type {ProductData} from '../../sanity/content'
 import {urlFor} from '../../sanity/image'
 import {localizedPath, type Locale} from '../../i18n/config'
 import {staticUi} from '../../i18n/static'
+import {productCategoryPath, productDetailPath} from '../../lib/productRoutes'
 
 interface Props {
   product: ProductData
@@ -23,23 +24,43 @@ const categoryLabels: Record<string, string> = {
 }
 const categoryKey =
   typeof product.partsCategoryKey === 'string' ? product.partsCategoryKey : null
-const categoryLabel = categoryKey
+const legacyCategoryLabel = categoryKey
   ? (categoryLabels[categoryKey] ?? t('Parts & accessories'))
   : t('Parts & accessories')
+const categoryTitle = product.productCategory?.title || legacyCategoryLabel
+const categoryHref = product.productCategory?.slug
+  ? productCategoryPath({
+      slug: product.productCategory.slug,
+      productType: product.productCategory.productType,
+      rootSlugAvailable: product.productCategoryRootSlugAvailable,
+    })
+  : '/products/parts-accessories'
+const breadcrumbs = [
+  {name: t('Home'), path: '/'},
+  {name: t('Products'), path: '/products'},
+  {name: t('Parts & accessories'), path: '/products/parts-accessories'},
+  ...(product.productCategory?.slug ? [{name: categoryTitle, path: categoryHref}] : []),
+  {name: product.sku || productTitle, path: productDetailPath(product)},
+]
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbs.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.name,
+    item: new URL(localizedPath(item.path, locale), Astro.site ?? Astro.url).toString(),
+  })),
+}
 
 const mainAsset = product.mainImage?.asset
 const mainImage = mainAsset
   ? urlFor(mainAsset).width(1280).height(1280).fit('max').auto('format').url()
   : null
 const mainAlt = product.mainImage?.alt ?? productTitle
-const compatibleProducts = product.compatibleProducts ?? []
+const compatibleProducts = product.relatedHardware ?? []
 const keySpecs = (product.keySpecs ?? []).slice(0, 4)
-const specificationRows = [
-  ...(product.specDimensions ?? []),
-  ...(product.specWeight ?? []),
-  ...(product.specMechanism ?? []),
-  ...(product.specMaterials ?? []),
-].filter((row) => row?.label && row?.value)
+const materials = product.materials ?? []
 const relatedProducts = product.related ?? []
 const contactHref = `${localizedPath('/contact', locale)}?product=${encodeURIComponent(product.sku ?? productTitle)}`
 ---
@@ -47,11 +68,12 @@ const contactHref = `${localizedPath('/contact', locale)}?product=${encodeURICom
 <section class="section part-detail" data-parts-product-detail>
   <div class="container">
     <nav class="part__crumbs" aria-label={t('Breadcrumb')}>
-      <a href={localizedPath('/products', locale)}>{t('Products')}</a>
-      <span aria-hidden="true">/</span>
-      <a href={`${localizedPath('/products', locale)}?parts=all`}>{t('Parts & accessories')}</a>
-      <span aria-hidden="true">/</span>
-      <span>{categoryLabel}</span>
+      {breadcrumbs.map((item, index) => <>
+        {index > 0 && <span aria-hidden="true">/</span>}
+        {index === breadcrumbs.length - 1
+          ? <span>{item.name}</span>
+          : <a href={localizedPath(item.path, locale)}>{item.name}</a>}
+      </>)}
     </nav>
 
     <div class="part__grid">
@@ -68,7 +90,7 @@ const contactHref = `${localizedPath('/contact', locale)}?product=${encodeURICom
       </figure>
 
       <div class="part__content">
-        <p class="eyebrow">{categoryLabel}</p>
+        <p class="eyebrow">{categoryTitle}</p>
         <h1>{productTitle}</h1>
         {product.sku && <p class="part__sku nums">{t('Part no.')}: {product.sku}</p>}
         {product.summary && <p class="part__summary">{product.summary}</p>}
@@ -81,7 +103,7 @@ const contactHref = `${localizedPath('/contact', locale)}?product=${encodeURICom
               <ul class="part__compatible-list">
                 {compatibleProducts.map((compatible) => (
                   <li>
-                    <a href={localizedPath(`/products/${compatible.slug ?? ''}`, locale)}>
+                    <a href={localizedPath(productDetailPath(compatible), locale)}>
                       <span>
                         <strong>{compatible.title}</strong>
                         {compatible.sku && <small class="nums">{compatible.sku}</small>}
@@ -97,7 +119,6 @@ const contactHref = `${localizedPath('/contact', locale)}?product=${encodeURICom
               </p>
             )
           }
-          {product.compatibilityNotes && <p class="part__compatibility-note">{product.compatibilityNotes}</p>}
         </section>
 
         {
@@ -106,7 +127,7 @@ const contactHref = `${localizedPath('/contact', locale)}?product=${encodeURICom
               {keySpecs.map((spec) => (
                 <div>
                   <dt>{spec.label}</dt>
-                  <dd class="nums">{spec.value}{spec.unit ? ` ${spec.unit}` : ''}</dd>
+                  <dd class="nums">{spec.value}</dd>
                   {spec.note && <p>{spec.note}</p>}
                 </div>
               ))}
@@ -139,51 +160,30 @@ const contactHref = `${localizedPath('/contact', locale)}?product=${encodeURICom
     </div>
   </div>
 </section>
+<script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} is:inline />
 
 {
-  (specificationRows.length > 0 || product.installationNotes || product.careNotes || product.replacementGuidance) && (
+  (keySpecs.length > 0 || materials.length > 0) && (
     <section class="section part-information">
       <div class="container">
         <div class="part__information-grid">
           {
-            specificationRows.length > 0 && (
+            keySpecs.length > 0 && (
               <section class="part__information-block" aria-labelledby="part-specifications-title">
                 <p class="eyebrow">{t('Product details')}</p>
                 <h2 id="part-specifications-title">{t('Specifications')}</h2>
                 <dl class="part__specifications">
-                  {specificationRows.map((row) => (
+                  {keySpecs.map((row) => (
                     <div>
                       <dt>{row.label}</dt>
-                      <dd>{row.value}</dd>
+                      <dd>{row.value}{row.note && <small>{row.note}</small>}</dd>
                     </div>
                   ))}
                 </dl>
               </section>
             )
           }
-          {
-            product.installationNotes && (
-              <section class="part__information-block" aria-labelledby="part-installation-title">
-                <p class="eyebrow">{t('Installation')}</p>
-                <h2 id="part-installation-title">{t('Installation & replacement')}</h2>
-                <p>{product.installationNotes}</p>
-              </section>
-            )
-          }
-          {
-            (product.careNotes || product.replacementGuidance) && (
-              <section class="part__information-block" aria-labelledby="part-care-title">
-                <p class="eyebrow">{t('Care')}</p>
-                <h2 id="part-care-title">{t('Care & service')}</h2>
-                {product.careNotes && <p>{product.careNotes}</p>}
-                {product.replacementGuidance && (
-                  <p class="part__service-note">
-                    <strong>{t('Service guidance')}:</strong> {product.replacementGuidance}
-                  </p>
-                )}
-              </section>
-            )
-          }
+          {materials.length > 0 && <section class="part__information-block"><p class="eyebrow">{t('Materials')}</p><h2>{t('Materials & construction')}</h2><ul>{materials.map((material) => <li>{material}</li>)}</ul></section>}
         </div>
       </div>
     </section>
@@ -196,7 +196,7 @@ const contactHref = `${localizedPath('/contact', locale)}?product=${encodeURICom
       <div class="container">
         <div class="part__related-head">
           <div>
-            <p class="eyebrow">{categoryLabel}</p>
+            <p class="eyebrow">{categoryTitle}</p>
             <h2>{t('Related parts & accessories')}</h2>
           </div>
           <a class="btn btn-link" href={`${localizedPath('/products', locale)}?parts=all`}>{t('View all parts')} <span aria-hidden="true">→</span></a>
@@ -208,7 +208,7 @@ const contactHref = `${localizedPath('/contact', locale)}?product=${encodeURICom
               : null
             return (
               <li>
-                <a class="part__related-card" href={localizedPath(`/products/${related.slug ?? ''}`, locale)}>
+                <a class="part__related-card" href={localizedPath(productDetailPath(related), locale)}>
                   <div class="part__related-image">
                     {image ? <img src={image} alt={related.mainImage?.alt ?? related.title ?? ''} loading="lazy" width="640" height="640" /> : <span>{t('Product image coming soon')}</span>}
                   </div>

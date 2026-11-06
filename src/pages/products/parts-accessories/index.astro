@@ -1,0 +1,9 @@
+---
+import ProductsIndex from '../index.astro'
+import { resolveLocale, type Locale } from '../../../i18n/config'
+import { ui } from '../../../i18n/ui'
+
+const locale = resolveLocale((Astro.props as { locale?: Locale }).locale, Astro.originPathname || Astro.url.pathname)
+---
+
+<ProductsIndex locale={locale} initialType="partAccessory" hideTypeTabs={true} titleOverride={ui(locale, 'partsAccessories')} />

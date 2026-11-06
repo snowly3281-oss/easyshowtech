@@ -24,7 +24,7 @@ export const service = defineType({
     { name: "content", title: "基础内容", default: true },
     { name: "media", title: "图片" },
     { name: "details", title: "服务详情" },
-    { name: "products", title: "关联产品" },
+    { name: "products", title: "关联产品与分类" },
     { name: "seo", title: "SEO" },
   ],
   orderings: [
@@ -83,6 +83,13 @@ export const service = defineType({
       group: "content",
       description:
         "数字越小越靠前。建议按 10、20、30 递增。",
+    }),
+    defineField({
+      name: "serviceCategory",
+      title: "服务分类",
+      type: "string",
+      group: "content",
+      description: "可选业务分类；仅在业务分类规则确认后填写。",
     }),
     defineField({
       name: "isActive",
@@ -220,7 +227,7 @@ export const service = defineType({
             }),
           ],
           preview: {
-            select: { title: "title", subtitle: "stepNumber" },
+            select: { title: "title", stepNumber: "stepNumber" },
             prepare: ({ title, stepNumber }) => ({
               title: title || "未命名步骤",
               subtitle: stepNumber ? `Step ${stepNumber}` : undefined,
@@ -257,6 +264,21 @@ export const service = defineType({
       ],
       validation: (rule) => rule.unique(),
     }),
+    defineField({
+      name: "relatedProductCategories",
+      title: "相关产品分类",
+      type: "array",
+      group: "products",
+      description: "关联已建立的产品分类页；不自动创建或推断分类。",
+      of: [
+        defineArrayMember({
+          type: "reference",
+          to: [{ type: "productCategory" }],
+          options: { disableNew: true },
+        }),
+      ],
+      validation: (rule) => rule.unique(),
+    }),
 
     // ── SEO ────────────────────────────────────────────────────────────────
     defineField({
@@ -279,7 +301,6 @@ export const service = defineType({
       title: "社交分享图片",
       type: "image",
       group: "seo",
-      mediaTags: ["role-share"],
       description: "分享到社交平台时显示的预览图。建议 1200×630 px。",
       options: { hotspot: true },
       fields: [

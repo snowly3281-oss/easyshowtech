@@ -8,20 +8,22 @@ import WholesaleOem from '../../components/product/WholesaleOem.astro'
 import RelatedProducts from '../../components/product/RelatedProducts.astro'
 import QuoteBand from '../../components/product/QuoteBand.astro'
 import ProductJsonLd from '../../components/product/ProductJsonLd.astro'
-import ProductSolutions from '../../components/product/ProductSolutions.astro'
 import PartsProductDetail from '../../components/product/PartsProductDetail.astro'
+import ProductCategoryLanding from '../../components/product/ProductCategoryLanding.astro'
+import ProductRelationships from '../../components/product/ProductRelationships.astro'
+import HardwareProductRelations from '../../components/product/HardwareProductRelations.astro'
 import { sanityClient } from '../../sanity/client'
 import { getPricePresentation } from '../../lib/price'
 import { productPathsQuery, productBySlugQuery } from '../../sanity/queries/products'
 import { taxonomyQuery } from '../../sanity/queries/taxonomy'
+import { productCategoryBySlugQuery, productCategoryPathsQuery } from '../../sanity/queries/productCategories'
 import { getRawSiteSettings } from '../../sanity/settings'
-import type {
-  ProductPathsQueryResult,
-  ProductBySlugQueryResult,
-  TaxonomyQueryResult,
-} from '../../sanity/sanity.types'
-import {fetchLocalized, resolveLocale} from '../../i18n/config'
+import type { ProductBySlugQueryResult, TaxonomyQueryResult } from '../../sanity/sanity.types'
+import {fetchLocalized, localizedPath, resolveLocale} from '../../i18n/config'
 import {siteSettings} from '../../config/site'
+import { urlFor } from '../../sanity/image'
+import { productDetailPath } from '../../lib/productRoutes'
+import type { ProductData } from '../../sanity/content'
 import type {Locale} from '../../i18n/config'
 
 export async function getStaticPaths() {
@@ -29,13 +31,23 @@ export async function getStaticPaths() {
   // below. getStaticPaths reruns on EVERY request in dev, so prefetching all
   // products (and passing them as props) made each PDP hit re-fetch the whole
   // catalog (~30s for 32 products). Returning params only keeps it cheap.
-  const slugs = await sanityClient.fetch<ProductPathsQueryResult>(
-    productPathsQuery,
-    {language: 'en'},
-  )
-  return (slugs ?? [])
-    .filter((entry): entry is { slug: string } => typeof entry.slug === 'string')
-    .map((entry) => ({ params: { slug: entry.slug } }))
+  const [products, categories] = await Promise.all([
+    sanityClient.fetch<Array<{slug: string | null; productType: string | null; categorySlug: string | null}>>(productPathsQuery, {language: 'en'}),
+    sanityClient.fetch<Array<{slug: string | null}>>(productCategoryPathsQuery, {
+      language: 'en',
+      productType: 'customDisplay',
+    }),
+  ])
+  const productSlugs = new Set((products ?? []).map((entry) => entry.slug).filter(Boolean))
+  const reservedCategorySlugs = new Set(['hardware', 'parts-accessories', 'parts', 'custom-displays'])
+  const productPaths = [...(products ?? [])]
+    .filter((entry) => !(entry.productType && entry.categorySlug))
+    .filter((entry): entry is typeof entry & {slug: string} => typeof entry.slug === 'string')
+    .map((entry) => ({params: {slug: entry.slug}, props: {pageKind: 'product'}}))
+  const categoryPaths = [...(categories ?? [])]
+    .filter((entry): entry is {slug: string} => typeof entry.slug === 'string' && !productSlugs.has(entry.slug) && !reservedCategorySlugs.has(entry.slug))
+    .map((entry) => ({params: {slug: entry.slug}, props: {pageKind: 'category'}}))
+  return [...productPaths, ...categoryPaths]
 }
 
 // Fetch just the requested product + settings. At build this runs once per
@@ -48,8 +60,20 @@ const locale = resolveLocale(
 )
 const slug =
   typeof props.slug === 'string' ? props.slug : Astro.params.slug
+type ProductWithArchitecture = ProductBySlugQueryResult & {
+  productType?: 'customDisplay' | 'hardware' | 'partAccessory' | null
+  catalogType?: string | null
+  productCategorySlug?: string | null
+  seo?: { metaTitle?: string | null; metaDescription?: string | null; canonicalUrl?: string | null; ogTitle?: string | null; ogDescription?: string | null; noIndex?: boolean | null; ogImage?: { asset?: unknown; alt?: string | null } | null } | null
+  relatedHardware?: any[] | null
+  accessories?: any[] | null
+  relatedSolutions?: any[] | null
+  relatedDisplays?: any[] | null
+  faq?: any[] | null
+  oemTerms?: Array<{_key: string; label: string | null; value: string | null; note: string | null}> | null
+}
 const [rawProduct, settings, taxonomy] = await Promise.all([
-  fetchLocalized<ProductBySlugQueryResult>(
+  fetchLocalized<ProductWithArchitecture>(
     productBySlugQuery,
     {slug: slug ?? ''},
     locale,
@@ -57,7 +81,12 @@ const [rawProduct, settings, taxonomy] = await Promise.all([
   getRawSiteSettings(),
   fetchLocalized<TaxonomyQueryResult>(taxonomyQuery, {}, locale),
 ])
-if (!rawProduct) return Astro.rewrite('/404')
+const routeKind = (Astro.props as {pageKind?: string}).pageKind
+const category = !rawProduct && routeKind !== 'product'
+  ? await fetchLocalized<any>(productCategoryBySlugQuery, {slug: slug ?? ''}, locale)
+  : null
+const validCategory = category?.productType === 'customDisplay' ? category : null
+if (!rawProduct && !validCategory) return Astro.rewrite('/404')
 
 const seriesTitles = new Map(
   (taxonomy?.series ?? []).map((entry) => [entry.slug, entry.title]),
@@ -65,7 +94,7 @@ const seriesTitles = new Map(
 const serviceTitles = new Map(
   (taxonomy?.services ?? []).map((entry) => [entry.slug, entry.title]),
 )
-const product = {
+const product: ProductData | null = rawProduct ? {
   ...rawProduct,
   seriesTitle:
     seriesTitles.get(rawProduct.seriesSlug ?? '') ?? rawProduct.seriesTitle,
@@ -80,33 +109,49 @@ const product = {
     seriesTitle:
       seriesTitles.get(related.seriesSlug ?? '') ?? related.seriesTitle,
   })),
-}
+} as ProductData : null
 const isPartsProduct =
-  rawProduct.catalogType === 'accessory' || rawProduct.catalogType === 'spare_part'
+  rawProduct?.productType === 'partAccessory' ||
+  rawProduct?.catalogType === 'accessory' || rawProduct?.catalogType === 'spare_part'
 
 // One shared price decision for visible content and JSON-LD.
-const price = getPricePresentation(settings, product)
+const price = product ? getPricePresentation(settings, product) : null
 
-const metaTitle = `${product.title ?? 'Product'} — ${siteSettings.brand}`
-const metaDescription = product.summary ?? undefined
+const metaTitle = validCategory
+  ? validCategory.seo?.metaTitle || `${validCategory.title} — ${siteSettings.brand}`
+  : product?.seo?.metaTitle || product?.metaTitle || `${product?.title ?? 'Product'} — ${siteSettings.brand}`
+const metaDescription = validCategory?.seo?.metaDescription || product?.seo?.metaDescription || product?.summary || undefined
+const ogAsset = product?.seo?.ogImage?.asset ?? product?.ogImage?.asset ?? product?.mainImage?.asset
+const productOgImage = ogAsset ? urlFor(ogAsset as never).width(1200).height(630).fit('crop').auto('format').url() : undefined
+const categoryCanonical = product?.productCategorySlug
+  ? new URL(localizedPath(productDetailPath({slug: product.slug, productType: product.productType, productCategorySlug: product.productCategorySlug}), locale), Astro.site ?? Astro.url).toString()
+  : undefined
 ---
 
-<BaseLayout locale={locale} title={metaTitle} description={metaDescription}>
-  {
-    isPartsProduct ? (
-      <PartsProductDetail product={product} locale={locale} />
-    ) : (
-      <>
-        <ProductHeader product={product} settings={settings} locale={locale} />
-        <AtAGlance product={product} locale={locale} />
-        <MaterialsSection variants={product.variants} locale={locale} />
-        <Datasheet product={product} locale={locale} />
-        <WholesaleOem terms={product.oemTerms} locale={locale} />
-        <ProductSolutions productId={product._id} placements={product.solutionPlacements} locale={locale} />
-        <RelatedProducts items={product.related} locale={locale} />
-        <QuoteBand settings={settings} moq={product.moq} locale={locale} />
-      </>
-    )
-  }
-  <ProductJsonLd product={product} price={price} />
-</BaseLayout>
+{validCategory ? (
+  <ProductCategoryLanding category={validCategory} locale={locale} expectedType="customDisplay" />
+) : product ? (
+  <BaseLayout locale={locale} title={product.seo?.metaTitle || product.metaTitle || metaTitle} description={product.seo?.metaDescription || product.metaDescription || metaDescription} ogImage={productOgImage} ogTitle={product.seo?.ogTitle || undefined} ogDescription={product.seo?.ogDescription || undefined} canonicalUrl={product.seo?.canonicalUrl || categoryCanonical} noIndex={product.seo?.noIndex || false}>
+    {
+      isPartsProduct ? (
+        <>
+          <PartsProductDetail product={product} locale={locale} />
+          <ProductRelationships product={product} locale={locale} />
+        </>
+      ) : (
+        <>
+          <ProductHeader product={product} settings={settings} locale={locale} />
+          <AtAGlance product={product} locale={locale} />
+          <MaterialsSection materials={product.materials} locale={locale} />
+          <Datasheet product={product} locale={locale} />
+          <WholesaleOem terms={product.oemTerms} locale={locale} />
+          {product.productType === 'hardware' && <HardwareProductRelations product={product} locale={locale} />}
+          <ProductRelationships product={product} locale={locale} />
+          <RelatedProducts items={product.related} locale={locale} />
+          <QuoteBand settings={settings} moq={product.moq == null ? undefined : String(product.moq)} locale={locale} />
+        </>
+      )
+    }
+    <ProductJsonLd product={product} price={price} />
+  </BaseLayout>
+) : null}

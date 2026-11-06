@@ -5,10 +5,12 @@
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { sanityClient } from '../../sanity/client'
 import { printingServiceBySlugQuery, printingServiceListQuery } from '../../sanity/queries/displayCatalog'
-import { fetchLocalized, resolveLocale } from '../../i18n/config'
+import { fetchLocalized } from '../../i18n/config'
 import { siteSettings } from '../../config/site'
 import type { Locale } from '../../i18n/config'
 import { urlFor } from '../../sanity/image'
+import { productDetailPath } from '../../lib/productRoutes'
+import type { PrintingServiceBySlugQueryResult } from '../../sanity/sanity.types'
 
 export async function getStaticPaths() {
   const services = await sanityClient.fetch<{ slug: string }[]>(
@@ -25,7 +27,7 @@ const props = Astro.props as Props
 const locale = (props.locale as Locale) ?? 'en'
 const slug = (props.slug ?? Astro.params.slug) as string
 
-const service = await fetchLocalized(
+const service = await fetchLocalized<PrintingServiceBySlugQueryResult>(
   printingServiceBySlugQuery,
   { slug },
   locale,
@@ -147,7 +149,7 @@ const heroImageUrl = slug === 'custom-logo-printing'
               <ul class="ps-related-list">
                 {service.relatedProducts.map((p) => (
                   <li>
-                    <a href={`/products/${p.slug}`} class="ps-related-item">
+                    <a href={productDetailPath(p)} class="ps-related-item">
                       {p.mainImage?.asset && (
                         <div class="ps-related__img">
                           <img

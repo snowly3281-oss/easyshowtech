@@ -3,6 +3,7 @@ import type { RelatedProduct } from '../../sanity/content'
 import MediaBox from './MediaBox.astro'
 import {localizedPath, type Locale} from '../../i18n/config'
 import {staticUi} from '../../i18n/static'
+import {productDetailPath} from '../../lib/productRoutes'
 
 interface Props {
   items?: RelatedProduct[] | null
@@ -26,7 +27,7 @@ const products = items ?? []
         <ul class="rel__grid">
           {products.map((p) => (
             <li class="rel__card">
-              <a href={localizedPath(`/products/${p.slug ?? ''}`, locale)} class="rel__link">
+              <a href={localizedPath(productDetailPath(p), locale)} class="rel__link">
                 <MediaBox source={p.mainImage} alt={p.title} ratio="1 / 1" width={520} />
                 <div class="rel__body">
                   <p class="rel__name">{p.title}</p>

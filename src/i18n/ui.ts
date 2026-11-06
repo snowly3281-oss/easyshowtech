@@ -4,6 +4,8 @@ export type UiKey =
   | "home"
   | "products"
   | "allProducts"
+  | "customDisplays"
+  | "hardwareFrames"
   | "bySeries"
   | "byService"
   | "tabProductsCatalog"
@@ -66,6 +68,8 @@ const english: Record<UiKey, string> = {
   home: "Home",
   products: "Products",
   allProducts: "All products",
+  customDisplays: "Custom Displays",
+  hardwareFrames: "Hardware & Frames",
   bySeries: "Products catalog",
   byService: "Printing Service",
   tabProductsCatalog: "Products catalog",
@@ -95,9 +99,9 @@ const english: Record<UiKey, string> = {
   privacy: "Privacy",
   terms: "Terms",
   footerTagline:
-    "Professional Display equipment manufacturer. Factory-direct supply and OEM laboratory.",
+    "Custom Display Systems for Events, Retail & Promotions",
   catalogIntro:
-    "Factory-direct Display equipment built to spec — browse the full range by series and service type.",
+    "Browse factory-direct Custom Displays built to spec, with clear categories, product series and printing services.",
   filters: "Filters",
   resetAll: "Reset all",
   clearAllFilters: "Clear all active filters",
@@ -136,6 +140,8 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     home: "Inicio",
     products: "Productos",
     allProducts: "Todos los productos",
+    customDisplays: "Displays personalizados",
+    hardwareFrames: "Estructuras y marcos",
     bySeries: "Catálogo de productos",
     byService: "Por servicio",
     tabProductsCatalog: "Catálogo de productos",
@@ -165,9 +171,9 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     privacy: "Privacidad",
     terms: "Términos",
     footerTagline:
-      "Fabricante profesional de equipos de Display. Suministro directo de fábrica y OEM para estudios, clínicas y hostelería.",
+      "Sistemas de exhibición personalizados para eventos, comercio minorista y promociones",
     catalogIntro:
-      "Equipos de Display directos de fábrica y fabricados según especificaciones. Explore la gama completa por serie y tipo de servicio.",
+      "Explora displays personalizados de fábrica, hechos según tus especificaciones, por categoría, serie y servicio de impresión.",
     filters: "Filtros",
     resetAll: "Restablecer",
     clearAllFilters: "Borrar todos los filtros activos",
@@ -203,6 +209,8 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     home: "Accueil",
     products: "Produits",
     allProducts: "Tous les produits",
+    customDisplays: "Displays personnalisés",
+    hardwareFrames: "Matériel et structures",
     bySeries: "Catalogue produits",
     byService: "Par service",
     tabProductsCatalog: "Catalogue produits",
@@ -232,9 +240,9 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     privacy: "Confidentialité",
     terms: "Conditions",
     footerTagline:
-      "Fabricant professionnel d’équipements de Display. Vente directe usine et OEM pour studios, cliniques et hôtellerie.",
+      "Systèmes d’exposition personnalisés pour événements, commerce de détail et promotions",
     catalogIntro:
-      "Équipements de Display fabriqués sur mesure et vendus directement par l’usine — parcourez toute la gamme par série et type de service.",
+      "Découvrez nos systèmes d’exposition personnalisés, fabriqués selon vos spécifications, par catégorie, série et service d’impression.",
     filters: "Filtres",
     resetAll: "Réinitialiser",
     clearAllFilters: "Effacer tous les filtres actifs",
@@ -270,6 +278,8 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     home: "Startseite",
     products: "Produkte",
     allProducts: "Alle Produkte",
+    customDisplays: "Individuelle Displays",
+    hardwareFrames: "Hardware und Rahmen",
     bySeries: "Produktkatalog",
     byService: "Nach Dienstleistung",
     tabProductsCatalog: "Produktkatalog",
@@ -299,9 +309,9 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     privacy: "Datenschutz",
     terms: "Bedingungen",
     footerTagline:
-      "Professioneller Hersteller von Display-Geräten. Direktlieferung und OEM für Studios, Kliniken und Hotellerie.",
+      "Individuelle Displaysysteme für Events, Einzelhandel und Promotionen",
     catalogIntro:
-      "Direkt ab Werk und nach Spezifikation gefertigte Display-Geräte — entdecken Sie das gesamte Sortiment nach Serie und Dienstleistung.",
+      "Entdecken Sie individuell gefertigte Displays direkt ab Werk, nach Kategorien, Serien und Druckservices.",
     filters: "Filter",
     resetAll: "Zurücksetzen",
     clearAllFilters: "Alle aktiven Filter löschen",
@@ -337,6 +347,8 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     home: "Home",
     products: "Prodotti",
     allProducts: "Tutti i prodotti",
+    customDisplays: "Display personalizzati",
+    hardwareFrames: "Strutture e telai",
     bySeries: "Catalogo prodotti",
     byService: "Per servizio",
     tabProductsCatalog: "Catalogo prodotti",
@@ -366,9 +378,9 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     privacy: "Privacy",
     terms: "Termini",
     footerTagline:
-      "Produttore professionale di attrezzature Display. Fornitura diretta e OEM per studi, cliniche e hospitality.",
+      "Sistemi espositivi personalizzati per eventi, retail e promozioni",
     catalogIntro:
-      "Attrezzature Display prodotte su specifica e fornite direttamente dalla fabbrica — esplora l’intera gamma per serie e tipo di servizio.",
+      "Esplora display personalizzati forniti direttamente dalla fabbrica, realizzati su specifica e organizzati per categoria, serie e servizio di stampa.",
     filters: "Filtri",
     resetAll: "Reimposta",
     clearAllFilters: "Cancella tutti i filtri attivi",

@@ -3,11 +3,66 @@ import { defineConfig, envField } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
+import { createClient } from '@sanity/client';
+import { loadEnv } from 'vite';
 
 import {legacyRedirects} from './src/data/legacyRedirects.ts';
 import {solutionScenarios} from './src/data/solutionScenarios.ts';
+import {productDetailPath} from './src/lib/productRoutes.ts';
 
 import tailwindcss from '@tailwindcss/vite';
+
+const envMode = process.argv.includes('build') ? 'production' : 'development';
+const env = loadEnv(envMode, process.cwd(), '');
+const routeClient = createClient({
+  projectId: env.PUBLIC_SANITY_PROJECT_ID ?? 'w8rk6k6z',
+  dataset: env.PUBLIC_SANITY_DATASET ?? 'production',
+  apiVersion: env.SANITY_API_VERSION ?? '2024-10-01',
+  useCdn: false,
+  perspective: 'published',
+  ...(env.SANITY_READ_TOKEN ? {token: env.SANITY_READ_TOKEN} : {}),
+});
+const productRouteQuery = `*[
+  _type == "product" &&
+  coalesce(language, "en") == $language &&
+  isActive == true &&
+  defined(slug.current)
+]{
+  "slug": slug.current,
+  language,
+  productType,
+  "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
+  "noIndex": coalesce(seo.noIndex, false)
+}`;
+const productRouteData = process.argv.includes('build')
+  ? (await Promise.all(['en', 'es', 'fr', 'de', 'it'].map((language) =>
+      routeClient.fetch(productRouteQuery, {language}),
+    ))).flat()
+  : [];
+const productRedirects = {};
+const productNoIndexPaths = new Set();
+const legacyProductPathCounts = new Map();
+for (const product of productRouteData ?? []) {
+  if (!product.slug) continue;
+  const prefix = product.language && product.language !== 'en' ? `/${product.language}` : '';
+  const path = `${prefix}/products/${product.slug}`;
+  legacyProductPathCounts.set(path, (legacyProductPathCounts.get(path) ?? 0) + 1);
+}
+for (const product of productRouteData ?? []) {
+  if (!product.slug) continue;
+  const prefix = product.language && product.language !== 'en' ? `/${product.language}` : '';
+  const legacyPath = `${prefix}/products/${product.slug}`;
+  const productPath = product.productType && product.categorySlug
+    ? productDetailPath({slug: product.slug, productType: product.productType, categorySlug: product.categorySlug})
+    : null;
+  const destination = productPath ? `${prefix}${productPath}` : null;
+  const legacyPathIsUnique = legacyProductPathCounts.get(legacyPath) === 1;
+  if (destination && legacyPathIsUnique && !legacyRedirects[legacyPath]) productRedirects[legacyPath] = {status: 301, destination};
+  if (product.noIndex) {
+    if (legacyPathIsUnique) productNoIndexPaths.add(legacyPath);
+    if (destination) productNoIndexPaths.add(destination);
+  }
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -16,6 +71,7 @@ export default defineConfig({
   // https://easyshowtech.com/products.
   site: 'https://easyshowtech.com',
   redirects: {
+    ...productRedirects,
     ...Object.fromEntries(solutionScenarios.flatMap(s => s.aliases.map(alias => [`/solutions/${alias}`, {status: 301, destination: `/solutions/${s.slug}`} ]))),
     ...Object.fromEntries(Object.entries(legacyRedirects).map(([path, destination]) => [path, {status: 301, destination}])),
   },
@@ -44,6 +100,8 @@ export default defineConfig({
       filter: (page) => {
         const pathname = new URL(page).pathname.replace(/\/$/, '') || '/';
         return (
+          !productRedirects[pathname] &&
+          !productNoIndexPaths.has(pathname) &&
           !new Set(['/warranty', '/returns', '/shipping', '/thank-you']).has(
             pathname,
           ) && !pathname.startsWith('/configurations/') &&

@@ -8,6 +8,8 @@
 export interface InternalTarget {
   _type?: string | null
   slug?: string | null
+  productType?: string | null
+  categorySlug?: string | null
 }
 
 export function resolveHref(
@@ -20,7 +22,11 @@ export function resolveHref(
       case 'solution':
         return slug ? `/solutions/${slug}` : null
       case 'product':
-        return slug ? `/products/${slug}` : null
+        if (!slug) return null
+        if (internal.productType === 'customDisplay' && internal.categorySlug) return `/products/${internal.categorySlug}/${slug}`
+        if (internal.productType === 'hardware' && internal.categorySlug) return `/products/hardware/${internal.categorySlug}/${slug}`
+        if (internal.productType === 'partAccessory' && internal.categorySlug) return `/products/parts-accessories/${internal.categorySlug}/${slug}`
+        return `/products/${slug}`
       case 'post':
         return slug ? `/resources/${slug}` : null
       case 'oem':

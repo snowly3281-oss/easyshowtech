@@ -5,6 +5,7 @@ import {urlFor} from "../sanity/image";
 import {buildArticleHeadings} from "../lib/article";
 import {localizedPath, resolveLocale, type Locale} from "../i18n/config";
 import {staticUi} from "../i18n/static";
+import {productDetailPath} from "../lib/productRoutes";
 
 interface Props {
   value?: unknown[] | null;
@@ -65,7 +66,7 @@ function internalHref(reference: RecordValue | null | undefined) {
   if (reference._type === "sitePage") return localizedPath(reference.route || "", locale);
   const slug = reference.slug;
   if (!slug) return "";
-  if (reference._type === "product") return localizedPath(`/products/${slug}`, locale);
+  if (reference._type === "product") return localizedPath(productDetailPath(reference), locale);
   if (reference._type === "solution") return localizedPath(`/solutions/${slug}`, locale);
   if (reference._type === "post") return localizedPath(`/resources/${slug}`, locale);
   return "";
@@ -327,7 +328,7 @@ const html =
                       if (!product?.slug) return "";
                       const src = imageUrl(product.mainImage, 520);
                       const size = imageSizeAttributes(product.mainImage, 520);
-                      return `<a class="pt-product" href="${esc(localizedPath(`/products/${product.slug}`, locale))}">
+                      return `<a class="pt-product" href="${esc(localizedPath(productDetailPath(product), locale))}">
                         ${src ? `<img src="${esc(src)}" alt="${esc(product.mainImage?.alt || product.title)}"${size} loading="lazy" decoding="async" />` : ""}
                         <span>
                           <small>${esc(product.sku)}</small>

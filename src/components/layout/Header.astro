@@ -11,24 +11,24 @@
  */
 import {
   siteSettings,
-  productsSeries,
-  productsParts,
   solutionsByCustomer,
   companyLinks,
 } from "../../config/site";
-import type { HomeServicesQueryResult } from "../../sanity/sanity.types";
+import type { HeaderNavigationData, ProductCategoryMenuItem } from "../../sanity/content";
 import {localizedPath, type Locale} from "../../i18n/config";
 import {ui} from "../../i18n/ui";
 import {staticUi} from "../../i18n/static";
+import {productCategoryPath} from "../../lib/productRoutes";
 
 interface Props {
   locale?: Locale;
   /** Printing Service taxonomy sourced from Sanity. Used to render the
    *  "By Service" mega-menu column and the mobile equivalent. */
-  printingServices?: HomeServicesQueryResult;
+  printingServices?: HeaderNavigationData['services'];
+  productCategories?: ProductCategoryMenuItem[];
 }
 
-const {locale = "en", printingServices = []} = Astro.props;
+const {locale = "en", printingServices = [], productCategories = []} = Astro.props;
 const t = (english: string) => staticUi(locale, english);
 const localizeHref = (href: string) => {
   // Use site URL from settings, fallback to production domain
@@ -36,17 +36,47 @@ const localizeHref = (href: string) => {
   const url = new URL(href, baseUrl);
   return `${localizedPath(url.pathname, locale)}${url.search}${url.hash}`;
 };
-const productPartLabel = (label: string) =>
-  label === "Parts & accessories" ? ui(locale, "partsAccessories") : t(label);
+const productGroups = [
+  {type: 'hardware', label: ui(locale, 'hardwareFrames'), href: '/products?type=hardware'},
+  {type: 'customDisplay', label: ui(locale, 'customDisplays'), href: '/products?type=customDisplay'},
+  {type: 'partAccessory', label: ui(locale, 'partsAccessories'), href: '/products?type=partAccessory'},
+].map((group) => ({
+  ...group,
+  categories: productCategories.filter((category) => category.productType === group.type && category.slug),
+  // Show planned taxonomy names without dead links until real active products
+  // back those categories in Sanity.
+  plannedCategories: (
+    group.type === 'hardware'
+      ? [
+          {slug: 'aluminum-tent-frames', title: 'Aluminum Tent Frames'},
+          {slug: 'steel-tent-frames', title: 'Steel Tent Frames'},
+          {slug: 'pop-up-wall-frames', title: 'Pop Up Wall Frames'},
+          {slug: 'backdrop-frames', title: 'Backdrop Frames'},
+          {slug: 'flag-hardware', title: 'Flag Hardware'},
+          {slug: 'display-hardware', title: 'Display Hardware'},
+          {slug: 'chair-frames', title: 'Chair Frames'},
+        ]
+      : group.type === 'partAccessory'
+        ? [
+            {slug: 'fabrics', title: 'Fabrics'},
+            {slug: 'carry-bags', title: 'Carry Bags'},
+            {slug: 'connectors', title: 'Connectors'},
+            {slug: 'weights', title: 'Weights'},
+            {slug: 'tools', title: 'Tools'},
+          ]
+        : []
+  ).filter((planned) => !productCategories.some((category) => category.slug === planned.slug)),
+}))
+const productCategoryHref = (category: ProductCategoryMenuItem) => productCategoryPath(category)
 // Resolve a card label from the active locale, falling back to the slug
 // itself so an unfinished translation still renders something usable.
-const serviceLabel = (s: HomeServicesQueryResult[number]) =>
+const serviceLabel = (s: HeaderNavigationData['services'][number]) =>
   s.title ?? s.slug ?? "";
 // Printing service detail pages live at /printing-services/<slug>; see
 // src/pages/printing-services/[slug].astro. The dropdown label points to the
 // /printing-services index so visitors land on the catalogue first.
 const printingServicesIndexHref = (locale: Locale) => localizedPath("/printing-services", locale);
-const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =>
+const serviceDetailHref = (s: HeaderNavigationData['services'][number], locale: Locale) =>
   `${localizedPath("/printing-services", locale)}/${encodeURIComponent(s.slug ?? "")}`;
 ---
 
@@ -84,14 +114,14 @@ const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =
           aria-labelledby="productsTrigger"
           data-dropdown
         >
-          <div class="mega-col">
-            <p class="mega-head">{ui(locale, "bySeries")}</p>
-            {productsSeries.map((l) => <a href={localizeHref(l.href)} class="mega-link">{t(l.label)}</a>)}
-          </div>
-          <div class="mega-col">
-            <p class="mega-head">{ui(locale, "partsAccessories")}</p>
-            {productsParts.map((l) => <a href={localizeHref(l.href)} class="mega-link">{productPartLabel(l.label)}</a>)}
-          </div>
+          {productGroups.map((group) => (
+            <div class="mega-col">
+              <a class="mega-head mega-head-link" href={localizeHref(group.href)}>{group.label}</a>
+              {group.categories.map((category) => <a href={localizeHref(productCategoryHref(category))} class="mega-link">{category.title}</a>)}
+              {group.plannedCategories.map((category) => <span class="mega-link mega-link-static" aria-disabled="true">{t(category.title)}</span>)}
+            </div>
+          ))}
+          <a href={localizeHref('/products')} class="mega-all">{ui(locale, 'allProducts')} →</a>
           <a class="catalog-menu" href={localizeHref('/design-catalog/')}>
             <img src="/images/backdrops/demo-2.webp" alt="Floral backdrop design preview" width="96" height="72" loading="lazy" />
             <span><strong>Backdrop Design Catalog</strong><small>Browse designs for your custom backdrop.</small></span>
@@ -204,10 +234,13 @@ const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =
     <div class="container mobile-inner">
       <details class="m-group">
         <summary>{ui(locale, "products")}</summary>
-        <p class="m-sub">{ui(locale, "bySeries")}</p>
-        {productsSeries.map((l) => <a href={localizeHref(l.href)} class="m-link">{t(l.label)}</a>)}
-        <p class="m-sub">{ui(locale, "partsAccessories")}</p>
-        {productsParts.map((l) => <a href={localizeHref(l.href)} class="m-link">{productPartLabel(l.label)}</a>)}
+        {productGroups.map((group) => (
+          <>
+            <p class="m-sub"><a href={localizeHref(group.href)}>{group.label}</a></p>
+            {group.categories.map((category) => <a href={localizeHref(productCategoryHref(category))} class="m-link">{category.title}</a>)}
+            {group.plannedCategories.map((category) => <span class="m-link m-link-static" aria-disabled="true">{t(category.title)}</span>)}
+          </>
+        ))}
         <a class="m-link catalog-mobile" href={localizeHref('/design-catalog/')}><strong>Backdrop Design Catalog</strong><small>Browse designs for your custom backdrop. →</small></a>
         <a href={localizeHref('/products')} class="m-link">{ui(locale, 'allProducts')}</a>
       </details>
@@ -234,7 +267,7 @@ const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =
 </header>
 
 <style>
- .catalog-menu{flex:0 0 100%;width:100%;box-sizing:border-box;display:flex;align-items:center;gap:16px;border-top:1px solid var(--color-ink-200);padding:16px;background:#f2eee7;border-radius:8px;text-decoration:none;color:var(--color-ink-900)}
+.catalog-menu{grid-column:1 / -1;width:100%;box-sizing:border-box;display:flex;align-items:center;gap:16px;border-top:1px solid var(--color-ink-200);padding:16px;background:#f2eee7;border-radius:8px;text-decoration:none;color:var(--color-ink-900)}
  .catalog-menu img{width:80px;height:60px;object-fit:cover;border-radius:5px}.catalog-menu strong,.catalog-menu small{display:block}.catalog-menu small{margin-top:5px;font-size:13px;color:var(--color-ink-600)}.catalog-menu-arrow{margin-left:auto;color:#e60026;font-size:14px;white-space:nowrap}.catalog-menu:hover{background:#ebe5db}.catalog-mobile{border-top:1px solid var(--color-ink-200);margin-top:12px}.catalog-mobile small{display:block;margin-top:5px;font-size:13px}
 
   /* Layout/positioning only — all colours/type/spacing come from global.css tokens. */
@@ -346,13 +379,15 @@ const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =
     gap: 2px;
     min-width: 200px;
   }
-  /* 3-column panel that can never clip: wraps to fewer columns when the
-     viewport is tight, caps its width to the viewport (minus gutters), and
-     scrolls if it ever runs taller than the space below the header. */
+  /* Keep the three product groups on one row. The footer links span the full
+     panel width; the panel still shrinks to fit narrower desktop viewports. */
   .dropdown.mega {
-    flex-wrap: wrap;
-    width: max-content;
-    max-width: min(36rem, calc(100vw - 3rem));
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    box-sizing: border-box;
+    width: min(52rem, calc(100vw - 16rem));
+    max-width: calc(100vw - 16rem);
     gap: var(--space-5) var(--space-5);
     max-height: calc(100vh - 96px);
     overflow-y: auto;
@@ -361,9 +396,7 @@ const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =
     display: flex;
     flex-direction: column;
     gap: 2px;
-    flex: 0 0 auto;
-    min-width: 150px;
-    max-width: 220px;
+    min-width: 0;
   }
   .mega-head {
     margin-bottom: var(--space-2);
@@ -372,6 +405,9 @@ const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =
     letter-spacing: var(--tracking-wider);
     color: var(--color-ink-500);
   }
+  .mega-head-link { color:var(--color-ink-500); text-decoration:none; }
+  .mega-head-link:hover { color:var(--color-coral); }
+  .mega-all { grid-column:1 / -1; border-top:1px solid var(--color-ink-200); padding-top:var(--space-3); color:var(--color-coral); font-size:14px; }
   .mega-link {
     padding: 6px 0;
     font-size: 14px;
@@ -381,6 +417,8 @@ const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =
   .mega-link:hover {
     color: var(--color-coral);
   }
+  .mega-link-static { cursor:default; color:var(--color-ink-500); }
+  .mega-link-static:hover { color:var(--color-ink-500); }
   /* Right cluster */
   .header-right {
     display: flex;
@@ -469,6 +507,8 @@ const serviceDetailHref = (s: HomeServicesQueryResult[number], locale: Locale) =
   .m-link:hover {
     color: var(--color-coral);
   }
+  .m-link-static { cursor:default; color:var(--color-ink-500); }
+  .m-link-static:hover { color:var(--color-ink-500); }
   .m-top {
     border-bottom: 1px solid var(--color-ink-150);
     font-weight: 600;

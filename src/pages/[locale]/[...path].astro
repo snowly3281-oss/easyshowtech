@@ -15,6 +15,12 @@ import FactoryPage from "../factory.astro";
 import ContactPage from "../contact.astro";
 import OemPage from "../oem-services.astro";
 import ProductsPage from "../products/index.astro";
+import CustomDisplaysPage from "../products/custom-displays.astro";
+import HardwareProductsPage from "../products/hardware/index.astro";
+import PartsAccessoriesPage from "../products/parts-accessories/index.astro";
+import HardwareCategoryPage from "../products/hardware/[slug].astro";
+import PartsCategoryPage from "../products/parts-accessories/[slug].astro";
+import CustomCategoryPage from "../products/custom-displays/[slug].astro";
 import ProductPage from "../products/[slug].astro";
 import PrintingServicesPage from "../printing-services/index.astro";
 import PrintingServicePage from "../printing-services/[slug].astro";
@@ -30,7 +36,10 @@ import ShippingPage from "../shipping.astro";
 import ThankYouPage from "../thank-you.astro";
 import ConfigurationPage from "../configurations/[id].astro";
 import NotFoundPage from "../404.astro";
-import {isLocale, type Locale} from "../../i18n/config";
+import {fetchLocalized, isLocale, localizedPath, type Locale} from "../../i18n/config";
+import {productRouteBySlugQuery} from "../../sanity/queries/products";
+import {productCategoryBySlugQuery} from "../../sanity/queries/productCategories";
+import {productDetailPath} from "../../lib/productRoutes";
 
 const rawLocale = Astro.params.locale;
 const locale: Locale = isLocale(rawLocale) && rawLocale !== "en"
@@ -39,7 +48,7 @@ const locale: Locale = isLocale(rawLocale) && rawLocale !== "en"
 const route = (Astro.params.path ?? "").replace(/^\/|\/$/g, "");
 const segments = route.split("/").filter(Boolean);
 
-let Page: typeof HomePage | typeof ProductPage = NotFoundPage;
+let Page: any = NotFoundPage;
 let pageProps: Record<string, unknown> = {locale};
 let found = locale !== "en";
 
@@ -51,11 +60,49 @@ if (found) {
   else if (route === "contact") Page = ContactPage;
   else if (route === "oem-services") Page = OemPage;
   else if (route === "products") Page = ProductsPage;
-  else if (route === "products/parts")
-    return Astro.redirect(`/${locale}/products?parts=all`, 301);
-  else if (segments[0] === "products" && segments.length === 2) {
+  else if (route === "products/custom-displays") Page = CustomDisplaysPage;
+  else if (route === "products/hardware") Page = HardwareProductsPage;
+  else if (route === "products/parts-accessories") Page = PartsAccessoriesPage;
+  else if (segments[0] === "products" && segments[1] === "custom-displays" && segments.length === 3) {
+    Page = CustomCategoryPage;
+    pageProps = {locale, slug: segments[2]};
+  }
+  else if (segments[0] === "products" && segments[1] === "custom-displays" && segments.length === 4) {
     Page = ProductPage;
-    pageProps = {locale, slug: segments[1]};
+    pageProps = {locale, slug: segments[3]};
+  }
+  else if (segments[0] === "products" && segments[1] === "hardware" && segments.length === 4) {
+    Page = ProductPage;
+    pageProps = {locale, slug: segments[3]};
+  }
+  else if (segments[0] === "products" && segments[1] === "parts-accessories" && segments.length === 4) {
+    Page = ProductPage;
+    pageProps = {locale, slug: segments[3]};
+  }
+  else if (route === "products/parts")
+    return Astro.redirect(`/${locale}/products/parts-accessories/`, 301);
+  else if (segments[0] === "products" && segments[1] === "hardware" && segments.length === 3) {
+    Page = HardwareCategoryPage;
+    pageProps = {locale, slug: segments[2]};
+  } else if (segments[0] === "products" && segments[1] === "parts-accessories" && segments.length === 3) {
+    Page = PartsCategoryPage;
+    pageProps = {locale, slug: segments[2]};
+  }
+  else if (segments[0] === "products" && segments.length === 3) {
+    Page = ProductPage;
+    pageProps = {locale, slug: segments[2]};
+  }
+  else if (segments[0] === "products" && segments.length === 2) {
+    const routeProduct = await fetchLocalized<{slug: string | null; productType: string | null; categorySlug: string | null} | null>(productRouteBySlugQuery, {slug: segments[1]}, locale)
+    if (routeProduct?.slug && routeProduct.productType && routeProduct.categorySlug) {
+      const destination = localizedPath(productDetailPath(routeProduct), locale)
+      if (destination !== Astro.url.pathname.replace(/\/$/, "")) return Astro.redirect(destination, 301)
+    }
+    const category = routeProduct?.slug
+      ? null
+      : await fetchLocalized<{productType?: string | null} | null>(productCategoryBySlugQuery, {slug: segments[1]}, locale)
+    Page = ProductPage;
+    pageProps = {locale, slug: segments[1], pageKind: category?.productType === "customDisplay" ? "category" : "product"};
   } else if (route === "solutions") Page = SolutionsPage;
   else if (segments[0] === "solutions" && segments.length === 2) {
     Page = SolutionPage;

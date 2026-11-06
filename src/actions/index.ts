@@ -173,14 +173,17 @@ function makeProductItem(input: {
   quantity?: string
   frame_finish?: string
   upholstery?: string
+  variant?: string
 }): RfqItem[] {
   const title = normalizeText(input.product)
   if (!title) return []
   const options: Record<string, string> = {}
   const frame = normalizeText(input.frame_finish)
   const upholstery = normalizeText(input.upholstery)
+  const variant = normalizeText(input.variant)
   if (frame) options['Frame finish'] = frame
   if (upholstery) options.Upholstery = upholstery
+  if (variant) options.Variant = variant
   return [
     {
       productId: null,
@@ -395,6 +398,7 @@ export const server = {
       sku: z.string().max(160).optional(),
       frame_finish: z.string().max(240).optional(),
       upholstery: z.string().max(240).optional(),
+      variant: z.string().max(240).optional(),
       subject: z.string().max(180).optional(),
       inquiry_type: z.string().max(120).optional(),
       inquiry_kind: z.enum(['quote', 'floorplan']).optional(),

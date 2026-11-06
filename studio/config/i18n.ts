@@ -20,6 +20,7 @@ export const LOCALIZED_DOCUMENT_TYPES = [
   "series",
   "equipment",
   "product",
+  "productCategory",
   "solution",
   "post",
   "postCategory",
@@ -35,7 +36,7 @@ export const TARGET_LANGUAGES = SUPPORTED_LANGUAGES.filter(
 );
 
 export const DEFAULT_TRANSLATION_STYLE_GUIDE = [
-  "Translate for a professional B2B Display equipment website.",
+  "Translate for a professional B2B custom display systems website.",
   "Keep the meaning precise, concise and commercially neutral.",
   "Do not invent certifications, prices, warranty promises or technical specifications.",
   "Preserve SKU codes, model names, dimensions, units, URLs and brand names.",

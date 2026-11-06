@@ -40,6 +40,30 @@ export const seo = defineType({
       description: '可选。留空时使用正文摘要；建议约 120–160 个字符。',
       validation: (rule) => rule.max(180).warning('建议控制在 180 个字符以内。'),
     }),
+    defineField({
+      name: 'canonicalUrl',
+      title: '规范网址 Canonical URL',
+      type: 'url',
+      description: '留空则使用当前页面网址。仅在需要合并重复页面时填写。',
+    }),
+    defineField({
+      name: 'ogTitle',
+      title: '社交分享标题 OG title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'ogDescription',
+      title: '社交分享摘要 OG description',
+      type: 'text',
+      rows: 2,
+    }),
+    defineField({
+      name: 'noIndex',
+      title: '禁止搜索引擎收录',
+      type: 'boolean',
+      initialValue: false,
+      description: '测试或内容未完成时可关闭收录；确认发布后再启用索引。',
+    }),
     mediaField({
       name: 'ogImage',
       title: '社交分享图片',

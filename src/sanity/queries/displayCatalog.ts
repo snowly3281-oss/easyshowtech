@@ -39,10 +39,17 @@ export const printingServiceBySlugQuery = defineQuery(`
     suitableApplications,
     artworkRequirements,
     processSteps[]{ _key, stepNumber, title, description },
-    "relatedProducts": relatedProducts[]->{
+    "relatedProducts": *[
+      _type == "product" &&
+      coalesce(language, "en") == $language &&
+      isActive == true &&
+      ^._id in printingServices[]._ref
+    ] | order(sortOrder asc, title asc){
       _id,
       title,
       "slug": slug.current,
+      productType,
+      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
       sku,
       summary,
       "seriesTitle": series->title,
@@ -108,6 +115,8 @@ export const seriesBySlugQuery = defineQuery(`
       _id,
       title,
       "slug": slug.current,
+      productType,
+      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
       sku,
       summary,
       mainImage{ asset, alt },

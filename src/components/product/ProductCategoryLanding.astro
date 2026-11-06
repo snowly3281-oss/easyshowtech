@@ -1,0 +1,180 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import ProductCard from './ProductCard.astro'
+import PortableText from '../PortableText.astro'
+import { urlFor } from '../../sanity/image'
+import { getRawSiteSettings } from '../../sanity/settings'
+import { localizedPath, type Locale } from '../../i18n/config'
+import { ui } from '../../i18n/ui'
+import type { ProductCardData } from '../../sanity/content'
+import { productCategoryPath } from '../../lib/productRoutes'
+
+interface CategoryLink {
+  title?: string | null
+  slug?: string | null
+  productType?: string | null
+  summary?: string | null
+  shortDescription?: string | null
+  hasProducts?: boolean
+}
+interface CategoryData {
+  _id: string
+  title?: string | null
+  slug?: string | null
+  productType?: string | null
+  description?: string | null
+  intro?: unknown[] | null
+  contentBlocks?: unknown[] | null
+  heroImage?: { asset?: unknown; alt?: string | null } | null
+  seo?: {
+    metaTitle?: string | null
+    metaDescription?: string | null
+    canonicalUrl?: string | null
+    ogTitle?: string | null
+    ogDescription?: string | null
+    noIndex?: boolean | null
+    ogImage?: { asset?: unknown; alt?: string | null } | null
+  } | null
+  products?: ProductCardData[] | null
+  relatedCategories?: CategoryLink[] | null
+  relatedPrintingServices?: CategoryLink[] | null
+  relatedSolutions?: CategoryLink[] | null
+  rootSlugAvailable?: boolean | null
+}
+interface Props { category: CategoryData; locale?: Locale; expectedType?: 'customDisplay' | 'hardware' | 'partAccessory' }
+
+const { category, locale = 'en', expectedType } = Astro.props
+if (expectedType && category.productType !== expectedType) return Astro.rewrite('/404')
+const settings = await getRawSiteSettings()
+const typeLabel = category.productType === 'hardware'
+  ? ui(locale, 'hardwareFrames')
+  : category.productType === 'partAccessory'
+    ? ui(locale, 'partsAccessories')
+    : ui(locale, 'customDisplays')
+const title = category.seo?.metaTitle || `${category.title || 'Products'} — EasyShow`
+const description = category.seo?.metaDescription || category.description || undefined
+const socialAsset = category.seo?.ogImage?.asset || category.heroImage?.asset
+const socialImage = socialAsset ? urlFor(socialAsset as never).width(1200).height(630).fit('crop').auto('format').url() : undefined
+const hero = category.heroImage?.asset ? urlFor(category.heroImage.asset as never).width(1800).auto('format').url() : null
+const categoryPath = (entry: CategoryLink) => productCategoryPath(entry)
+const completeDisplayCategory = category.productType === 'hardware'
+  ? category.relatedCategories?.find((entry) => entry.productType === 'customDisplay' && entry.slug && entry.hasProducts !== false)
+  : undefined
+const groupRoot = category.productType === 'hardware'
+  ? {label: ui(locale, 'hardwareFrames'), href: '/products/hardware'}
+  : category.productType === 'partAccessory'
+    ? {label: ui(locale, 'partsAccessories'), href: '/products/parts-accessories'}
+    : {label: ui(locale, 'customDisplays'), href: '/products/custom-displays'}
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: ui(locale, 'home'), item: 'https://easyshowtech.com/' },
+    { '@type': 'ListItem', position: 2, name: ui(locale, 'products'), item: 'https://easyshowtech.com/products' },
+    { '@type': 'ListItem', position: 3, name: groupRoot.label, item: `https://easyshowtech.com${groupRoot.href}` },
+    { '@type': 'ListItem', position: 4, name: category.title, item: `https://easyshowtech.com${Astro.url.pathname}` },
+  ],
+}
+---
+
+<BaseLayout
+  locale={locale}
+  title={title}
+  description={description}
+  ogImage={socialImage}
+  ogTitle={category.seo?.ogTitle || title}
+  ogDescription={category.seo?.ogDescription || description}
+  canonicalUrl={category.seo?.canonicalUrl || undefined}
+  noIndex={category.seo?.noIndex || false}
+>
+  <section class="section category-page">
+    <div class="container">
+      <nav class="category-crumbs" aria-label={ui(locale, 'breadcrumb')}>
+        <a href={localizedPath('/', locale)}>{ui(locale, 'home')}</a>
+        <span aria-hidden="true">/</span>
+        <a href={localizedPath('/products', locale)}>{ui(locale, 'products')}</a>
+        <span aria-hidden="true">/</span>
+        <a href={localizedPath(groupRoot.href, locale)}>{groupRoot.label}</a>
+        <span aria-hidden="true">/</span>
+        <span>{category.title}</span>
+      </nav>
+
+      {hero && <img class="category-hero" src={hero} alt={category.heroImage?.alt || category.title || ''} width="1800" height="800" fetchpriority="high" />}
+      <p class="category-eyebrow">{typeLabel}</p>
+      <h1>{category.title}</h1>
+      {category.description && <p class="category-description">{category.description}</p>}
+      {category.intro?.length && <div class="category-intro"><PortableText value={category.intro as never} /></div>}
+      {category.contentBlocks?.length && <div class="category-intro"><PortableText value={category.contentBlocks as never} /></div>}
+
+      {completeDisplayCategory && (
+        <aside class="category-conversion" aria-label="Hardware and custom display options">
+          <div>
+            <p class="category-conversion-label">Hardware &amp; frames</p>
+            <h2>{category.title}</h2>
+          </div>
+          <span class="category-conversion-arrow" aria-hidden="true">→</span>
+          <div>
+            <p class="category-conversion-label">Need a complete custom display?</p>
+            <a href={localizedPath(categoryPath(completeDisplayCategory), locale)}>{completeDisplayCategory.title}</a>
+          </div>
+        </aside>
+      )}
+
+      {category.products?.length ? (
+        <section class="category-products" aria-labelledby="category-products-heading">
+          <h2 id="category-products-heading">{ui(locale, 'products')}</h2>
+          <ul class="category-grid">
+            {category.products.map((product) => <ProductCard product={product} settings={settings} locale={locale} />)}
+          </ul>
+        </section>
+      ) : null}
+
+      {category.relatedCategories?.some((entry) => entry.slug && entry.hasProducts !== false && entry.slug !== completeDisplayCategory?.slug) ? (
+        <nav class="category-related" aria-label="Related product categories">
+          <h2>{ui(locale, 'allProducts')}</h2>
+          <ul>{category.relatedCategories.filter((entry) => entry.slug && entry.hasProducts !== false && entry.slug !== completeDisplayCategory?.slug).map((entry) => <li><a href={localizedPath(categoryPath(entry), locale)}>{entry.title}</a></li>)}</ul>
+        </nav>
+      ) : null}
+
+      {category.relatedPrintingServices?.length ? (
+        <nav class="category-related" aria-label="Related printing services">
+          <h2>{ui(locale, 'byService')}</h2>
+          <ul>{category.relatedPrintingServices.filter((entry) => entry.slug).map((entry) => <li><a href={localizedPath(`/printing-services/${entry.slug}`, locale)}>{entry.title}</a></li>)}</ul>
+        </nav>
+      ) : null}
+
+      {category.relatedSolutions?.length ? (
+        <nav class="category-related" aria-label="Related solutions">
+          <h2>{ui(locale, 'solutions')}</h2>
+          <ul>{category.relatedSolutions.filter((entry) => entry.slug).map((entry) => <li><a href={localizedPath(`/solutions/${entry.slug}`, locale)}>{entry.title}</a></li>)}</ul>
+        </nav>
+      ) : null}
+
+      <div class="category-cta">
+        <a class="btn btn-coral" href={localizedPath('/contact', locale)}>{ui(locale, 'requestCustomQuote')}</a>
+      </div>
+    </div>
+  </section>
+  <script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} is:inline />
+</BaseLayout>
+
+<style>
+  .category-crumbs { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:var(--space-5); color:var(--color-ink-500); font-size:var(--text-body-s); }
+  .category-crumbs a { color:inherit; }
+  .category-hero { display:block; width:100%; max-height:520px; object-fit:cover; border-radius:var(--radius-md); margin-bottom:var(--space-6); }
+  .category-eyebrow { margin:0 0 var(--space-2); color:var(--color-coral); font-size:var(--text-body-s); font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .category-page h1 { margin:0; }
+  .category-description,.category-intro { max-width:76ch; color:var(--color-ink-600); }
+  .category-products,.category-related,.category-conversion { margin-top:var(--space-8); }
+  .category-conversion { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); align-items:center; gap:var(--space-5); padding:var(--space-6); border:1px solid var(--color-line); border-radius:var(--radius-md); background:var(--color-white); }
+  .category-conversion h2 { margin:0; font-size:var(--text-h3); }
+  .category-conversion-label { margin:0 0 var(--space-2); color:var(--color-ink-500); font-size:var(--text-body-s); }
+  .category-conversion a { color:var(--color-coral); font-size:var(--text-h3); font-weight:700; }
+  .category-conversion-arrow { color:var(--color-coral); font-size:2rem; }
+  .category-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-5); padding:0; list-style:none; }
+  .category-related ul { display:flex; flex-wrap:wrap; gap:12px 22px; padding:0; list-style:none; }
+  .category-related a { color:var(--color-coral); }
+  .category-cta { margin-top:var(--space-8); }
+  @media(max-width:760px) { .category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-3); } .category-conversion { grid-template-columns:1fr; gap:var(--space-3); } .category-conversion-arrow { transform:rotate(90deg); justify-self:start; } }
+  @media(max-width:420px) { .category-grid { grid-template-columns:1fr; } }
+</style>

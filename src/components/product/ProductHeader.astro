@@ -5,6 +5,8 @@ import { formatPrice, getPricePresentation } from '../../lib/price'
 import QuoteModal from './QuoteModal.astro'
 import {localizedPath, type Locale} from '../../i18n/config'
 import {localizeCountDuration, staticUi} from '../../i18n/static'
+import {ui} from '../../i18n/ui'
+import { productCategoryPath, productDetailPath } from '../../lib/productRoutes'
 
 interface Props {
   product: ProductData
@@ -16,39 +18,22 @@ const { product, settings, locale = 'en' } = Astro.props
 const t = (english: string) => staticUi(locale, english)
 const productTitle = product.title ?? t('EasyShow equipment')
 
-// Generic finish / upholstery configurator — global common options edited in
-// siteSettings (per-product variants come later). Frame finish only applies to
-// the wood series; upholstery to all. There's no cart on a quote site, so the
-// selection is captured into the Request-a-quote link instead.
-const isWood = (product.seriesSlug ?? '').startsWith('wood-')
-// Aluminium frames are anodised / electroplated to order — the alloy takes
-// virtually any colour, so there's no fixed swatch set. The PDP shows an
-// "any colour" note instead and the quote records an open custom-colour intent.
-const isAluminium = (product.seriesSlug ?? '') === 'aluminum'
-const frameFinishes = (isWood ? settings?.frameFinishes : null) ?? []
-const upholsteryColors = settings?.upholsteryColors ?? []
-const defaultFrame =
-  frameFinishes.find((f) =>
-    (product.seriesTitle ?? '').toLowerCase().includes((f?.name ?? '').toLowerCase())
-  )?.name ??
-  frameFinishes[0]?.name ??
-  null
-const defaultUpholstery = upholsteryColors[0]?.name ?? null
-const frameParam = defaultFrame ?? (isAluminium ? 'anodised-custom' : null)
+const variants = (product.variants ?? []).filter((variant) => variant?.variantName)
+const variantLabel = (variant: NonNullable<typeof variants>[number]) => {
+  const details = [variant.attributes?.size, variant.attributes?.color, variant.attributes?.material, variant.attributes?.weight].filter(Boolean)
+  return [variant.variantName, variant.sku, ...details].filter(Boolean).join(' · ')
+}
+const defaultVariant = variants.find((variant) => variant.isDefault) ?? variants[0]
+const defaultVariantLabel = defaultVariant ? variantLabel(defaultVariant) : null
 const quoteHref =
   localizedPath('/contact', locale) +
   '?product=' +
   encodeURIComponent(product.sku ?? '') +
-  (frameParam ? '&frame=' + encodeURIComponent(frameParam) : '') +
-  (defaultUpholstery ? '&upholstery=' + encodeURIComponent(defaultUpholstery) : '')
+  (defaultVariantLabel ? '&variant=' + encodeURIComponent(defaultVariantLabel) : '')
 
-const certs = product.certifications ?? []
-// MOQ is a fixed company-wide policy ("1 unit, no minimum"); default it here
-// rather than copying onto every product doc. Lead time / warranty stay
-// per-product (and hidden until the client confirms them).
 const stats = [
-  { label: 'MOQ', value: localizeCountDuration(locale, product.moq ?? '1 unit') },
-  { label: t('Lead time'), value: localizeCountDuration(locale, product.leadTime) },
+  { label: 'MOQ', value: product.moq == null ? null : localizeCountDuration(locale, String(product.moq)) },
+  { label: t('Lead time'), value: localizeCountDuration(locale, product.productionLeadTime) },
   { label: t('Warranty'), value: localizeCountDuration(locale, product.warranty) },
 ].filter((s) => s.value)
 
@@ -76,24 +61,48 @@ const slides: Slide[] = sources.map((s) => ({
   alt: s.alt,
 }))
 const hasMedia = slides.length > 0
+const productGroup = product.productType === 'hardware'
+  ? {label: ui(locale, 'hardwareFrames'), path: '/products/hardware'}
+  : product.productType === 'partAccessory'
+    ? {label: ui(locale, 'partsAccessories'), path: '/products/parts-accessories'}
+    : product.productType === 'customDisplay'
+      ? {label: ui(locale, 'customDisplays'), path: '/products/custom-displays'}
+      : null
+const categoryPath = product.productCategory
+  ? productCategoryPath({
+      slug: product.productCategory.slug,
+      productType: product.productCategory.productType,
+      rootSlugAvailable: product.productCategoryRootSlugAvailable,
+    })
+  : null
+const breadcrumbs = [
+  {name: t('Home'), path: '/'},
+  {name: ui(locale, 'products'), path: '/products'},
+  ...(productGroup ? [{name: productGroup.label, path: productGroup.path}] : []),
+  ...(categoryPath && product.productCategory?.title ? [{name: product.productCategory.title, path: categoryPath}] : []),
+  {name: product.sku || productTitle, path: productDetailPath(product)},
+]
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbs.map((item, index) => ({
+    '@type': 'ListItem',
+    position: index + 1,
+    name: item.name,
+    item: new URL(localizedPath(item.path, locale), Astro.site ?? Astro.url).toString(),
+  })),
+}
 ---
 
 <section class="section ph">
   <div class="container">
     <nav class="ph__crumbs nums" aria-label={t('Breadcrumb')}>
-      <a href={localizedPath('/products', locale)}>{t('Products')}</a>
-      {product.seriesTitle && (
-        <>
-          <span aria-hidden="true">/</span>
-          <a href={`${localizedPath('/products', locale)}?series=${product.seriesSlug ?? ''}`}>{product.seriesTitle} {t('series')}</a>
-        </>
-      )}
-      {product.sku && (
-        <>
-          <span aria-hidden="true">/</span>
-          <span>{product.sku}</span>
-        </>
-      )}
+      {breadcrumbs.map((item, index) => <>
+        {index > 0 && <span aria-hidden="true">/</span>}
+        {index === breadcrumbs.length - 1
+          ? <span>{item.name}</span>
+          : <a href={localizedPath(item.path, locale)}>{item.name}</a>}
+      </>)}
     </nav>
 
     <div class="ph__grid">
@@ -147,9 +156,6 @@ const hasMedia = slides.length > 0
                 loading="eager"
                 fetchpriority="high"
               />
-              {product.mainImageDimensionNote && (
-                <span class="ph__dim nums">{product.mainImageDimensionNote}</span>
-              )}
               {slides.length > 1 && (
                 <>
                   <span class="ph__nav ph__nav--prev" data-ph-prev role="button" tabindex="0" aria-label={t('Previous image')}>
@@ -178,71 +184,30 @@ const hasMedia = slides.length > 0
             <>
               <span class="ph__amount nums">{priceText}</span>
               {product.priceUnit && <span class="ph__priceunit">{product.priceUnit}</span>}
-              {product.priceNote && <span class="ph__pricenote">{product.priceNote}</span>}
             </>
           ) : (
             <span class="ph__quote">{t('Price on request')}</span>
           )}
         </div>
 
-        {frameFinishes.length > 0 && (
-          <div class="ph__config" data-config-kind="frame">
+        {variants.length > 0 && (
+          <div class="ph__config" data-config-kind="variant">
             <div class="ph__confighead">
-              <p class="ph__configlabel">{t('Frame finish')}</p>
-              <span class="ph__configval" data-config-value="frame">{defaultFrame}</span>
+              <p class="ph__configlabel">{t('Available variants')}</p>
+              <span class="ph__configval" data-config-value="variant">{defaultVariantLabel}</span>
             </div>
-            <ul class="ph__swatches">
-              {frameFinishes.map((f) => (
+            <ul class="ph__pills">
+              {variants.map((variant) => (
                 <li>
                   <button
                     type="button"
-                    class:list={['ph__swatch', { 'is-active': f?.name === defaultFrame }]}
-                    data-swatch="frame"
-                    data-name={f?.name}
-                    style={f?.hex ? `--sw:${f.hex}` : undefined}
-                    aria-label={f?.name ?? undefined}
-                    title={f?.name ?? undefined}
-                  />
+                    class:list={['ph__pill', { 'is-active': variant === defaultVariant }]}
+                    data-swatch="variant"
+                    data-name={variantLabel(variant)}
+                    aria-pressed={variant === defaultVariant ? 'true' : 'false'}
+                  >{variantLabel(variant)}</button>
                 </li>
               ))}
-            </ul>
-          </div>
-        )}
-
-        {isAluminium && (
-          <div class="ph__config" data-config-kind="frame">
-            <div class="ph__confighead">
-              <p class="ph__configlabel">{t('Frame finish')}</p>
-              <span class="ph__configval">{t('Aluminium')}</span>
-            </div>
-            <ul class="ph__pills">
-              <li><span class="ph__pill ph__pill--note">{t('Anodised aluminium — any colour')}</span></li>
-            </ul>
-            <p class="ph__confignote">{t('Tell us your colour in the quote request.')}</p>
-          </div>
-        )}
-
-        {upholsteryColors.length > 0 && (
-          <div class="ph__config" data-config-kind="upholstery">
-            <div class="ph__confighead">
-              <p class="ph__configlabel">{t('Upholstery')}</p>
-              <span class="ph__configval" data-config-value="upholstery">{defaultUpholstery}</span>
-            </div>
-            <ul class="ph__pills">
-              {upholsteryColors.map((u) => (
-                <li>
-                  <button
-                    type="button"
-                    class:list={['ph__pill', { 'is-active': u?.name === defaultUpholstery }]}
-                    data-swatch="upholstery"
-                    data-name={u?.name}
-                  >
-                    <span class="ph__pilldot" style={u?.hex ? `background:${u.hex}` : undefined} />
-                    {u?.name}
-                  </button>
-                </li>
-              ))}
-              <li><span class="ph__pill ph__pill--note">{t('Custom on request')}</span></li>
             </ul>
           </div>
         )}
@@ -274,7 +239,6 @@ const hasMedia = slides.length > 0
           </button>
           <a class="btn btn-outline ph__cta" data-quote-cta href={quoteHref}>{t('Request one-product quote')}</a>
         </div>
-        {certs.length > 0 && <p class="ph__certs">{certs.join(' · ')} {t('certified')}</p>}
       </aside>
     </div>
   </div>
@@ -282,6 +246,7 @@ const hasMedia = slides.length > 0
   <QuoteModal sku={product.sku} title={productTitle} locale={locale} />
 
 </section>
+<script type="application/ld+json" set:html={JSON.stringify(breadcrumbJsonLd)} is:inline />
 
 <script>
   // Interactive PDP gallery: vertical thumbnail rail on the left that
@@ -367,8 +332,7 @@ const hasMedia = slides.length > 0
   }
   initGallery()
 
-  // Finish / upholstery configurator: highlight the picked option, update the
-  // "Selected: X" label, and fold the choice into the Request-a-quote link.
+  // Product variant selector: preserve only variants maintained on this SKU.
   function initConfigurator() {
     const cta = document.querySelector('[data-quote-cta]') as HTMLAnchorElement | null
     if (!cta || cta.dataset.configuratorInitialized === 'true') return
@@ -379,7 +343,10 @@ const hasMedia = slides.length > 0
         const name = btn.getAttribute('data-name') || ''
         document
           .querySelectorAll('[data-swatch="' + group + '"]')
-          .forEach((b) => b.classList.toggle('is-active', b === btn))
+          .forEach((b) => {
+            b.classList.toggle('is-active', b === btn)
+            if (b.hasAttribute('aria-pressed')) b.setAttribute('aria-pressed', b === btn ? 'true' : 'false')
+          })
         const valEl = document.querySelector('[data-config-value="' + group + '"]')
         if (valEl) valEl.textContent = name
         if (cta) {
@@ -606,7 +573,7 @@ const hasMedia = slides.length > 0
     width: 100%;
     margin: 0;
   }
-  /* Finish / upholstery configurator. */
+  /* Product variant selector. */
   .ph__config {
     margin: var(--space-4) 0 0;
     /* keep the section clear of the 76px sticky header when scrolled to */
@@ -630,43 +597,7 @@ const hasMedia = slides.length > 0
     font-size: var(--text-body-s);
     color: var(--color-ink-600, #555);
   }
-  /* Helper line under the aluminium "any colour" frame note. */
-  .ph__confignote {
-    margin: var(--space-2) 0 0;
-    font-size: var(--text-body-s);
-    color: var(--color-ink-400, #9a948a);
-  }
-  /* Frame finish — circular colour swatches. */
-  .ph__swatches {
-    margin: 0;
-    /* the active swatch draws a 4px outer coral halo; pad the row so it is
-       fully contained and never reads as clipped against the label/row edge */
-    padding: 4px 0 0;
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-  }
-  .ph__swatch {
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    border-radius: 50%;
-    background: var(--sw, var(--color-paper-2, #ece7dd));
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    box-shadow: 0 0 0 2px transparent;
-    cursor: pointer;
-    transition: box-shadow 0.15s ease;
-  }
-  .ph__swatch:hover {
-    box-shadow: 0 0 0 2px var(--color-ink-300, #cfc9bd);
-  }
-  .ph__swatch.is-active {
-    box-shadow:
-      0 0 0 2px var(--color-white, #fff),
-      0 0 0 4px var(--color-coral);
-  }
-  /* Upholstery — text pills with a colour dot. */
+  /* Available options come only from the selected product's variants. */
   .ph__pills {
     margin: 0;
     padding: 0;
@@ -695,19 +626,6 @@ const hasMedia = slides.length > 0
   .ph__pill.is-active {
     border-color: var(--color-ink-900, #0e1013);
     box-shadow: inset 0 0 0 1px var(--color-ink-900, #0e1013);
-  }
-  .ph__pilldot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
-  }
-  .ph__pill--note {
-    color: var(--color-ink-400, #9a948a);
-    cursor: default;
-  }
-  .ph__pill--note:hover {
-    border-color: var(--color-ink-200, #e2ddd3);
   }
   .ph__stats {
     margin: var(--space-4) 0 0;

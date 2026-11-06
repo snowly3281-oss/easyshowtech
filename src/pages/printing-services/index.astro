@@ -4,25 +4,21 @@
  */
 import BaseLayout from '../../layouts/BaseLayout.astro'
 import { urlFor } from '../../sanity/image'
-import { fetchLocalizedList } from '../../i18n/config'
+import { fetchLocalizedList, localizedPath } from '../../i18n/config'
 import { printingServiceListQuery } from '../../sanity/queries/displayCatalog'
-import { getRawSiteSettings } from '../../sanity/settings'
-import type { SiteSettingsData } from '../../sanity/content'
 import type { Locale } from '../../i18n/config'
+import type { PrintingServiceListQueryResult } from '../../sanity/sanity.types'
 import { siteSettings } from '../../config/site'
 
 const locale = (Astro.props.locale as Locale) ?? 'en'
 const t = (key: string) => key
 
-const [services, settings] = await Promise.all([
-  fetchLocalizedList(printingServiceListQuery, {}, locale, (s) => s.slug ?? ''),
-  getRawSiteSettings(),
-])
+const services = await fetchLocalizedList<PrintingServiceListQueryResult[number]>(printingServiceListQuery, {}, locale, (s) => s.slug ?? '')
 
 const pageTitle = 'Printing Services'
 const metaTitle = `${pageTitle} — ${siteSettings.brand}`
 const metaDescription =
-  'Five in-house printing capabilities: custom fabric printing, dye sublimation, logo printing, large-format printing and artwork setup. Full-service display equipment manufacturing.'
+  'Five in-house printing capabilities: custom fabric printing, dye sublimation, logo printing, large-format printing and artwork setup for custom display systems.'
 ---
 
 <BaseLayout locale={locale} title={metaTitle} description={metaDescription}>
@@ -36,7 +32,7 @@ const metaDescription =
       <h1 class="page-title">{pageTitle}</h1>
       <p class="page-intro">
         From custom fabric printing to large-format graphics, our five in-house
-        printing capabilities cover every branding need for display equipment.
+        printing capabilities cover every branding need for Custom Displays.
         Production-ready artwork support included.
       </p>
     </div>
@@ -47,7 +43,7 @@ const metaDescription =
       <div class="ps-grid">
         {services.map((service) => (
           <article class="ps-card">
-            <a href={`/printing-services/${service.slug}`} class="ps-card__link">
+            <a href={localizedPath(`/printing-services/${service.slug}`, locale)} class="ps-card__link">
               {service.cardImage?.asset ? (
                 <div class="ps-card__img">
                   <img

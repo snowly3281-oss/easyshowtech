@@ -1,0 +1,19 @@
+---
+import ProductPage from '../../[slug].astro'
+import { sanityClient } from '../../../../sanity/client'
+import { productPathsQuery } from '../../../../sanity/queries/products'
+
+type ProductRoute = { slug: string | null; productType: string | null; categorySlug: string | null }
+
+export async function getStaticPaths() {
+  const products = await sanityClient.fetch<ProductRoute[]>(productPathsQuery, {language: 'en'})
+  return (products ?? [])
+    .filter((product) => product.productType === 'partAccessory' && product.categorySlug && product.slug)
+    .map((product) => ({params: {category: product.categorySlug!, slug: product.slug!}, props: {slug: product.slug}}))
+}
+
+const props = Astro.props as {locale?: string; slug?: string}
+const RoutedProductPage = ProductPage as any
+---
+
+<RoutedProductPage locale={props.locale} slug={props.slug ?? Astro.params.slug} />

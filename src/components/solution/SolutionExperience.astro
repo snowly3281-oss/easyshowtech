@@ -1,6 +1,7 @@
 ﻿---
 import Icon from '../Icon.astro'
 import SolutionPackages from './SolutionPackages.astro'
+import SolutionRecommendations from './SolutionRecommendations.astro'
 import AssistedConfiguration from './AssistedConfiguration.astro'
 import SolutionHero from './SolutionHero.astro'
 import { urlFor } from '../../sanity/image'
@@ -229,6 +230,7 @@ const process = [
   />
 
   <SolutionPackages solution={solution} whatsapp={whatsapp} showPrices={showPrices} locale={locale} />
+  <SolutionRecommendations solution={solution} locale={locale} />
 
   <AssistedConfiguration
     solutionTitle={solution.title ?? t('your project')}

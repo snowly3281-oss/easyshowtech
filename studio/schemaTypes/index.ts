@@ -12,6 +12,7 @@ import { equipment } from './equipment'
 import { service } from './service'
 import { partsCategory } from './partsCategory'
 import { product } from './product'
+import { productCategory } from './productCategory'
 import { solution } from './solution'
 import { oem } from './oem'
 import { post } from './post'
@@ -62,6 +63,7 @@ const registeredTypes: SchemaTypeDefinition[] = [
   service,
   partsCategory,
   product,
+  productCategory,
   solution,
   oem,
   post,

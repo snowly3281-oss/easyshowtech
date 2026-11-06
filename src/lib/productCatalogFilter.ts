@@ -1,6 +1,6 @@
 type FacetName = 'series' | 'service' | 'parts'
 type SortMode = 'featured' | 'price-asc' | 'price-desc'
-type CatalogTab = 'catalog' | 'printing' | 'parts'
+type CatalogTab = 'all' | 'customDisplay' | 'hardware' | 'partAccessory'
 
 interface CatalogState {
   tab: CatalogTab
@@ -44,7 +44,10 @@ function sortMode(value: string | null): SortMode {
 }
 
 function catalogTab(value: string | null): CatalogTab {
-  return value === 'printing' || value === 'parts' ? value : 'catalog'
+  if (value === 'customDisplay' || value === 'hardware' || value === 'partAccessory' || value === 'all') return value
+  // Backwards compatibility for existing catalog URLs.
+  if (value === 'parts') return 'partAccessory'
+  return 'all'
 }
 
 export function initProductCatalog(): void {
@@ -56,6 +59,7 @@ export function initProductCatalog(): void {
   root.dataset.initialized = 'true'
 
   const perPage = Math.max(1, Number(root.dataset.perPage) || 9)
+  const defaultTab = catalogTab(root.dataset.initialType ?? 'all')
   const resultLabels: ResultLabels = {
     single: root.dataset.resultSingle ?? '{shown} of {total} product',
     plural: root.dataset.resultPlural ?? '{shown} of {total} products',
@@ -74,7 +78,7 @@ export function initProductCatalog(): void {
   )
 
   const state: CatalogState = {
-    tab: 'catalog',
+    tab: defaultTab,
     series: [],
     service: [],
     parts: [],
@@ -86,9 +90,10 @@ export function initProductCatalog(): void {
 
   const readUrl = () => {
     const params = new URLSearchParams(location.search)
-    state.tab = catalogTab(params.get('tab'))
+    const urlType = params.get('type') ?? params.get('tab')
+    if (urlType) state.tab = catalogTab(urlType)
     state.series = (params.get('series') ?? '').split(',').filter(Boolean)
-    state.service = (params.get('service') ?? '')
+    state.service = (params.get('service') ?? params.get('equipment') ?? '')
       .split(',')
       .filter(Boolean)
     state.parts = (params.get('parts') ?? '').split(',').filter(Boolean)
@@ -129,7 +134,7 @@ export function initProductCatalog(): void {
 
   const syncUrl = () => {
     const params = new URLSearchParams()
-    if (state.tab !== 'catalog') params.set('tab', state.tab)
+    if (state.tab !== defaultTab) params.set('type', state.tab)
     if (state.series.length) params.set('series', state.series.join(','))
     if (state.service.length)
       params.set('service', state.service.join(','))
@@ -143,7 +148,7 @@ export function initProductCatalog(): void {
   }
 
   const hasActiveFilters = () =>
-    state.tab !== 'catalog' ||
+    state.tab !== defaultTab ||
     state.series.length > 0 ||
     state.service.length > 0 ||
     state.parts.length > 0 ||
@@ -159,13 +164,14 @@ export function initProductCatalog(): void {
       .filter(Boolean)
     const partsCategory = card.dataset.partsCategory ?? ''
     const catalogType = card.dataset.catalogType ?? 'equipment'
-    const isPrinting = card.dataset.printingService === 'true' || service.length > 0
-    const isPart = catalogType === 'accessory' || catalogType === 'spare_part'
+    const productType = card.dataset.productType ?? ''
+    const isPart = productType === 'partAccessory' || catalogType === 'accessory' || catalogType === 'spare_part'
 
-    // Top-level tab gate: each card only appears in one tab.
-    if (state.tab === 'catalog' && (isPart || isPrinting)) return false
-    if (state.tab === 'printing' && !isPrinting) return false
-    if (state.tab === 'parts' && !isPart) return false
+    // Product type is independent from series and printing-service references.
+    // Legacy equipment remains visible under All until a human classifies it.
+    if (state.tab === 'partAccessory' && !isPart) return false
+    if (state.tab === 'customDisplay' && productType !== 'customDisplay') return false
+    if (state.tab === 'hardware' && productType !== 'hardware') return false
 
     if (state.series.length && !state.series.includes(series)) return false
     if (
@@ -187,9 +193,6 @@ export function initProductCatalog(): void {
       return false
     return true
   }
-
-  const partsCategoryFromCard = (card: HTMLElement) =>
-    card.dataset.partsCategory ?? ''
 
   const sortCards = (items: HTMLElement[]) => {
     if (state.sort === 'featured') return items
@@ -342,7 +345,7 @@ export function initProductCatalog(): void {
   priceMax?.addEventListener('input', updatePrice)
   resetButton?.addEventListener('click', () => {
     Object.assign(state, {
-      tab: 'catalog',
+      tab: defaultTab,
       series: [],
       service: [],
       parts: [],

@@ -25,6 +25,7 @@ export const solution = defineType({
     { name: "content", title: "页面内容", default: true },
     { name: "packages", title: "面积档位与配置单" },
     { name: "links", title: "旧关联数据" },
+    { name: "recommendations", title: "推荐产品与服务" },
     { name: "seo", title: "搜索引擎 SEO" },
   ],
   orderings: [
@@ -54,6 +55,9 @@ export const solution = defineType({
     defineField({name: 'customizationOptions', title: '定制讨论事项', type: 'array', group: 'content', of: [{type: 'string'}]}),
     defineField({name: 'supportServices', title: '项目级支持服务', type: 'array', group: 'content', description: '仅引用已确认的 service。产品适用印刷服务继续维护在 product.printingServices。', of: [{type: 'reference', to: [{type: 'service'}]}]}),
     defineField({name: 'relatedSolutions', title: '相关场景', type: 'array', group: 'content', of: [{type: 'reference', to: [{type: 'solution'}]}]}),
+    defineField({name: 'recommendedProducts', title: '推荐产品', type: 'array', group: 'recommendations', description: '可选精选推荐；保留配置单中的数量和场景语义。', of: [{type: 'reference', to: [{type: 'product'}]}], validation: rule => rule.unique()}),
+    defineField({name: 'recommendedProductCategories', title: '推荐产品分类', type: 'array', group: 'recommendations', of: [{type: 'reference', to: [{type: 'productCategory'}]}], validation: rule => rule.unique()}),
+    defineField({name: 'recommendedPrintingServices', title: '推荐印刷服务', type: 'array', group: 'recommendations', of: [{type: 'reference', to: [{type: 'service'}]}], validation: rule => rule.unique()}),
     ...['heroImage', 'combinationImage'].map(name => defineField({name, title: name === 'heroImage' ? '场景首图' : '产品组合图', type: 'image', group: 'content', options: {hotspot: true}, fields: [{name: 'alt', title: '替代文字', type: 'string'}, {name: 'caption', title: '来源/参考图说明', type: 'string'}]})),
     defineField({name: 'gallery', title: '场景图库', type: 'array', group: 'content', of: [{type: 'image', options: {hotspot: true}, fields: [{name: 'alt', title: '替代文字', type: 'string'}, {name: 'caption', title: '来源/参考图说明', type: 'string'}]}]}),
     defineField({
@@ -230,7 +234,7 @@ export const solution = defineType({
         Array.isArray(audience) && audience.length
           ? audience.join(" · ")
           : "尚未设置目标客户",
-      media,
+      media: media as never,
     }),
   },
 });

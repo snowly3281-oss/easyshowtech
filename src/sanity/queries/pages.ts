@@ -24,7 +24,9 @@ export const sitePageByKeyQuery = defineQuery(`
         internal-> {
           _type,
           route,
-          "slug": slug.current
+          "slug": slug.current,
+          productType,
+          "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null)
         }
       }
     },
@@ -44,7 +46,9 @@ export const sitePageByKeyQuery = defineQuery(`
           internal-> {
             _type,
             route,
-            "slug": slug.current
+            "slug": slug.current,
+            productType,
+            "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null)
           }
         }
       },

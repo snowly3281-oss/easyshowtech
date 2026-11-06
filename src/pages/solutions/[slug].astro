@@ -39,21 +39,22 @@ export async function getStaticPaths() {
 }
 
 type Props = { solution?: SolutionData; locale?: string; slug?: string }
+const props = Astro.props as Props
 const locale = resolveLocale(
-  Astro.props.locale,
+  props.locale,
   Astro.originPathname || Astro.url.pathname,
 )
-const props = Astro.props as Props
 const slug = props.slug ?? Astro.params.slug
 const scenario = findScenario(slug ?? '')
 const scenarioContent = scenario ? await fetchLocalized<ScenarioSolutionQueryResult>(scenarioSolutionQuery, {slug: scenario.slug, documentId: scenario.documentId, aliases: [...scenario.aliases]}, locale) : null
-const solution =
+const solution = (
   props.solution ??
   (await fetchLocalized<SolutionBySlugQueryResult>(
     solutionBySlugQuery,
     {slug: slug ?? ''},
     locale,
   ))
+ ) as SolutionData | null
 if (!solution && !scenario) return Astro.rewrite('/404')
 
 const metaTitle = (scenario ? scenarioContent?.seo?.metaTitle : solution?.seo?.metaTitle) ?? `${scenario?.title ?? solution?.title ?? 'Solution'} — EasyShow`
@@ -65,7 +66,7 @@ const ogImage = ogAsset
 const siteSettings = await getSiteSettings()
 ---
 
-<BaseLayout locale={locale} title={metaTitle} description={metaDescription} ogImage={ogImage}>
+<BaseLayout locale={locale} title={metaTitle} description={metaDescription} ogImage={ogImage} ogTitle={solution?.seo?.ogTitle ?? undefined} ogDescription={solution?.seo?.ogDescription ?? undefined} canonicalUrl={solution?.seo?.canonicalUrl ?? undefined} noIndex={solution?.seo?.noIndex ?? false}>
   {scenario ? <ScenarioDetail scenario={scenario} content={scenarioContent} locale={locale} /> : solution && <SolutionExperience
     solution={solution}
     whatsapp={siteSettings.whatsapp}

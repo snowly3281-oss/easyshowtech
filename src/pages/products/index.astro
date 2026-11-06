@@ -7,10 +7,9 @@ import { getRawSiteSettings } from '../../sanity/settings'
 import { productListQuery } from '../../sanity/queries/products'
 import { taxonomyQuery } from '../../sanity/queries/taxonomy'
 import type {
-  ProductListQueryResult,
   TaxonomyQueryResult,
 } from '../../sanity/sanity.types'
-import type { SolutionBlock } from '../../sanity/content'
+import type { ProductCardData, SolutionBlock } from '../../sanity/content'
 import {
   fetchLocalized,
   fetchLocalizedList,
@@ -23,8 +22,11 @@ const locale = resolveLocale(
   Astro.props.locale,
   Astro.originPathname || Astro.url.pathname,
 )
+const pageProps = Astro.props as { initialType?: 'customDisplay' | 'hardware' | 'partAccessory'; hideTypeTabs?: boolean; titleOverride?: string }
+const initialType = pageProps.initialType ?? 'all'
+const hideTypeTabs = pageProps.hideTypeTabs ?? false
 const [products, taxonomy, settings, page] = await Promise.all([
-  fetchLocalizedList<ProductListQueryResult[number]>(
+  fetchLocalizedList<ProductCardData>(
     productListQuery,
     {},
     locale,
@@ -65,14 +67,14 @@ const usedServices = new Set(
   list.flatMap((product) => product.serviceSlugs ?? []).filter(Boolean),
 )
 const usedPartsCategories = new Set(
-  list.map((product) => product.partsCategoryKey).filter(Boolean),
+  list.flatMap((product) => typeof product.partsCategoryKey === 'string' ? [product.partsCategoryKey] : []),
 )
 series = series.filter((entry) => entry.slug && usedSeries.has(entry.slug))
 services = services.filter(
   (entry) => entry.slug && usedServices.has(entry.slug),
 )
 partsCategories = partsCategories.filter(
-  (entry) => entry.categoryKey && usedPartsCategories.has(entry.categoryKey),
+  (entry) => typeof entry.categoryKey === 'string' && usedPartsCategories.has(entry.categoryKey),
 )
 const seriesTitles = new Map(series.map((entry) => [entry.slug, entry.title]))
 const serviceTitles = new Map(
@@ -111,7 +113,9 @@ list = list.map((product) => ({
 // results" facet.
 const hasPublishedParts = list.some(
   (product) =>
-    product.catalogType === 'accessory' || product.catalogType === 'spare_part',
+    product.productType === 'partAccessory' ||
+    product.catalogType === 'accessory' ||
+    product.catalogType === 'spare_part',
 )
 const partsCategoryDefinitions = partsCategories
   .map((entry) => ({
@@ -121,7 +125,7 @@ const partsCategoryDefinitions = partsCategories
   .filter((category) =>
     list.some(
       (product) =>
-        (product.catalogType === 'accessory' || product.catalogType === 'spare_part') &&
+        (product.productType === 'partAccessory' || product.catalogType === 'accessory' || product.catalogType === 'spare_part') &&
         product.partsCategoryKey === category.key,
     ),
   )
@@ -133,7 +137,7 @@ const showPrices = settings?.showPrices ?? false
 
 const PER_PAGE = 9
 const initialShown = Math.min(PER_PAGE, list.length)
-const pageTitle = page?.hero?.heading || page?.title || ui(locale, 'products')
+const pageTitle = pageProps.titleOverride || page?.hero?.heading || page?.title || ui(locale, 'products')
 const pageIntro =
   page?.hero?.subheading ||
   page?.introduction ||
@@ -167,33 +171,42 @@ const resultLabels = {
         {pageIntro}
       </p>
 
-      <div class="cat__tabs" role="tablist" aria-label={ui(locale, 'products')}>
+      <div class="cat__tabs" role="tablist" aria-label={ui(locale, 'products')} hidden={hideTypeTabs}>
         <a
           href="#catalog"
           class="cat__tab is-active"
           role="tab"
           aria-selected="true"
-          data-tab="catalog"
+          data-tab="all"
         >
-          {ui(locale, 'tabProductsCatalog')}
+          {ui(locale, 'allProducts')}
         </a>
         <a
-          href="#printing"
+          href="#hardware"
           class="cat__tab"
           role="tab"
           aria-selected="false"
-          data-tab="printing"
+          data-tab="hardware"
         >
-          {ui(locale, 'tabPrintingService')}
+          {ui(locale, 'hardwareFrames')}
         </a>
         <a
-          href="#parts"
+          href="#custom-displays"
           class="cat__tab"
           role="tab"
           aria-selected="false"
-          data-tab="parts"
+          data-tab="customDisplay"
         >
-          {ui(locale, 'tabPartsAccessories')}
+          {ui(locale, 'customDisplays')}
+        </a>
+        <a
+          href="#parts-accessories"
+          class="cat__tab"
+          role="tab"
+          aria-selected="false"
+          data-tab="partAccessory"
+        >
+          {ui(locale, 'partsAccessories')}
         </a>
       </div>
 
@@ -204,6 +217,7 @@ const resultLabels = {
         data-result-single={resultLabels.single}
         data-result-plural={resultLabels.plural}
         data-result-zero={resultLabels.zero}
+        data-initial-type={initialType}
       >
         <aside class="cat__side">
           <div class="cat__filterhead">
@@ -233,7 +247,7 @@ const resultLabels = {
             </button>
           </div>
 
-          <div class="facetgroup" data-facetgroup="catalog">
+          <div class="facetgroup" data-facetgroup="all,customDisplay,hardware,partAccessory">
             <p class="facetgroup__label">{ui(locale, 'bySeries')}</p>
             <div class="facetgroup__list">
               {
@@ -249,7 +263,7 @@ const resultLabels = {
         
           {
             services.length > 0 && (
-              <div class="facetgroup" data-facetgroup="printing">
+              <div class="facetgroup" data-facetgroup="all,customDisplay,hardware,partAccessory">
                 <p class="facetgroup__label">{ui(locale, 'byService')}</p>
                 <div class="facetgroup__list">
                   {
@@ -267,7 +281,7 @@ const resultLabels = {
          
           {
             hasPublishedParts && (
-              <div class="facetgroup" data-facetgroup="parts">
+              <div class="facetgroup" data-facetgroup="partAccessory">
                 <p class="facetgroup__label">{ui(locale, 'partsAccessories')}</p>
                 <div class="facetgroup__list">
                   <label class="facet">
@@ -289,7 +303,7 @@ const resultLabels = {
 
           {
             showPrices && (
-              <div class="facetgroup" data-facetgroup="catalog,printing,parts">
+              <div class="facetgroup" data-facetgroup="all,customDisplay,hardware,partAccessory">
                 <p class="facetgroup__label">{ui(locale, 'priceRange')}</p>
                 <div class="cat__price">
                   <input type="number" inputmode="numeric" min="0" data-price-min placeholder={ui(locale, 'minimum')} aria-label={ui(locale, 'minimumPrice')} />
@@ -392,8 +406,7 @@ const resultLabels = {
     color: var(--color-ink-600, #555);
   }
 
-  /* Top-level tab strip — switches the catalog between
-     Products catalog / Printing Service / Parts & accessories. */
+  /* Product type switcher. Printing services remain a separate site section. */
   .cat__tabs {
     display: flex;
     flex-wrap: wrap;

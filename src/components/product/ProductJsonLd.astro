@@ -24,7 +24,7 @@ if (product.sku) jsonLd.sku = product.sku
 if (product.mpn) jsonLd.mpn = product.mpn
 if (product.gtin13) jsonLd.gtin13 = product.gtin13
 if (product.brand) jsonLd.brand = { '@type': 'Brand', name: product.brand }
-if (product.material) jsonLd.material = product.material
+if (product.materials?.length) jsonLd.material = product.materials.join(', ')
 if (product.summary) jsonLd.description = product.summary
 
 const imgAsset = product.mainImage?.asset
@@ -39,31 +39,12 @@ if (price?.kind === 'range') {
     availability: 'https://schema.org/InStock',
   }
 } else if (price?.kind === 'exact') {
-  const offers = (product.pricing ?? [])
-    .filter((p) => p.amount != null && p.currency)
-    .map((p) => {
-      const offer: Record<string, unknown> = {
-        '@type': 'Offer',
-        priceCurrency: p.currency,
-        price: p.amount,
-        availability: 'https://schema.org/InStock',
-      }
-      if (p.validUntil) offer.priceValidUntil = p.validUntil
-      if (product.warrantyUrl) offer.warranty = product.warrantyUrl
-      return offer
-    })
-
-  // Fall back to the scalar price when there is no multi-currency pricing.
-  if (offers.length === 0) {
-    offers.push({
-      '@type': 'Offer',
-      priceCurrency: price.currency,
-      price: price.amount,
-      availability: 'https://schema.org/InStock',
-    })
+  jsonLd.offers = {
+    '@type': 'Offer',
+    priceCurrency: price.currency,
+    price: price.amount,
+    availability: 'https://schema.org/InStock',
   }
-
-  if (offers.length > 0) jsonLd.offers = offers.length === 1 ? offers[0] : offers
 }
 
 const json = JSON.stringify(jsonLd)

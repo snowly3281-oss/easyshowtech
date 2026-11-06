@@ -6,6 +6,7 @@ import PostCard from '../../components/resources/PostCard.astro'
 import ArticleToc from '../../components/resources/ArticleToc.astro'
 import { buildArticleHeadings, estimateReadingMinutes } from '../../lib/article'
 import { postMeta } from '../../lib/postMeta'
+import { productDetailPath } from '../../lib/productRoutes'
 import { sanityClient } from '../../sanity/client'
 import { urlFor } from '../../sanity/image'
 import {
@@ -222,7 +223,7 @@ const ogImage = socialSource
                 <p class="eyebrow">{t('Referenced in this guide')}</p>
                 <div class="article-references__links">
                   {relatedProducts.map((product) => (
-                    <a href={localizedPath(`/products/${product.slug ?? ''}`, locale)}>
+                    <a href={localizedPath(productDetailPath(product), locale)}>
                       <span>
                         <small>{product.sku || t('Product')}</small>
                         <strong>{product.title}</strong>

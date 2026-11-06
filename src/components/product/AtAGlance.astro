@@ -11,7 +11,7 @@ interface Props {
 const { product, locale = 'en' } = Astro.props
 const t = (english: string) => staticUi(locale, english)
 const specs = product.keySpecs ?? []
-const defaultVariant = (product.variants ?? []).find((v) => v.isDefault)?.name
+const defaultVariant = (product.variants ?? []).find((v) => v.isDefault)?.variantName
 const ref = [product.sku, defaultVariant].filter(Boolean).join(' · ')
 ---
 
@@ -28,7 +28,6 @@ const ref = [product.sku, defaultVariant].filter(Boolean).join(' · ')
             <div class="glance__item">
               <dt class="glance__num nums">
                 {s.value}
-                {s.unit && <span class="glance__unit">{s.unit}</span>}
               </dt>
               <dd class="glance__label">
                 {s.label}

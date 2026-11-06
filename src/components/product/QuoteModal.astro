@@ -8,9 +8,8 @@
  * no <dialog> support) the click falls through and the browser navigates to
  * /contact — nothing breaks.
  *
- * Product context: SKU + title are baked in from props; frame/upholstery are
- * read live from the on-page configurator at open time, so the quote always
- * reflects the visitor's current selection.
+ * Product context and any Sanity-authored SKU variant are read from the page
+ * at open time, so the quote reflects the visitor's current selection.
  */
 import {
   TURNSTILE_ACTION,
@@ -27,8 +26,7 @@ interface Props {
 const { sku, title, locale = 'en' } = Astro.props
 const t = (english: string) => staticUi(locale, english)
 const labels = {
-  frame: t('Frame finish'),
-  upholstery: t('Upholstery'),
+  variant: t('Variant'),
   sending: t('Sending…'),
   send: t('Send request'),
   failed: t('Something went wrong. Please try again or email us directly.'),
@@ -38,8 +36,7 @@ const labels = {
 <dialog
   class="qm"
   id="quoteModal"
-  data-frame-label={labels.frame}
-  data-upholstery-label={labels.upholstery}
+  data-variant-label={labels.variant}
   data-sending-label={labels.sending}
   data-send-label={labels.send}
   data-failed-label={labels.failed}
@@ -87,6 +84,7 @@ const labels = {
     <input type="hidden" name="sku" value={sku ?? ''} data-qm-sku />
     <input type="hidden" name="frame_finish" value="" data-qm-frame />
     <input type="hidden" name="upholstery" value="" data-qm-upholstery />
+    <input type="hidden" name="variant" value="" data-qm-variant />
     <input type="hidden" name="source_url" value="" data-qm-source />
     <!-- Honeypot: hidden from humans; bots that tick it are silently dropped. -->
     <input type="checkbox" name="botcheck" class="qm__hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
@@ -152,8 +150,7 @@ const labels = {
     const summary = dialog.querySelector('[data-qm-summary]') as HTMLElement
     const fullForm = dialog.querySelector('[data-qm-fullform]') as HTMLAnchorElement
     const labels = {
-      frame: dialog.dataset.frameLabel || 'Frame finish',
-      upholstery: dialog.dataset.upholsteryLabel || 'Upholstery',
+      variant: dialog.dataset.variantLabel || 'Variant',
       sending: dialog.dataset.sendingLabel || 'Sending…',
       send: dialog.dataset.sendLabel || 'Send request',
       failed:
@@ -162,7 +159,7 @@ const labels = {
     }
 
     const readSelection = () => {
-      // Human-readable frame/upholstery straight from the live configurator.
+      // Human-readable product variant selected on the page.
       const vals: Record<string, string> = {}
       document.querySelectorAll('.ph__config').forEach((c) => {
         const label = (c as HTMLElement).dataset.configKind
@@ -181,17 +178,16 @@ const labels = {
       statusEl.dataset.state = ''
 
       const vals = readSelection()
-      const frame = vals.frame ?? ''
-      const uph = vals.upholstery ?? ''
-      ;(dialog.querySelector('[data-qm-frame]') as HTMLInputElement).value = frame
-      ;(dialog.querySelector('[data-qm-upholstery]') as HTMLInputElement).value = uph
+      const variant = vals.variant ?? ''
+      ;(dialog.querySelector('[data-qm-frame]') as HTMLInputElement).value = ''
+      ;(dialog.querySelector('[data-qm-upholstery]') as HTMLInputElement).value = ''
+      ;(dialog.querySelector('[data-qm-variant]') as HTMLInputElement).value = variant
       ;(dialog.querySelector('[data-qm-source]') as HTMLInputElement).value = window.location.href
 
       const skuVal = (dialog.querySelector('[data-qm-sku]') as HTMLInputElement).value
       const rows: Array<[string, string, boolean]> = [
         ['SKU', skuVal, true],
-        [labels.frame, frame, false],
-        [labels.upholstery, uph, false],
+        [labels.variant, variant, false],
       ]
       summary.replaceChildren(
         ...rows

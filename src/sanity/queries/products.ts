@@ -10,7 +10,24 @@ export const productPathsQuery = defineQuery(`
     coalesce(language, "en") == $language &&
     isActive == true &&
     defined(slug.current)
-  ]{ "slug": slug.current }
+  ]{
+    "slug": slug.current,
+    productType,
+    "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null)
+  }
+`)
+
+export const productRouteBySlugQuery = defineQuery(`
+  *[
+    _type == "product" &&
+    coalesce(language, "en") == $language &&
+    slug.current == $slug &&
+    isActive == true
+  ][0]{
+    "slug": slug.current,
+    productType,
+    "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null)
+  }
 `)
 
 /**
@@ -34,8 +51,13 @@ export const productListQuery = defineQuery(`
     "slug": slug.current,
     sku,
     summary,
+    productType,
+    catalogType,
+    "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
+    "partsCategoryKey": partsCategory->key,
     "seriesTitle": series->title,
     "seriesSlug": series->slug.current,
+    "serviceTitles": printingServices[]->title,
     "serviceSlugs": printingServices[]->slug.current,
     mainImage{ asset, alt },
     priceDisplay,
@@ -52,7 +74,7 @@ export const productListQuery = defineQuery(`
  * One active product by slug, fully projected for the PDP.
  *
  * printingServices is the primary many-to-many relationship with printing services.
- * relatedProducts is the curated list (when present); fallback to same-series products.
+ * Relationships are curated references. Series membership is not treated as a product relationship.
  */
 export const productBySlugQuery = defineQuery(`
   *[
@@ -66,6 +88,12 @@ export const productBySlugQuery = defineQuery(`
     "slug": slug.current,
     sku,
     summary,
+    productType,
+    catalogType,
+    "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
+    "productCategoryRootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.productCategory->slug.current][0]._id) && !(productCategory->slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),
+    "productCategory": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->{ title, "slug": slug.current, productType }, null),
+    "partsCategoryKey": partsCategory->key,
     "seriesTitle": series->title,
     "seriesSlug": series->slug.current,
     "seriesDescription": series->description,
@@ -81,9 +109,10 @@ export const productBySlugQuery = defineQuery(`
     moq,
     warranty,
     mainImage{ asset, alt },
-    galleryImages[]{ _key, image, alt, label },
+    "gallery": galleryImages[]{ _key, image, alt, label },
     keyFeatures[]{ _key, title, description },
     keySpecs[]{ _key, label, value, note },
+    oemTerms[]{ _key, label, value, note },
     variants[]{ _key, variantName, sku, attributes, isDefault, image{ asset, alt } },
     materials,
     customizationOptions,
@@ -97,30 +126,28 @@ export const productBySlugQuery = defineQuery(`
     metaTitle,
     metaDescription,
     ogImage{ asset, alt },
+    seo{ metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{ asset, alt } },
+    "relatedHardware": relatedHardware[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },
+    "accessories": accessories[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },
+    "relatedSolutions": relatedSolutions[@->isActive != false]->{ title, "slug": slug.current, summary },
+    "relatedDisplays": *[
+      _type == "product" &&
+      isActive == true &&
+      productType == "customDisplay" &&
+      ^._id in relatedHardware[]._ref
+    ] | order(sortOrder asc, title asc){ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },
+    faq[]{ _key, question, answer },
     brand,
     mpn,
     gtin13,
-    "related": select(
-      count(relatedProducts) > 0 => relatedProducts[]->{
-        _id, title, "slug": slug.current, sku,
-        "seriesTitle": series->title,
-        "seriesSlug": series->slug.current,
-        mainImage{ asset, alt },
-        priceDisplay, price, priceMin, priceMax, currency
-      },
-      *[
-        _type == "product" &&
-        coalesce(language, "en") == $language &&
-        isActive == true &&
-        series._ref == ^.series._ref &&
-        _id != ^._id
-      ] | order(sortOrder asc, title asc)[0...3]{
-        _id, title, "slug": slug.current, sku,
-        "seriesTitle": series->title,
-        "seriesSlug": series->slug.current,
-        mainImage{ asset, alt },
-        priceDisplay, price, priceMin, priceMax, currency
-      }
-    )
+    "related": relatedProducts[@->isActive == true]->{
+      _id, title, "slug": slug.current, sku,
+      productType,
+      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
+      "seriesTitle": series->title,
+      "seriesSlug": series->slug.current,
+      mainImage{ asset, alt },
+      priceDisplay, price, priceMin, priceMax, currency
+    }
   }
 `)

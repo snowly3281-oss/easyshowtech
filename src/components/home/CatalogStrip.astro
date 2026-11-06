@@ -12,7 +12,16 @@ interface Props {
 const { intro, series } = Astro.props
 const locale = resolveLocale(undefined, Astro.url.pathname)
 const t = (english: string) => staticUi(locale, english)
-const items = series ?? []
+const sceneImages: Record<string, string> = {
+  chairs: '/images/products/director-chair-event-scene.webp',
+  'flags-system': '/images/products/flags-landscape.webp',
+  'sign-display': '/images/products/sign-display-landscape.webp',
+}
+const items = (series ?? []).map((item) => {
+  const scene = sceneImages[item.slug ?? '']
+  const card = pickCardRatio(scene ? 4 / 3 : item.cardImage?.aspect)
+  return {series: item, scene, card}
+})
 
 /**
  * Decide card image ratio:
@@ -58,15 +67,7 @@ function pickCardRatio(aspect: number | null | undefined): {
       {/* Full-bleed carousel: the rail spans full width; padding aligns the
           first card with the container content, and cards bleed past both edges. */}
       <ul class="cat__rail" data-cat-rail>
-        {items.map((s) => {
-          const sceneImages: Record<string, string> = {
-              chairs: '/images/products/director-chair-event-scene.webp',
-              'flags-system': '/images/products/flags-landscape.webp',
-              'sign-display': '/images/products/sign-display-landscape.webp',
-            }
-            const scene = sceneImages[s.slug ?? '']
-            const card = pickCardRatio(scene ? 4 / 3 : s.cardImage?.aspect)
-          return (
+        {items.map(({series: s, scene, card}) => (
             <li class="cat__card">
               <a href={`${localizedPath('/products', locale)}?series=${s.slug ?? ''}`} class="cat__link">
                 <MediaBox
@@ -94,8 +95,7 @@ function pickCardRatio(aspect: number | null | undefined): {
                 </div>
               </a>
             </li>
-          )
-        })}
+          ))}
       </ul>
     </section>
   )

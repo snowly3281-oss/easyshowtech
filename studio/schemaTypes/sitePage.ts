@@ -121,7 +121,7 @@ export const sitePage = defineType({
           title: "创始人行业经验",
           type: "verifiedValue",
           description:
-            "示例：15+ years in Display equipment manufacturing。",
+            "示例：15+ years in custom display systems manufacturing。",
         }),
         defineField({
           name: "founderFactoryRole",
