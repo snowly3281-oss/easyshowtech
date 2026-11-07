@@ -58,6 +58,7 @@ export type UiKey =
   | "seriesSuffix"
   | "seriesLabel"
   | "priceOnRequest"
+  | "availableSizes"
   | "viewDetails"
   | "addToRfq"
   | "addProductToRfq"
@@ -127,6 +128,7 @@ const english: Record<UiKey, string> = {
   seriesSuffix: "series",
   seriesLabel: "{series} series",
   priceOnRequest: "Price on request",
+  availableSizes: "Available sizes",
   viewDetails: "View details",
   addToRfq: "Add to RFQ",
   addProductToRfq: "Add {product} to RFQ",
@@ -199,6 +201,7 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     seriesSuffix: "serie",
     seriesLabel: "Serie {series}",
     priceOnRequest: "Precio bajo consulta",
+    availableSizes: "Tamaños disponibles",
     viewDetails: "Ver detalles",
     addToRfq: "Añadir a la solicitud",
     addProductToRfq: "Añadir {product} a la solicitud",
@@ -268,6 +271,7 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     seriesSuffix: "série",
     seriesLabel: "Série {series}",
     priceOnRequest: "Prix sur demande",
+    availableSizes: "Tailles disponibles",
     viewDetails: "Voir les détails",
     addToRfq: "Ajouter à la demande",
     addProductToRfq: "Ajouter {product} à la demande",
@@ -337,6 +341,7 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     seriesSuffix: "Serie",
     seriesLabel: "Serie {series}",
     priceOnRequest: "Preis auf Anfrage",
+    availableSizes: "Verfügbare Größen",
     viewDetails: "Details ansehen",
     addToRfq: "Zur Anfrage hinzufügen",
     addProductToRfq: "{product} zur Anfrage hinzufügen",
@@ -406,6 +411,7 @@ const translations: Record<Exclude<Locale, "en">, Record<UiKey, string>> = {
     seriesSuffix: "serie",
     seriesLabel: "Serie {series}",
     priceOnRequest: "Prezzo su richiesta",
+    availableSizes: "Dimensioni disponibili",
     viewDetails: "Vedi dettagli",
     addToRfq: "Aggiungi alla richiesta",
     addProductToRfq: "Aggiungi {product} alla richiesta",

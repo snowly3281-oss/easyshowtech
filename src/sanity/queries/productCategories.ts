@@ -49,10 +49,12 @@ export const productCategoryBySlugQuery = defineQuery(`
       "rootSlugAvailable": !defined(*[_type == "product" && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),
     productType,
     description,
+    shortDescription,
     intro,
     contentBlocks,
     heroImage{ asset, alt },
-    seo{ metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{ asset, alt } },
+    seo{ focusKeyword, primaryKeyword, secondaryKeywords, metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{ asset, alt } },
+    faq[]{_key, question, answer},
     "products": *[
       _type == "product" &&
       coalesce(language, "en") == $language &&
@@ -65,6 +67,9 @@ export const productCategoryBySlugQuery = defineQuery(`
       sku,
       summary,
       productType,
+      internalModel,
+      "productFamilyTitle": productFamily->title,
+      variants[]{_key, variantName, sku, sizeLabel, width, length, height, measurementUnit, attributes},
       catalogType,
       "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),
       "partsCategoryKey": partsCategory->key,

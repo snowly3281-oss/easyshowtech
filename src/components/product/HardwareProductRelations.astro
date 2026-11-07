@@ -1,20 +1,26 @@
 ---
 import { localizedPath, type Locale } from '../../i18n/config'
 import { ui } from '../../i18n/ui'
-import { productDetailPath } from '../../lib/productRoutes'
+import { productCategoryPath, productDetailPath } from '../../lib/productRoutes'
 
 interface Props { product: any; locale?: Locale }
 const { product, locale = 'en' } = Astro.props as Props
-const displays = (product.relatedDisplays ?? []).filter((entry: any) => entry?.slug)
+const displays = [...(product.relatedCustomDisplays ?? []), ...(product.relatedDisplays ?? [])]
+  .filter((entry: any) => entry?.slug)
+  .filter((entry: any, index: number, all: any[]) => all.findIndex((candidate) => candidate._id === entry._id || candidate.slug === entry.slug) === index)
+const displayCategory = product.productCategory?.relatedCategories?.find((entry: any) => entry?.slug && entry?.hasProducts)
 ---
 
-{displays.length ? (
+{displays.length || displayCategory ? (
   <section class="section hardware-display-link">
     <div class="container">
       <p class="eyebrow">{ui(locale, 'customDisplays')}</p>
       <h2>Need a complete custom display?</h2>
       <p>Pair this hardware with a configured display product.</p>
-      <ul>{displays.map((entry: any) => <li><a href={localizedPath(productDetailPath(entry), locale)}>{entry.title} →</a></li>)}</ul>
+      <ul>
+        {displayCategory && <li><a href={localizedPath(productCategoryPath(displayCategory), locale)}>Explore {displayCategory.title} →</a></li>}
+        {displays.map((entry: any) => <li><a href={localizedPath(productDetailPath(entry), locale)}>{entry.title} →</a></li>)}
+      </ul>
     </div>
   </section>
 ) : null}

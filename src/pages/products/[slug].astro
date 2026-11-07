@@ -66,6 +66,8 @@ type ProductWithArchitecture = ProductBySlugQueryResult & {
   productCategorySlug?: string | null
   seo?: { metaTitle?: string | null; metaDescription?: string | null; canonicalUrl?: string | null; ogTitle?: string | null; ogDescription?: string | null; noIndex?: boolean | null; ogImage?: { asset?: unknown; alt?: string | null } | null } | null
   relatedHardware?: any[] | null
+  relatedCustomDisplays?: any[] | null
+  relatedAccessories?: any[] | null
   accessories?: any[] | null
   relatedSolutions?: any[] | null
   relatedDisplays?: any[] | null
@@ -136,6 +138,7 @@ const categoryCanonical = product?.productCategorySlug
       isPartsProduct ? (
         <>
           <PartsProductDetail product={product} locale={locale} />
+          <Datasheet product={product} locale={locale} />
           <ProductRelationships product={product} locale={locale} />
         </>
       ) : (
@@ -152,6 +155,6 @@ const categoryCanonical = product?.productCategorySlug
         </>
       )
     }
-    <ProductJsonLd product={product} price={price} />
+    <ProductJsonLd product={product} price={price} canonicalUrl={product.seo?.canonicalUrl || categoryCanonical} />
   </BaseLayout>
 ) : null}

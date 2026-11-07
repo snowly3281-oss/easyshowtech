@@ -76,6 +76,7 @@ const SINGLETONS = [
 const EXPLICIT_TYPES = [
   "backdropDesign",
   "product",
+  "productFamily",
   "series",
   "service",
   "partsCategory",
@@ -380,6 +381,13 @@ export const structure: StructureResolver = async (S, context) => {
                         ),
                   ),
               ),
+
+            filteredDocumentListItem(S, {
+              id: "product-families",
+              title: "产品家族 Product Family",
+              schemaType: "productFamily",
+              filter: `_type == "productFamily" && ${ENGLISH_CONTENT_FILTER}`,
+            }),
 
             S.divider(),
 
@@ -752,6 +760,12 @@ export const structure: StructureResolver = async (S, context) => {
               title: "产品系列（Catalog）",
               schemaType: "series",
               filter: `_type == "series" && ${ENGLISH_CONTENT_FILTER} && coalesce(kind, "product") == "product"`,
+            }),
+            filteredDocumentListItem(S, {
+              id: "product-family-all",
+              title: "产品家族（Product Family）",
+              schemaType: "productFamily",
+              filter: `_type == "productFamily" && ${ENGLISH_CONTENT_FILTER}`,
             }),
             filteredDocumentListItem(S, {
               id: "service-all",

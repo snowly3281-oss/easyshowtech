@@ -78,6 +78,13 @@ export const product = defineType({
         '产品唯一型号，例如 "ES-ALT-10X20"。用于内部管理和 CSV 导入校验。',
     }),
     defineField({
+      name: "internalModel",
+      title: "内部型号 / Product Model",
+      type: "string",
+      group: "content",
+      description: "同一产品型号共用的内部型号代码；尺寸 SKU 单独填写在变体中。",
+    }),
+    defineField({
       name: "summary",
       title: "简短介绍",
       type: "text",
@@ -162,6 +169,24 @@ export const product = defineType({
       }),
     }),
     defineField({
+      name: "productFamily",
+      title: "产品家族 Product Family",
+      type: "reference",
+      group: "classification",
+      description: "可选。用于组织具有相同结构平台的型号，不会单独生成 SEO 页面。",
+      to: [{ type: "productFamily" }],
+      validation: rule => rule.custom(async (value, context) => {
+        if (!value?._ref) return true
+        const document = context.document as {productCategory?: {_ref?: string}} | undefined
+        if (!document?.productCategory?._ref) return true
+        const family = await context.getClient({apiVersion: "2024-10-01"}).fetch<{categoryId?: string} | null>(
+          '*[_type == "productFamily" && _id == $id][0]{"categoryId": productCategory._ref}',
+          {id: value._ref},
+        )
+        return !family?.categoryId || family.categoryId === document.productCategory._ref || "产品家族与产品必须属于同一产品分类。"
+      }),
+    }),
+    defineField({
       name: "partsCategory",
       title: "零件子分类（兼容旧数据）",
       type: "reference",
@@ -175,6 +200,24 @@ export const product = defineType({
       type: "array",
       group: "classification",
       description: "可选结构化关联；仅选择确实配套的产品，不根据系列自动推断。",
+      of: [{ type: "reference", to: [{ type: "product" }] }],
+      validation: rule => rule.unique(),
+    }),
+    defineField({
+      name: "relatedCustomDisplays",
+      title: "配套完整定制展示产品",
+      type: "array",
+      group: "classification",
+      description: "仅用于确实配套的 Hardware → Custom Display 关联；不要根据系列自动推断。",
+      of: [{ type: "reference", to: [{ type: "product" }] }],
+      validation: rule => rule.unique(),
+    }),
+    defineField({
+      name: "relatedAccessories",
+      title: "相关配件 / 零件（新）",
+      type: "array",
+      group: "classification",
+      description: "新建关联请使用此字段；旧 accessories 字段继续读取以兼容现有产品。",
       of: [{ type: "reference", to: [{ type: "product" }] }],
       validation: rule => rule.unique(),
     }),
@@ -256,6 +299,43 @@ export const product = defineType({
         '客户可以自定义的内容，例如 "Logo printing", "Custom size", "Color matching"。',
       of: [defineArrayMember({ type: "string" })],
       options: { layout: "tags" },
+    }),
+    defineField({
+      name: "applications",
+      title: "适用场景",
+      type: "array",
+      group: "content",
+      description: "填写已确认的应用场景，例如 trade shows、retail promotions。",
+      of: [defineArrayMember({type: "string"})],
+      options: {layout: "tags"},
+    }),
+    defineField({
+      name: "includedItems",
+      title: "包含物品",
+      type: "array",
+      group: "content",
+      description: "说明此型号或默认配置实际包含的内容；尺寸差异的内容填写在对应 Variant。",
+      of: [defineArrayMember({type: "string"})],
+      options: {layout: "tags"},
+    }),
+    defineField({
+      name: "printAreas",
+      title: "印刷区域",
+      type: "array",
+      group: "printing",
+      of: [defineArrayMember({type: "object", name: "printArea", fields: [
+        defineField({name: "name", title: "区域名称", type: "string", validation: rule => rule.required()}),
+        defineField({name: "description", title: "说明", type: "text", rows: 2}),
+        defineField({name: "dimensions", title: "已确认的印刷尺寸", type: "string", description: "只填写工厂已确认的尺寸及单位。"}),
+      ], preview: {select: {title: "name", subtitle: "dimensions"}}})],
+    }),
+    defineField({
+      name: "artworkRequirements",
+      title: "稿件要求",
+      type: "text",
+      rows: 3,
+      group: "printing",
+      description: "可选。填写已确认的文件格式、出血或色彩要求。",
     }),
 
     // ── GROUP: Media ─────────────────────────────────────────────────────
@@ -391,6 +471,19 @@ export const product = defineType({
       ],
     }),
     defineField({
+      name: "specifications",
+      title: "技术规格（结构化）",
+      type: "array",
+      group: "specs",
+      description: "与尺寸变体无关的型号共用规格。净重与包装毛重请分开记录；只填已核实数据。",
+      of: [defineArrayMember({type: "object", name: "productSpecification", fields: [
+        defineField({name: "label", title: "参数名称", type: "string", validation: rule => rule.required()}),
+        defineField({name: "value", title: "参数值", type: "string", validation: rule => rule.required()}),
+        defineField({name: "unit", title: "单位", type: "string"}),
+        defineField({name: "note", title: "补充说明", type: "string"}),
+      ], preview: {select: {title: "label", subtitle: "value"}}})],
+    }),
+    defineField({
       name: "variants",
       title: "产品规格变体",
       type: "array",
@@ -415,6 +508,20 @@ export const product = defineType({
               type: "string",
               description: "该变体专属的 SKU（可选）。",
             }),
+            defineField({name: "sizeLabel", title: "尺寸显示名", type: "string", description: '例如 "10 × 10 ft"。优先使用此字段在目录和询价中显示尺寸。'}),
+            defineField({name: "width", title: "宽度（数值）", type: "number", validation: rule => rule.min(0)}),
+            defineField({name: "length", title: "长度（数值）", type: "number", validation: rule => rule.min(0)}),
+            defineField({name: "height", title: "高度（数值）", type: "number", validation: rule => rule.min(0)}),
+            defineField({name: "measurementUnit", title: "尺寸单位", type: "string", options: {list: [
+              {title: "in", value: "in"}, {title: "ft", value: "ft"}, {title: "mm", value: "mm"}, {title: "cm", value: "cm"},
+            ]}}),
+            defineField({name: "frameMaterial", title: "框架材料", type: "string"}),
+            defineField({name: "legProfile", title: "腿管形状 / 型材", type: "string"}),
+            defineField({name: "tubeDimensions", title: "管材尺寸 / 壁厚", type: "string", description: "按已核实的工厂资料填写，例如外径与壁厚。"}),
+            defineField({name: "netWeight", title: "产品净重（数值）", type: "number", validation: rule => rule.min(0)}),
+            defineField({name: "shippingWeight", title: "包装毛重（数值）", type: "number", validation: rule => rule.min(0)}),
+            defineField({name: "weightUnit", title: "重量单位", type: "string", options: {list: [{title: "kg", value: "kg"}, {title: "lb", value: "lb"}]}}),
+            defineField({name: "packageDimensions", title: "包装尺寸", type: "string", description: "使用一致的长度单位，例如 L × W × H。"}),
             defineField({
               name: "attributes",
               title: "属性",
@@ -445,6 +552,28 @@ export const product = defineType({
                 }),
               ],
             }),
+            defineField({
+              name: "includedItems",
+              title: "此变体包含物品",
+              type: "array",
+              of: [defineArrayMember({type: "string"})],
+              options: {layout: "tags"},
+            }),
+            defineField({
+              name: "images",
+              title: "此变体图片",
+              type: "array",
+              of: [defineArrayMember({type: "object", name: "variantImage", fields: [
+                defineField({name: "image", title: "图片", type: "image", options: {hotspot: true}, validation: rule => rule.required()}),
+                defineField({name: "alt", title: "替代文字", type: "string"}),
+              ]})],
+            }),
+            defineField({name: "specSheetTitle", title: "规格书名称", type: "string"}),
+            defineField({name: "specSheet", title: "此变体规格书", type: "file", options: {accept: ".pdf,.png,.jpg,.jpeg"}}),
+            defineField({name: "availabilityStatus", title: "供应状态", type: "string", options: {list: [
+              {title: "可供货", value: "available"}, {title: "按单生产", value: "madeToOrder"}, {title: "仅询价确认", value: "inquiryOnly"}, {title: "已停产", value: "discontinued"},
+            ]}}),
+            defineField({name: "sortOrder", title: "显示顺序", type: "number"}),
             mediaField({
               name: "image",
               title: "变体图片",
@@ -470,6 +599,29 @@ export const product = defineType({
           preview: { select: { title: "variantName", subtitle: "sku" } },
         }),
       ],
+      validation: rule => rule.custom((variants?: Array<{
+        sku?: string
+        isDefault?: boolean
+        width?: number
+        length?: number
+        height?: number
+        measurementUnit?: string
+        netWeight?: number
+        shippingWeight?: number
+        weightUnit?: string
+      }>) => {
+        const entries = variants ?? []
+        const skus = entries.map(variant => variant?.sku?.trim()).filter(Boolean) as string[]
+        if (new Set(skus).size !== skus.length) return "同一产品中的 Variant SKU 必须唯一。"
+        if (entries.filter((variant) => variant?.isDefault).length > 1) return "每个产品最多只能设置一个默认 Variant。"
+        const dimensioned = entries.filter((variant) => [variant.width, variant.length, variant.height].some((value) => value != null))
+        if (dimensioned.some((variant) => !variant.measurementUnit)) return "填写数值尺寸时必须选择尺寸单位。"
+        if (new Set(dimensioned.map((variant) => variant.measurementUnit)).size > 1) return "同一产品的结构化尺寸请使用统一单位；显示单位可写在尺寸显示名中。"
+        const weighted = entries.filter((variant) => variant.netWeight != null || variant.shippingWeight != null)
+        if (weighted.some((variant) => !variant.weightUnit)) return "填写数值重量时必须选择重量单位。"
+        if (new Set(weighted.map((variant) => variant.weightUnit)).size > 1) return "同一产品的结构化重量请使用统一单位。"
+        return true
+      }),
     }),
 
     // ── GROUP: Printing Services ───────────────────────────────────────────
@@ -487,6 +639,27 @@ export const product = defineType({
         },
       ],
       validation: (rule) => rule.unique(),
+    }),
+    defineField({
+      name: "technicalDocuments",
+      title: "技术文件与说明书",
+      type: "array",
+      group: "specs",
+      description: "添加规格书、安装说明、产品目录、装配指南或技术图纸。Variant 专属规格书可填在对应变体中。",
+      of: [defineArrayMember({type: "object", name: "productDocument", fields: [
+        defineField({name: "title", title: "文件标题", type: "string", validation: rule => rule.required()}),
+        defineField({name: "documentType", title: "文件类型", type: "string", options: {list: [
+          {title: "Specification Sheet", value: "specificationSheet"},
+          {title: "Setup Instructions", value: "setupInstructions"},
+          {title: "Product Catalog", value: "productCatalog"},
+          {title: "Assembly Guide", value: "assemblyGuide"},
+          {title: "Technical Drawing", value: "technicalDrawing"},
+          {title: "Other", value: "other"},
+        ]}, validation: rule => rule.required()}),
+        defineField({name: "file", title: "文件", type: "file", options: {accept: ".pdf,.png,.jpg,.jpeg,.dwg,.dxf"}, validation: rule => rule.required()}),
+        defineField({name: "description", title: "说明", type: "text", rows: 2}),
+        defineField({name: "variantSkus", title: "适用 Variant SKU（留空表示共用）", type: "array", of: [defineArrayMember({type: "string"})], options: {layout: "tags"}}),
+      ], preview: {select: {title: "title", subtitle: "documentType"}}})],
     }),
 
     // ── GROUP: Pricing ─────────────────────────────────────────────────────
@@ -646,18 +819,53 @@ export const product = defineType({
     }),
   ],
 
+  validation: (rule) => rule.custom(async (value, context) => {
+    const document = value as {
+      _id?: string
+      sku?: string
+      variants?: Array<{sku?: string}>
+    } | undefined
+    const skus = [document?.sku, ...(document?.variants ?? []).map((variant) => variant?.sku)]
+      .map((sku) => sku?.trim())
+      .filter(Boolean) as string[]
+    if (!skus.length) return true
+
+    const duplicateInDocument = skus.find((sku, index) => skus.indexOf(sku) !== index)
+    if (duplicateInDocument) return `SKU “${duplicateInDocument}” 在此产品中重复。`
+
+    const publishedId = document?._id?.replace(/^drafts\./, '')
+    const ignoreIds = publishedId ? [publishedId, `drafts.${publishedId}`] : []
+    const conflict = await context.getClient({apiVersion: '2024-10-01'}).fetch<{
+      _id: string
+      title?: string
+      sku?: string
+      matchingVariantSkus?: string[]
+    } | null>(
+      '*[_type == "product" && !(_id in $ignoreIds) && (sku in $skus || count(variants[sku in $skus]) > 0)][0]{_id, title, sku, "matchingVariantSkus": variants[sku in $skus].sku}',
+      {ignoreIds, skus},
+    )
+    if (!conflict) return true
+    const conflictingSku = [conflict.sku, ...(conflict.matchingVariantSkus ?? [])]
+      .find((sku) => sku && skus.includes(sku.trim()))
+    return `SKU “${conflictingSku ?? skus[0]}” 已被另一产品（${conflict.title || conflict._id}）使用。`
+  }),
+
   preview: {
     select: {
       title: "title",
       sku: "sku",
+      internalModel: "internalModel",
+      familyTitle: "productFamily.title",
       seriesTitle: "series.title",
       isActive: "isActive",
       media: "mainImage",
     },
-    prepare: ({ title, sku, seriesTitle, isActive, media }) => ({
+    prepare: ({ title, sku, internalModel, familyTitle, seriesTitle, isActive, media }) => ({
       title: title || "未命名产品",
       subtitle: [
         sku,
+        internalModel,
+        familyTitle,
         seriesTitle,
         isActive === false ? "已隐藏" : null,
       ]

@@ -16,6 +16,15 @@ const { product, settings, locale = 'en' } = Astro.props
 const price = getPricePresentation(settings, product)
 const priceText = formatPrice(price)
 const productTitle = product.title ?? 'Product'
+const variants = (product.variants ?? []).filter(Boolean)
+const availableSizes = [...new Set(variants.map((variant) => {
+  const label = variant.sizeLabel || variant.attributes?.size
+  if (label) return label
+  const dimensions = [variant.width, variant.length, variant.height].filter((value) => value != null)
+  return dimensions.length
+    ? `${dimensions.join(' × ')}${variant.measurementUnit ? ` ${variant.measurementUnit}` : ''}`
+    : null
+}).filter(Boolean))]
 const addLabel = uiFormat(locale, 'addProductToRfq', { product: productTitle })
 const addedLabel = uiFormat(locale, 'addedProductToRfq', {
   product: productTitle,
@@ -46,6 +55,8 @@ const addedLabel = uiFormat(locale, 'addedProductToRfq', {
     <div class="card__body">
       {product.sku && <p class="card__sku nums">{product.sku}</p>}
       <p class="card__name">{product.title}</p>
+      {product.internalModel && <p class="card__model nums">{product.internalModel}</p>}
+      {product.productFamilyTitle && <span class="card__family">{product.productFamilyTitle}</span>}
       {
         product.seriesTitle && (
           <span class="card__tag">
@@ -53,6 +64,9 @@ const addedLabel = uiFormat(locale, 'addedProductToRfq', {
           </span>
         )
       }
+      {availableSizes.length > 0 && (
+        <p class="card__sizes"><span>{ui(locale, 'availableSizes')}:</span> {availableSizes.slice(0, 4).join(' / ')}{availableSizes.length > 4 ? ' …' : ''}</p>
+      )}
       <div class="card__foot">
         {priceText ? (
           <span class="card__price nums">{priceText}</span>
@@ -123,6 +137,25 @@ const addedLabel = uiFormat(locale, 'addedProductToRfq', {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
+  }
+  .card__model {
+    margin: var(--space-1) 0 0;
+    color: var(--color-ink-500, #69645d);
+    font-size: var(--text-micro);
+  }
+  .card__family {
+    margin-top: var(--space-2);
+    color: var(--color-ink-600, #555);
+    font-size: var(--text-body-s);
+    font-weight: 600;
+  }
+  .card__sizes {
+    margin: var(--space-2) 0 0;
+    color: var(--color-ink-600, #555);
+    font-size: var(--text-caption);
+  }
+  .card__sizes span {
+    color: var(--color-ink-500, #69645d);
   }
   .card__tag {
     align-self: flex-start;

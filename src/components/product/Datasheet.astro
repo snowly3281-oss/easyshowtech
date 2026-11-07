@@ -1,5 +1,5 @@
 ---
-import type { ProductData } from '../../sanity/content'
+import type {ProductData} from '../../sanity/content'
 import type {Locale} from '../../i18n/config'
 import {staticUi} from '../../i18n/static'
 
@@ -8,42 +8,112 @@ interface Props {
   locale?: Locale
 }
 
-const { product, locale = 'en' } = Astro.props
+const {product, locale = 'en'} = Astro.props
 const t = (english: string) => staticUi(locale, english)
-
-const specs = product.keySpecs ?? []
-const features = product.keyFeatures ?? []
+const keySpecs = product.keySpecs ?? []
+const familySpecs = product.productFamily?.sharedSpecifications ?? []
+const modelSpecs = product.specifications ?? []
+const structuredSpecs = [...familySpecs, ...modelSpecs]
+const specRows = structuredSpecs.length ? structuredSpecs : keySpecs.map((row) => ({...row, unit: null}))
+const specs = [...new Map(specRows.filter((row) => row?.label && row?.value).map((row) => [row.label, row])).values()]
+const features = [...new Map(
+  [...(product.productFamily?.sharedFeatures ?? []), ...(product.keyFeatures ?? [])]
+    .filter((feature) => feature?.title)
+    .map((feature) => [feature.title!.trim().toLocaleLowerCase(), feature]),
+).values()]
 const materials = product.materials ?? []
 const customizationOptions = product.customizationOptions ?? []
-const hasDetails = specs.length > 0 || features.length > 0 || materials.length > 0 || customizationOptions.length > 0
+const applications = product.applications ?? []
+const includedItems = product.includedItems ?? []
+const printAreas = product.printAreas ?? []
+const variants = (product.variants ?? []).filter((variant) => variant?.variantName)
+const defaultVariant = variants.find((variant) => variant.isDefault) ?? variants[0]
+const documents = (product.technicalDocuments ?? []).filter((document) => document?.title && document?.url)
+const sharedDocuments = documents.filter((document) => !document.variantSkus?.length)
+const hasVariantDetails = variants.some((variant) =>
+  variant.sizeLabel || variant.width != null || variant.length != null || variant.height != null ||
+  variant.frameMaterial || variant.legProfile || variant.tubeDimensions || variant.netWeight != null ||
+  variant.shippingWeight != null || variant.packageDimensions || variant.includedItems?.length || variant.specSheetUrl,
+)
+const hasDetails = specs.length > 0 || features.length > 0 || materials.length > 0 || customizationOptions.length > 0 ||
+  applications.length > 0 || includedItems.length > 0 || printAreas.length > 0 || product.artworkRequirements ||
+  sharedDocuments.length > 0 || hasVariantDetails
+
+function variantRows(variant: NonNullable<typeof variants[number]>) {
+  const size = variant.sizeLabel || variant.attributes?.size || (
+    [variant.width, variant.length, variant.height].some((value) => value != null)
+      ? [variant.width, variant.length, variant.height].filter((value) => value != null).join(' × ') + (variant.measurementUnit ? ` ${variant.measurementUnit}` : '')
+      : null
+  )
+  const weight = (value: number | null | undefined) => value == null ? null : `${value}${variant.weightUnit ? ` ${variant.weightUnit}` : ''}`
+  return [
+    {label: t('Size'), value: size},
+    {label: t('Frame material'), value: variant.frameMaterial || variant.attributes?.material},
+    {label: t('Leg profile'), value: variant.legProfile},
+    {label: t('Tube dimensions'), value: variant.tubeDimensions},
+    {label: t('Net weight'), value: weight(variant.netWeight) || variant.attributes?.weight},
+    {label: t('Shipping weight'), value: weight(variant.shippingWeight)},
+    {label: t('Package dimensions'), value: variant.packageDimensions},
+  ].filter((row) => row.value)
+}
 ---
 
 {
   hasDetails && (
     <section class="section datasheet">
       <div class="container">
-        <p class="eyebrow">{t('Technical specifications')}</p>
+        <p class="eyebrow">{t('Technical information')}</p>
         <div class="datasheet__head">
-          <h2 class="datasheet__title">{t('The full datasheet.')}</h2>
-          {product.sku && <p class="datasheet__ref nums">{product.sku}</p>}
+          <h2 class="datasheet__title">{t('Product specifications & documents')}</h2>
+          {product.internalModel && <p class="datasheet__ref nums">{product.internalModel}</p>}
         </div>
+
         <div class="datasheet__groups">
           {specs.length > 0 && (
             <div class="specgroup">
-              <h3 class="specgroup__label">{t('Technical specifications')}</h3>
+              <h3 class="specgroup__label">{t('Model specifications')}</h3>
               <dl class="specgroup__rows">
                 {specs.map((row) => (
                   <div class="specrow">
                     <dt class="specrow__label">{row.label}</dt>
-                    <dd class="specrow__value nums">{row.value}{row.note && <small>{row.note}</small>}</dd>
+                    <dd class="specrow__value nums">{row.value}{row.unit ? ` ${row.unit}` : ''}{row.note && <small>{row.note}</small>}</dd>
                   </div>
                 ))}
               </dl>
             </div>
           )}
+
+          {hasVariantDetails && (
+            <div class="specgroup variant-specs" aria-live="polite">
+              <h3 class="specgroup__label">{t('Selected variant specifications')}</h3>
+              {variants.map((variant) => {
+                const rows = variantRows(variant)
+                const variantDocuments = documents.filter((document) => document.variantSkus?.includes(variant.sku || ''))
+                return (
+                  <div data-variant-detail={variant._key || variant.sku || variant.variantName} hidden={variant !== defaultVariant}>
+                    <p class="variant-specs__heading">
+                      <strong>{variant.sizeLabel || variant.attributes?.size || variant.variantName}</strong>
+                      {variant.sku && <span class="nums">SKU: {variant.sku}</span>}
+                    </p>
+                    {variant.availabilityStatus && <p class="variant-specs__availability">{t('Availability')}: {variant.availabilityStatus}</p>}
+                    {rows.length > 0 && <dl class="specgroup__rows">{rows.map((row) => <div class="specrow"><dt class="specrow__label">{row.label}</dt><dd class="specrow__value nums">{row.value}</dd></div>)}</dl>}
+                    {variant.includedItems?.length ? <div class="variant-specs__list"><h4>{t('Included items')}</h4><ul>{variant.includedItems.map((item) => <li>{item}</li>)}</ul></div> : null}
+                    {variant.specSheetUrl && <a class="document-link" href={variant.specSheetUrl} target="_blank" rel="noreferrer">{variant.specSheetTitle || t('Download specification sheet')} <span aria-hidden="true">↗</span></a>}
+                    {variantDocuments.length > 0 && <ul class="document-links">{variantDocuments.map((document) => <li><a class="document-link" href={document.url!} target="_blank" rel="noreferrer">{document.title} <span aria-hidden="true">↗</span></a>{document.description && <p>{document.description}</p>}</li>)}</ul>}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {features.length > 0 && <div class="specgroup"><h3 class="specgroup__label">{t('Key features')}</h3><ul>{features.map((feature) => <li><strong>{feature.title}</strong>{feature.description && <p>{feature.description}</p>}</li>)}</ul></div>}
           {materials.length > 0 && <div class="specgroup"><h3 class="specgroup__label">{t('Materials')}</h3><ul>{materials.map((material) => <li>{material}</li>)}</ul></div>}
+          {applications.length > 0 && <div class="specgroup"><h3 class="specgroup__label">{t('Applications')}</h3><ul>{applications.map((application) => <li>{application}</li>)}</ul></div>}
+          {includedItems.length > 0 && <div class="specgroup"><h3 class="specgroup__label">{t('Included items')}</h3><ul>{includedItems.map((item) => <li>{item}</li>)}</ul></div>}
           {customizationOptions.length > 0 && <div class="specgroup"><h3 class="specgroup__label">{t('Customization options')}</h3><ul>{customizationOptions.map((option) => <li>{option}</li>)}</ul></div>}
+          {printAreas.length > 0 && <div class="specgroup"><h3 class="specgroup__label">{t('Print areas')}</h3><ul>{printAreas.map((area) => <li><strong>{area.name}</strong>{area.dimensions && <> — {area.dimensions}</>}{area.description && <p>{area.description}</p>}</li>)}</ul></div>}
+          {product.artworkRequirements && <div class="specgroup"><h3 class="specgroup__label">{t('Artwork requirements')}</h3><p>{product.artworkRequirements}</p></div>}
+          {sharedDocuments.length > 0 && <div class="specgroup"><h3 class="specgroup__label">{t('Technical documents')}</h3><ul class="document-links">{sharedDocuments.map((document) => <li><a class="document-link" href={document.url!} target="_blank" rel="noreferrer">{document.title} <span aria-hidden="true">↗</span></a>{document.description && <p>{document.description}</p>}</li>)}</ul></div>}
         </div>
       </div>
     </section>
@@ -51,59 +121,24 @@ const hasDetails = specs.length > 0 || features.length > 0 || materials.length >
 }
 
 <style>
-  .datasheet__head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: var(--space-4);
-    margin: var(--space-3) 0 var(--space-6);
-  }
-  .datasheet__title {
-    margin: 0;
-  }
-  .datasheet__ref {
-    font-size: var(--text-body-s);
-    color: var(--color-ink-400, #9a948a);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-wider);
-  }
-  .datasheet__groups {
-    display: grid;
-    gap: var(--space-7);
-    max-width: 760px;
-  }
-  .specgroup__label {
-    margin: 0 0 var(--space-2);
-    font-size: var(--text-body-s);
-    text-transform: uppercase;
-    letter-spacing: var(--tracking-wider);
-    color: var(--color-ink-600, #555);
-    border-bottom: 1px solid var(--color-ink-200, #e2ddd3);
-    padding-bottom: var(--space-2);
-  }
-  .specgroup__rows {
-    margin: 0;
-  }
-  .specrow {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-4);
-    padding: var(--space-2) 0;
-    border-bottom: 1px solid var(--color-ink-100, #efeae0);
-  }
-  .specrow__label {
-    color: var(--color-ink-600, #555);
-  }
-  .specrow__value {
-    text-align: right;
-  }
-  @media (max-width: 767px) {
-    .specrow {
-      grid-template-columns: 1fr;
-      gap: 2px;
-    }
-    .specrow__value {
-      text-align: left;
-    }
-  }
+  .datasheet__head { display:flex; justify-content:space-between; align-items:baseline; gap:var(--space-4); margin:var(--space-3) 0 var(--space-6); }
+  .datasheet__title { margin:0; }
+  .datasheet__ref { font-size:var(--text-body-s); color:var(--color-ink-400, #9a948a); text-transform:uppercase; letter-spacing:var(--tracking-wider); }
+  .datasheet__groups { display:grid; gap:var(--space-7); max-width:820px; }
+  .specgroup__label { margin:0 0 var(--space-2); font-size:var(--text-body-s); text-transform:uppercase; letter-spacing:var(--tracking-wider); color:var(--color-ink-600, #555); border-bottom:1px solid var(--color-ink-200, #e2ddd3); padding-bottom:var(--space-2); }
+  .specgroup__rows { margin:0; }
+  .specrow { display:grid; grid-template-columns:1fr 1fr; gap:var(--space-4); padding:var(--space-2) 0; border-bottom:1px solid var(--color-ink-100, #efeae0); }
+  .specrow__label { color:var(--color-ink-600, #555); }
+  .specrow__value { text-align:right; }
+  .specrow__value small { display:block; margin-top:2px; color:var(--color-ink-500); }
+  .variant-specs__heading { display:flex; flex-wrap:wrap; justify-content:space-between; gap:var(--space-2); margin:0 0 var(--space-2); }
+  .variant-specs__heading span { color:var(--color-ink-500); font-size:var(--text-body-s); }
+  .variant-specs__availability { margin:0 0 var(--space-2); color:var(--color-ink-500); font-size:var(--text-body-s); }
+  .variant-specs__list { margin-top:var(--space-3); }
+  .variant-specs__list h4 { margin:0; font-size:var(--text-body-s); }
+  .variant-specs__list ul { margin:var(--space-2) 0 0; }
+  .document-link { display:inline-flex; align-items:center; gap:var(--space-2); color:var(--color-coral); font-weight:600; }
+  .document-links { display:grid; gap:var(--space-3); margin:var(--space-3) 0 0; padding:0; list-style:none; }
+  .document-links p { margin:var(--space-1) 0 0; color:var(--color-ink-500); font-size:var(--text-body-s); }
+  @media (max-width:767px) { .specrow { grid-template-columns:1fr; gap:2px; } .specrow__value { text-align:left; } }
 </style>

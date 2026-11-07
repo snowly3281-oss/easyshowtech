@@ -26,6 +26,21 @@ export const seo = defineType({
       validation: (rule) => rule.max(80).warning('焦点关键词建议不超过 80 个字符。'),
     }),
     defineField({
+      name: 'primaryKeyword',
+      title: 'Primary keyword（主关键词）',
+      type: 'string',
+      description: '内容规划字段，仅供编辑和 SEO 管理使用；不会输出为 meta keywords。分类页或型号页各自维护自己的主题。',
+      validation: (rule) => rule.max(100).warning('建议关键词不超过 100 个字符。'),
+    }),
+    defineField({
+      name: 'secondaryKeywords',
+      title: 'Secondary keywords（辅助关键词）',
+      type: 'array',
+      of: [{type: 'string'}],
+      options: {layout: 'tags'},
+      description: '仅作内容规划参考，不会输出为 meta keywords；避免与其他页面重复争抢同一主题。',
+    }),
+    defineField({
       name: 'metaTitle',
       title: '搜索结果标题 Meta title',
       type: 'string',

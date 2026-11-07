@@ -452,6 +452,8 @@ export type CtaLink = {
 export type Seo = {
   _type: "seo";
   focusKeyword?: string;
+  primaryKeyword?: string;
+  secondaryKeywords?: Array<string>;
   metaTitle?: string;
   metaDescription?: string;
   canonicalUrl?: string;
@@ -1116,6 +1118,13 @@ export type Solution = {
   seo?: Seo;
 };
 
+export type ProductFamilyReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "productFamily";
+};
+
 export type PartsCategoryReference = {
   _ref: string;
   _type: "reference";
@@ -1137,6 +1146,7 @@ export type Product = {
   title?: string;
   slug?: Slug;
   sku?: string;
+  internalModel?: string;
   summary?: string;
   description?: Array<{
     children?: Array<{
@@ -1162,8 +1172,19 @@ export type Product = {
   series?: SeriesReference;
   productType?: "customDisplay" | "hardware" | "partAccessory";
   productCategory?: ProductCategoryReference;
+  productFamily?: ProductFamilyReference;
   partsCategory?: PartsCategoryReference;
   relatedHardware?: Array<
+    {
+      _key: string;
+    } & ProductReference
+  >;
+  relatedCustomDisplays?: Array<
+    {
+      _key: string;
+    } & ProductReference
+  >;
+  relatedAccessories?: Array<
     {
       _key: string;
     } & ProductReference
@@ -1198,6 +1219,16 @@ export type Product = {
   }>;
   materials?: Array<string>;
   customizationOptions?: Array<string>;
+  applications?: Array<string>;
+  includedItems?: Array<string>;
+  printAreas?: Array<{
+    name?: string;
+    description?: string;
+    dimensions?: string;
+    _type: "printArea";
+    _key: string;
+  }>;
+  artworkRequirements?: string;
   mainImage?: {
     asset?: SanityImageAssetReference;
     media?: unknown;
@@ -1232,15 +1263,57 @@ export type Product = {
     _type: "keySpec";
     _key: string;
   }>;
+  specifications?: Array<{
+    label?: string;
+    value?: string;
+    unit?: string;
+    note?: string;
+    _type: "productSpecification";
+    _key: string;
+  }>;
   variants?: Array<{
     variantName?: string;
     sku?: string;
+    sizeLabel?: string;
+    width?: number;
+    length?: number;
+    height?: number;
+    measurementUnit?: "in" | "ft" | "mm" | "cm";
+    frameMaterial?: string;
+    legProfile?: string;
+    tubeDimensions?: string;
+    netWeight?: number;
+    shippingWeight?: number;
+    weightUnit?: "kg" | "lb";
+    packageDimensions?: string;
     attributes?: {
       size?: string;
       color?: string;
       material?: string;
       weight?: string;
     };
+    includedItems?: Array<string>;
+    images?: Array<{
+      image?: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        _type: "image";
+      };
+      alt?: string;
+      _type: "variantImage";
+      _key: string;
+    }>;
+    specSheetTitle?: string;
+    specSheet?: {
+      asset?: SanityFileAssetReference;
+      media?: unknown;
+      _type: "file";
+    };
+    availabilityStatus?:
+      "available" | "madeToOrder" | "inquiryOnly" | "discontinued";
+    sortOrder?: number;
     image?: {
       asset?: SanityImageAssetReference;
       media?: unknown;
@@ -1258,6 +1331,25 @@ export type Product = {
       _key: string;
     } & ServiceReference
   >;
+  technicalDocuments?: Array<{
+    title?: string;
+    documentType?:
+      | "specificationSheet"
+      | "setupInstructions"
+      | "productCatalog"
+      | "assemblyGuide"
+      | "technicalDrawing"
+      | "other";
+    file?: {
+      asset?: SanityFileAssetReference;
+      media?: unknown;
+      _type: "file";
+    };
+    description?: string;
+    variantSkus?: Array<string>;
+    _type: "productDocument";
+    _key: string;
+  }>;
   priceDisplay?: "show" | "range" | "quote";
   price?: number;
   priceMin?: number;
@@ -1280,6 +1372,42 @@ export type Product = {
   seo?: Seo;
 };
 
+export type ProductFamily = {
+  _id: string;
+  _type: "productFamily";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  title?: string;
+  slug?: Slug;
+  productCategory?: ProductCategoryReference;
+  description?: string;
+  sharedFeatures?: Array<{
+    title?: string;
+    description?: string;
+    _type: "familyFeature";
+    _key: string;
+  }>;
+  sharedSpecifications?: Array<{
+    label?: string;
+    value?: string;
+    unit?: string;
+    note?: string;
+    _type: "familySpecification";
+    _key: string;
+  }>;
+  image?: {
+    asset?: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "image";
+  };
+  sortOrder?: number;
+  isActive?: boolean;
+};
+
 export type ProductCategory = {
   _id: string;
   _type: "productCategory";
@@ -1300,6 +1428,7 @@ export type ProductCategory = {
     } & SeriesReference
   >;
   description?: string;
+  shortDescription?: string;
   intro?: Array<{
     children?: Array<{
       marks?: Array<string>;
@@ -1359,6 +1488,12 @@ export type ProductCategory = {
       _key: string;
     } & ProductCategoryReference
   >;
+  faq?: Array<{
+    question?: string;
+    answer?: string;
+    _type: "categoryFaq";
+    _key: string;
+  }>;
   sortOrder?: number;
   isActive?: boolean;
   seo?: Seo;
@@ -1811,8 +1946,10 @@ export type AllSanitySchemaTypes =
   | Oem
   | ServiceReference
   | Solution
+  | ProductFamilyReference
   | PartsCategoryReference
   | Product
+  | ProductFamily
   | ProductCategory
   | PartsCategory
   | Service
@@ -3417,7 +3554,7 @@ export type HeaderNavigationQueryResult = {
 
 // Source: ../src/sanity/queries/productCategories.ts
 // Variable: productCategoryBySlugQuery
-// Query: *[    _type == "productCategory" &&    coalesce(language, "en") == $language &&    slug.current == $slug &&    isActive == true &&    coalesce(seo.noIndex, false) != true  ][0]{    _id,    title,    "slug": slug.current,      "rootSlugAvailable": !defined(*[_type == "product" && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),    productType,    description,    intro,    contentBlocks,    heroImage{ asset, alt },    seo{ metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{ asset, alt } },    "products": *[      _type == "product" &&      coalesce(language, "en") == $language &&      isActive == true &&      productCategory._ref == ^._id && productType == ^.productType    ] | order(sortOrder asc, title asc){      _id,      title,      "slug": slug.current,      sku,      summary,      productType,      catalogType,      "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),      "partsCategoryKey": partsCategory->key,      "seriesTitle": series->title,      "seriesSlug": series->slug.current,      "serviceSlugs": printingServices[]->slug.current,      mainImage{ asset, alt },      priceDisplay,      price,      priceMin,      priceMax,      currency,      isFeatured,      sortOrder    },    "relatedCategories": relatedCategories[@->isActive == true && coalesce(@->seo.noIndex, false) != true]->{      title, "slug": slug.current, productType,      "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),      "hasProducts": count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0    },    "relatedPrintingServices": relatedPrintingServices[@->isActive == true]->{ title, "slug": slug.current, shortDescription },    "relatedSolutions": relatedSolutions[@->isActive != false]->{ title, "slug": slug.current, summary }  }
+// Query: *[    _type == "productCategory" &&    coalesce(language, "en") == $language &&    slug.current == $slug &&    isActive == true &&    coalesce(seo.noIndex, false) != true  ][0]{    _id,    title,    "slug": slug.current,      "rootSlugAvailable": !defined(*[_type == "product" && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),    productType,    description,    shortDescription,    intro,    contentBlocks,    heroImage{ asset, alt },    seo{ focusKeyword, primaryKeyword, secondaryKeywords, metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{ asset, alt } },    faq[]{_key, question, answer},    "products": *[      _type == "product" &&      coalesce(language, "en") == $language &&      isActive == true &&      productCategory._ref == ^._id && productType == ^.productType    ] | order(sortOrder asc, title asc){      _id,      title,      "slug": slug.current,      sku,      summary,      productType,      internalModel,      "productFamilyTitle": productFamily->title,      variants[]{_key, variantName, sku, sizeLabel, width, length, height, measurementUnit, attributes},      catalogType,      "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),      "partsCategoryKey": partsCategory->key,      "seriesTitle": series->title,      "seriesSlug": series->slug.current,      "serviceSlugs": printingServices[]->slug.current,      mainImage{ asset, alt },      priceDisplay,      price,      priceMin,      priceMax,      currency,      isFeatured,      sortOrder    },    "relatedCategories": relatedCategories[@->isActive == true && coalesce(@->seo.noIndex, false) != true]->{      title, "slug": slug.current, productType,      "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),      "hasProducts": count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0    },    "relatedPrintingServices": relatedPrintingServices[@->isActive == true]->{ title, "slug": slug.current, shortDescription },    "relatedSolutions": relatedSolutions[@->isActive != false]->{ title, "slug": slug.current, summary }  }
 export type ProductCategoryBySlugQueryResult = {
   _id: string;
   title: string | null;
@@ -3425,6 +3562,7 @@ export type ProductCategoryBySlugQueryResult = {
   rootSlugAvailable: boolean | false | true;
   productType: "customDisplay" | "hardware" | "partAccessory" | null;
   description: string | null;
+  shortDescription: string | null;
   intro: Array<{
     children?: Array<{
       marks?: Array<string>;
@@ -3466,6 +3604,9 @@ export type ProductCategoryBySlugQueryResult = {
     alt: string | null;
   } | null;
   seo: {
+    focusKeyword: string | null;
+    primaryKeyword: string | null;
+    secondaryKeywords: Array<string> | null;
     metaTitle: string | null;
     metaDescription: string | null;
     canonicalUrl: string | null;
@@ -3477,6 +3618,11 @@ export type ProductCategoryBySlugQueryResult = {
       alt: string | null;
     } | null;
   } | null;
+  faq: Array<{
+    _key: string;
+    question: string | null;
+    answer: string | null;
+  }> | null;
   products: Array<{
     _id: string;
     title: string | null;
@@ -3484,6 +3630,24 @@ export type ProductCategoryBySlugQueryResult = {
     sku: string | null;
     summary: string | null;
     productType: "customDisplay" | "hardware" | "partAccessory" | null;
+    internalModel: string | null;
+    productFamilyTitle: string | null;
+    variants: Array<{
+      _key: string;
+      variantName: string | null;
+      sku: string | null;
+      sizeLabel: string | null;
+      width: number | null;
+      length: number | null;
+      height: number | null;
+      measurementUnit: "cm" | "ft" | "in" | "mm" | null;
+      attributes: {
+        size?: string;
+        color?: string;
+        material?: string;
+        weight?: string;
+      } | null;
+    }> | null;
     catalogType: null;
     productCategorySlug: string | null;
     partsCategoryKey: string | null;
@@ -3541,7 +3705,7 @@ export type ProductRouteBySlugQueryResult = {
 
 // Source: ../src/sanity/queries/products.ts
 // Variable: productListQuery
-// Query: *[    _type == "product" &&    coalesce(language, "en") == $language &&    isActive == true  ] | order(sortOrder asc, title asc){    _id,    title,    "slug": slug.current,    sku,    summary,    productType,    catalogType,    "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),    "partsCategoryKey": partsCategory->key,    "seriesTitle": series->title,    "seriesSlug": series->slug.current,    "serviceTitles": printingServices[]->title,    "serviceSlugs": printingServices[]->slug.current,    mainImage{ asset, alt },    priceDisplay,    price,    priceMin,    priceMax,    currency,    isFeatured,    sortOrder,  }
+// Query: *[    _type == "product" &&    coalesce(language, "en") == $language &&    isActive == true  ] | order(sortOrder asc, title asc){    _id,    title,    "slug": slug.current,    sku,    summary,    productType,    catalogType,    internalModel,    "productFamilyTitle": productFamily->title,    variants[]{ _key, variantName, sku, sizeLabel, width, length, height, measurementUnit, attributes },    "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),    "partsCategoryKey": partsCategory->key,    "seriesTitle": series->title,    "seriesSlug": series->slug.current,    "serviceTitles": printingServices[]->title,    "serviceSlugs": printingServices[]->slug.current,    mainImage{ asset, alt },    priceDisplay,    price,    priceMin,    priceMax,    currency,    isFeatured,    sortOrder,  }
 export type ProductListQueryResult = Array<{
   _id: string;
   title: string | null;
@@ -3550,6 +3714,24 @@ export type ProductListQueryResult = Array<{
   summary: string | null;
   productType: "customDisplay" | "hardware" | "partAccessory" | null;
   catalogType: null;
+  internalModel: string | null;
+  productFamilyTitle: string | null;
+  variants: Array<{
+    _key: string;
+    variantName: string | null;
+    sku: string | null;
+    sizeLabel: string | null;
+    width: number | null;
+    length: number | null;
+    height: number | null;
+    measurementUnit: "cm" | "ft" | "in" | "mm" | null;
+    attributes: {
+      size?: string;
+      color?: string;
+      material?: string;
+      weight?: string;
+    } | null;
+  }> | null;
   productCategorySlug: string | null;
   partsCategoryKey: string | null;
   seriesTitle: string | null;
@@ -3571,7 +3753,7 @@ export type ProductListQueryResult = Array<{
 
 // Source: ../src/sanity/queries/products.ts
 // Variable: productBySlugQuery
-// Query: *[    _type == "product" &&    coalesce(language, "en") == $language &&    slug.current == $slug &&    isActive == true  ][0]{    _id,    title,    "slug": slug.current,    sku,    summary,    productType,    catalogType,    "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),    "productCategoryRootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.productCategory->slug.current][0]._id) && !(productCategory->slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),    "productCategory": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->{ title, "slug": slug.current, productType }, null),    "partsCategoryKey": partsCategory->key,    "seriesTitle": series->title,    "seriesSlug": series->slug.current,    "seriesDescription": series->description,    "serviceTitles": printingServices[]->title,    "serviceSlugs": printingServices[]->slug.current,    productionLeadTime,    priceDisplay,    price,    priceMin,    priceMax,    currency,    priceUnit,    moq,    warranty,    mainImage{ asset, alt },    "gallery": galleryImages[]{ _key, image, alt, label },    keyFeatures[]{ _key, title, description },    keySpecs[]{ _key, label, value, note },    oemTerms[]{ _key, label, value, note },    variants[]{ _key, variantName, sku, attributes, isDefault, image{ asset, alt } },    materials,    customizationOptions,    "printingServices": printingServices[]->{      _id,      title,      "slug": slug.current,      shortDescription,    },    description,    metaTitle,    metaDescription,    ogImage{ asset, alt },    seo{ metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{ asset, alt } },    "relatedHardware": relatedHardware[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },    "accessories": accessories[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },    "relatedSolutions": relatedSolutions[@->isActive != false]->{ title, "slug": slug.current, summary },    "relatedDisplays": *[      _type == "product" &&      isActive == true &&      productType == "customDisplay" &&      ^._id in relatedHardware[]._ref    ] | order(sortOrder asc, title asc){ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },    faq[]{ _key, question, answer },    brand,    mpn,    gtin13,    "related": relatedProducts[@->isActive == true]->{      _id, title, "slug": slug.current, sku,      productType,      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),      "seriesTitle": series->title,      "seriesSlug": series->slug.current,      mainImage{ asset, alt },      priceDisplay, price, priceMin, priceMax, currency    }  }
+// Query: *[    _type == "product" &&    coalesce(language, "en") == $language &&    slug.current == $slug &&    isActive == true  ][0]{    _id,    title,    "slug": slug.current,    sku,    summary,    productType,    catalogType,    internalModel,    "productFamily": productFamily->{      _id, title, "slug": slug.current, description,      sharedFeatures[]{_key, title, description},      sharedSpecifications[]{_key, label, value, unit, note}    },    "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),    "productCategoryRootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.productCategory->slug.current][0]._id) && !(productCategory->slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),    "productCategory": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->{      title, "slug": slug.current, productType,      "relatedCategories": relatedCategories[@->isActive == true && @->productType == "customDisplay" && coalesce(@->seo.noIndex, false) != true]->{        title, "slug": slug.current, productType,        "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),        "hasProducts": count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0      }    }, null),    "partsCategoryKey": partsCategory->key,    "seriesTitle": series->title,    "seriesSlug": series->slug.current,    "seriesDescription": series->description,    "serviceTitles": printingServices[]->title,    "serviceSlugs": printingServices[]->slug.current,    productionLeadTime,    priceDisplay,    price,    priceMin,    priceMax,    currency,    priceUnit,    moq,    warranty,    mainImage{ asset, alt },    "gallery": galleryImages[]{ _key, image, alt, label },    keyFeatures[]{ _key, title, description },    keySpecs[]{ _key, label, value, note },    specifications[]{ _key, label, value, unit, note },    oemTerms[]{ _key, label, value, note },    variants[]{      _key, variantName, sku, sizeLabel, attributes, isDefault,      width, length, height, measurementUnit, frameMaterial, legProfile, tubeDimensions,      netWeight, shippingWeight, weightUnit, packageDimensions, includedItems, availabilityStatus, sortOrder,      image{ asset, alt },      "images": images[]{_key, alt, image{asset, alt}},      specSheetTitle,      "specSheetUrl": specSheet.asset->url,      "specSheetFileName": specSheet.asset->originalFilename    },    materials,    customizationOptions,    applications,    includedItems,    printAreas[]{_key, name, description, dimensions},    artworkRequirements,    "technicalDocuments": technicalDocuments[]{      _key, title, documentType, description, variantSkus,      "url": file.asset->url,      "fileName": file.asset->originalFilename,      "mimeType": file.asset->mimeType    },    "printingServices": printingServices[]->{      _id,      title,      "slug": slug.current,      shortDescription,    },    description,    metaTitle,    metaDescription,    ogImage{ asset, alt },    seo{ metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{ asset, alt } },    "relatedHardware": relatedHardware[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },    "relatedCustomDisplays": relatedCustomDisplays[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },    "relatedAccessories": relatedAccessories[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },    "accessories": accessories[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },    "relatedSolutions": relatedSolutions[@->isActive != false]->{ title, "slug": slug.current, summary },    "relatedDisplays": *[      _type == "product" &&      isActive == true &&      productType == "customDisplay" &&      ^._id in relatedHardware[]._ref    ] | order(sortOrder asc, title asc){ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },    faq[]{ _key, question, answer },    brand,    mpn,    gtin13,    "related": relatedProducts[@->isActive == true]->{      _id, title, "slug": slug.current, sku,      productType,      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),      "seriesTitle": series->title,      "seriesSlug": series->slug.current,      mainImage{ asset, alt },      priceDisplay, price, priceMin, priceMax, currency    }  }
 export type ProductBySlugQueryResult = {
   _id: string;
   title: string | null;
@@ -3580,12 +3762,38 @@ export type ProductBySlugQueryResult = {
   summary: string | null;
   productType: "customDisplay" | "hardware" | "partAccessory" | null;
   catalogType: null;
+  internalModel: string | null;
+  productFamily: {
+    _id: string;
+    title: string | null;
+    slug: string | null;
+    description: string | null;
+    sharedFeatures: Array<{
+      _key: string;
+      title: string | null;
+      description: string | null;
+    }> | null;
+    sharedSpecifications: Array<{
+      _key: string;
+      label: string | null;
+      value: string | null;
+      unit: string | null;
+      note: string | null;
+    }> | null;
+  } | null;
   productCategorySlug: string | null;
   productCategoryRootSlugAvailable: boolean | false | true;
   productCategory: {
     title: string | null;
     slug: string | null;
     productType: "customDisplay" | "hardware" | "partAccessory" | null;
+    relatedCategories: Array<{
+      title: string | null;
+      slug: string | null;
+      productType: "customDisplay" | "hardware" | "partAccessory" | null;
+      rootSlugAvailable: boolean | false | true;
+      hasProducts: boolean;
+    }> | null;
   } | null;
   partsCategoryKey: string | null;
   seriesTitle: string | null;
@@ -3629,6 +3837,13 @@ export type ProductBySlugQueryResult = {
     value: string | null;
     note: string | null;
   }> | null;
+  specifications: Array<{
+    _key: string;
+    label: string | null;
+    value: string | null;
+    unit: string | null;
+    note: string | null;
+  }> | null;
   oemTerms: Array<{
     _key: string;
     label: string | null;
@@ -3639,6 +3854,7 @@ export type ProductBySlugQueryResult = {
     _key: string;
     variantName: string | null;
     sku: string | null;
+    sizeLabel: string | null;
     attributes: {
       size?: string;
       color?: string;
@@ -3646,13 +3862,65 @@ export type ProductBySlugQueryResult = {
       weight?: string;
     } | null;
     isDefault: boolean | null;
+    width: number | null;
+    length: number | null;
+    height: number | null;
+    measurementUnit: "cm" | "ft" | "in" | "mm" | null;
+    frameMaterial: string | null;
+    legProfile: string | null;
+    tubeDimensions: string | null;
+    netWeight: number | null;
+    shippingWeight: number | null;
+    weightUnit: "kg" | "lb" | null;
+    packageDimensions: string | null;
+    includedItems: Array<string> | null;
+    availabilityStatus:
+      "available" | "discontinued" | "inquiryOnly" | "madeToOrder" | null;
+    sortOrder: number | null;
     image: {
       asset: SanityImageAssetReference | null;
       alt: string | null;
     } | null;
+    images: Array<{
+      _key: string;
+      alt: string | null;
+      image: {
+        asset: SanityImageAssetReference | null;
+        alt: null;
+      } | null;
+    }> | null;
+    specSheetTitle: string | null;
+    specSheetUrl: string | null;
+    specSheetFileName: string | null;
   }> | null;
   materials: Array<string> | null;
   customizationOptions: Array<string> | null;
+  applications: Array<string> | null;
+  includedItems: Array<string> | null;
+  printAreas: Array<{
+    _key: string;
+    name: string | null;
+    description: string | null;
+    dimensions: string | null;
+  }> | null;
+  artworkRequirements: string | null;
+  technicalDocuments: Array<{
+    _key: string;
+    title: string | null;
+    documentType:
+      | "assemblyGuide"
+      | "other"
+      | "productCatalog"
+      | "setupInstructions"
+      | "specificationSheet"
+      | "technicalDrawing"
+      | null;
+    description: string | null;
+    variantSkus: Array<string> | null;
+    url: string | null;
+    fileName: string | null;
+    mimeType: string | null;
+  }> | null;
   printingServices: Array<{
     _id: string;
     title: string | null;
@@ -3696,6 +3964,30 @@ export type ProductBySlugQueryResult = {
     } | null;
   } | null;
   relatedHardware: Array<{
+    _id: string;
+    title: string | null;
+    slug: string | null;
+    productType: "customDisplay" | "hardware" | "partAccessory" | null;
+    categorySlug: string | null;
+    sku: string | null;
+    mainImage: {
+      asset: SanityImageAssetReference | null;
+      alt: string | null;
+    } | null;
+  }> | null;
+  relatedCustomDisplays: Array<{
+    _id: string;
+    title: string | null;
+    slug: string | null;
+    productType: "customDisplay" | "hardware" | "partAccessory" | null;
+    categorySlug: string | null;
+    sku: string | null;
+    mainImage: {
+      asset: SanityImageAssetReference | null;
+      alt: string | null;
+    } | null;
+  }> | null;
+  relatedAccessories: Array<{
     _id: string;
     title: string | null;
     slug: string | null;
@@ -4383,11 +4675,11 @@ declare module "@sanity/client" {
     '\n  *[\n    _type == "post" &&\n    coalesce(language, "en") == $language &&\n    slug.current == $slug\n  ][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    excerpt,\n    publishedAt,\n    _updatedAt,\n    "readingTime": round(length(pt::text(body)) / 1200),\n    "cover": coverImage{ asset, alt },\n    body[]{\n      ...,\n      markDefs[]{\n        ...,\n        _type == "internalLink" => {\n          "reference": reference->{\n            _type,\n            route,\n            "slug": slug.current\n          }\n        }\n      },\n      _type == "postImageBlock" => {\n        image{ asset, alt },\n        caption\n      },\n      _type == "postGalleryBlock" => {\n        heading,\n        images[]{\n          _key,\n          image{ asset },\n          alt,\n          caption\n        }\n      },\n      _type == "postVideoBlock" => {\n        source,\n        url,\n        "fileUrl": file.asset->url,\n        caption\n      },\n      _type == "postProductBlock" => {\n        heading,\n        body,\n        "products": products[]->{\n          _id,\n          title,\n          "slug": slug.current,\n          productType,\n          "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),\n          sku,\n          summary,\n          mainImage{ asset, alt }\n        }\n      },\n      _type == "postSolutionBlock" => {\n        heading,\n        body,\n        "solution": solution->{\n          _id,\n          title,\n          "slug": slug.current,\n          summary\n        }\n      },\n      _type == "postDownloadBlock" => {\n        title,\n        description,\n        "fileUrl": file.asset->url,\n        buttonLabel\n      },\n      _type == "postCtaBlock" => {\n        heading,\n        body,\n        primaryCta{\n          label,\n          external,\n          internal->{ _type, route, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null) }\n        },\n        secondaryCta{\n          label,\n          external,\n          internal->{ _type, route, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null) }\n        }\n      }\n    },\n    audience,\n    editorialStatus,\n    featured,\n    "author": author->{ _id, name, role, portrait{ asset, alt }, bio },\n    "categories": categories[]->{ _id, title, "slug": slug.current },\n    "tags": tags[]->{ _id, title, "slug": slug.current },\n    "solutions": solutions[]->{ _id, title, "slug": slug.current },\n    "relatedProducts": relatedProducts[]->{\n      _id,\n      title,\n      "slug": slug.current,\n      productType,\n      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),\n      sku,\n      summary,\n      mainImage{ asset, alt }\n    },\n    "relatedPosts": relatedPosts[]->{\n      _id,\n      title,\n      "slug": slug.current,\n      excerpt,\n      publishedAt,\n      _updatedAt,\n      "readingTime": round(length(pt::text(body)) / 1200),\n      "cover": coverImage{ asset, alt },\n      "categories": categories[]->{ _id, title, "slug": slug.current }\n    },\n    seo{ metaTitle, metaDescription, ogImage{ asset, alt } }\n  }\n': PostBySlugQueryResult;
     '\n  *[\n    _type == "productCategory" &&\n    coalesce(language, "en") == $language &&\n    isActive == true &&\n    productType == $productType &&\n    defined(slug.current) &&\n    coalesce(seo.noIndex, false) != true &&\n    count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0\n  ] | order(sortOrder asc, title asc){\n    "slug": slug.current,\n    "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(^.slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"])\n  }\n': ProductCategoryPathsQueryResult;
     '{\n  "services": *[\n    _type == "service" &&\n    coalesce(language, "en") == $language &&\n    isActive == true\n  ] | order(sortOrder asc, title asc){ _id, title, "slug": slug.current, shortDescription },\n  "productCategories": *[\n    _type == "productCategory" &&\n    coalesce(language, "en") == $language &&\n    isActive == true &&\n    defined(slug.current) &&\n    coalesce(seo.noIndex, false) != true &&\n    count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0\n  ] | order(sortOrder asc, title asc){\n    _id, title, "slug": slug.current, productType, sortOrder,\n    "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"])\n  }\n}': HeaderNavigationQueryResult;
-    '\n  *[\n    _type == "productCategory" &&\n    coalesce(language, "en") == $language &&\n    slug.current == $slug &&\n    isActive == true &&\n    coalesce(seo.noIndex, false) != true\n  ][0]{\n    _id,\n    title,\n    "slug": slug.current,\n      "rootSlugAvailable": !defined(*[_type == "product" && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),\n    productType,\n    description,\n    intro,\n    contentBlocks,\n    heroImage{ asset, alt },\n    seo{ metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{ asset, alt } },\n    "products": *[\n      _type == "product" &&\n      coalesce(language, "en") == $language &&\n      isActive == true &&\n      productCategory._ref == ^._id && productType == ^.productType\n    ] | order(sortOrder asc, title asc){\n      _id,\n      title,\n      "slug": slug.current,\n      sku,\n      summary,\n      productType,\n      catalogType,\n      "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),\n      "partsCategoryKey": partsCategory->key,\n      "seriesTitle": series->title,\n      "seriesSlug": series->slug.current,\n      "serviceSlugs": printingServices[]->slug.current,\n      mainImage{ asset, alt },\n      priceDisplay,\n      price,\n      priceMin,\n      priceMax,\n      currency,\n      isFeatured,\n      sortOrder\n    },\n    "relatedCategories": relatedCategories[@->isActive == true && coalesce(@->seo.noIndex, false) != true]->{\n      title, "slug": slug.current, productType,\n      "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),\n      "hasProducts": count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0\n    },\n    "relatedPrintingServices": relatedPrintingServices[@->isActive == true]->{ title, "slug": slug.current, shortDescription },\n    "relatedSolutions": relatedSolutions[@->isActive != false]->{ title, "slug": slug.current, summary }\n  }\n': ProductCategoryBySlugQueryResult;
+    '\n  *[\n    _type == "productCategory" &&\n    coalesce(language, "en") == $language &&\n    slug.current == $slug &&\n    isActive == true &&\n    coalesce(seo.noIndex, false) != true\n  ][0]{\n    _id,\n    title,\n    "slug": slug.current,\n      "rootSlugAvailable": !defined(*[_type == "product" && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),\n    productType,\n    description,\n    shortDescription,\n    intro,\n    contentBlocks,\n    heroImage{ asset, alt },\n    seo{ focusKeyword, primaryKeyword, secondaryKeywords, metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{ asset, alt } },\n    faq[]{_key, question, answer},\n    "products": *[\n      _type == "product" &&\n      coalesce(language, "en") == $language &&\n      isActive == true &&\n      productCategory._ref == ^._id && productType == ^.productType\n    ] | order(sortOrder asc, title asc){\n      _id,\n      title,\n      "slug": slug.current,\n      sku,\n      summary,\n      productType,\n      internalModel,\n      "productFamilyTitle": productFamily->title,\n      variants[]{_key, variantName, sku, sizeLabel, width, length, height, measurementUnit, attributes},\n      catalogType,\n      "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),\n      "partsCategoryKey": partsCategory->key,\n      "seriesTitle": series->title,\n      "seriesSlug": series->slug.current,\n      "serviceSlugs": printingServices[]->slug.current,\n      mainImage{ asset, alt },\n      priceDisplay,\n      price,\n      priceMin,\n      priceMax,\n      currency,\n      isFeatured,\n      sortOrder\n    },\n    "relatedCategories": relatedCategories[@->isActive == true && coalesce(@->seo.noIndex, false) != true]->{\n      title, "slug": slug.current, productType,\n      "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),\n      "hasProducts": count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0\n    },\n    "relatedPrintingServices": relatedPrintingServices[@->isActive == true]->{ title, "slug": slug.current, shortDescription },\n    "relatedSolutions": relatedSolutions[@->isActive != false]->{ title, "slug": slug.current, summary }\n  }\n': ProductCategoryBySlugQueryResult;
     '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    isActive == true &&\n    defined(slug.current)\n  ]{\n    "slug": slug.current,\n    productType,\n    "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null)\n  }\n': ProductPathsQueryResult;
     '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    slug.current == $slug &&\n    isActive == true\n  ][0]{\n    "slug": slug.current,\n    productType,\n    "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null)\n  }\n': ProductRouteBySlugQueryResult;
-    '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    isActive == true\n  ] | order(sortOrder asc, title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    sku,\n    summary,\n    productType,\n    catalogType,\n    "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),\n    "partsCategoryKey": partsCategory->key,\n    "seriesTitle": series->title,\n    "seriesSlug": series->slug.current,\n    "serviceTitles": printingServices[]->title,\n    "serviceSlugs": printingServices[]->slug.current,\n    mainImage{ asset, alt },\n    priceDisplay,\n    price,\n    priceMin,\n    priceMax,\n    currency,\n    isFeatured,\n    sortOrder,\n  }\n': ProductListQueryResult;
-    '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    slug.current == $slug &&\n    isActive == true\n  ][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    sku,\n    summary,\n    productType,\n    catalogType,\n    "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),\n    "productCategoryRootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.productCategory->slug.current][0]._id) && !(productCategory->slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),\n    "productCategory": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->{ title, "slug": slug.current, productType }, null),\n    "partsCategoryKey": partsCategory->key,\n    "seriesTitle": series->title,\n    "seriesSlug": series->slug.current,\n    "seriesDescription": series->description,\n    "serviceTitles": printingServices[]->title,\n    "serviceSlugs": printingServices[]->slug.current,\n    productionLeadTime,\n    priceDisplay,\n    price,\n    priceMin,\n    priceMax,\n    currency,\n    priceUnit,\n    moq,\n    warranty,\n    mainImage{ asset, alt },\n    "gallery": galleryImages[]{ _key, image, alt, label },\n    keyFeatures[]{ _key, title, description },\n    keySpecs[]{ _key, label, value, note },\n    oemTerms[]{ _key, label, value, note },\n    variants[]{ _key, variantName, sku, attributes, isDefault, image{ asset, alt } },\n    materials,\n    customizationOptions,\n    "printingServices": printingServices[]->{\n      _id,\n      title,\n      "slug": slug.current,\n      shortDescription,\n    },\n    description,\n    metaTitle,\n    metaDescription,\n    ogImage{ asset, alt },\n    seo{ metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{ asset, alt } },\n    "relatedHardware": relatedHardware[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },\n    "accessories": accessories[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },\n    "relatedSolutions": relatedSolutions[@->isActive != false]->{ title, "slug": slug.current, summary },\n    "relatedDisplays": *[\n      _type == "product" &&\n      isActive == true &&\n      productType == "customDisplay" &&\n      ^._id in relatedHardware[]._ref\n    ] | order(sortOrder asc, title asc){ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },\n    faq[]{ _key, question, answer },\n    brand,\n    mpn,\n    gtin13,\n    "related": relatedProducts[@->isActive == true]->{\n      _id, title, "slug": slug.current, sku,\n      productType,\n      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),\n      "seriesTitle": series->title,\n      "seriesSlug": series->slug.current,\n      mainImage{ asset, alt },\n      priceDisplay, price, priceMin, priceMax, currency\n    }\n  }\n': ProductBySlugQueryResult;
+    '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    isActive == true\n  ] | order(sortOrder asc, title asc){\n    _id,\n    title,\n    "slug": slug.current,\n    sku,\n    summary,\n    productType,\n    catalogType,\n    internalModel,\n    "productFamilyTitle": productFamily->title,\n    variants[]{ _key, variantName, sku, sizeLabel, width, length, height, measurementUnit, attributes },\n    "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),\n    "partsCategoryKey": partsCategory->key,\n    "seriesTitle": series->title,\n    "seriesSlug": series->slug.current,\n    "serviceTitles": printingServices[]->title,\n    "serviceSlugs": printingServices[]->slug.current,\n    mainImage{ asset, alt },\n    priceDisplay,\n    price,\n    priceMin,\n    priceMax,\n    currency,\n    isFeatured,\n    sortOrder,\n  }\n': ProductListQueryResult;
+    '\n  *[\n    _type == "product" &&\n    coalesce(language, "en") == $language &&\n    slug.current == $slug &&\n    isActive == true\n  ][0]{\n    _id,\n    title,\n    "slug": slug.current,\n    sku,\n    summary,\n    productType,\n    catalogType,\n    internalModel,\n    "productFamily": productFamily->{\n      _id, title, "slug": slug.current, description,\n      sharedFeatures[]{_key, title, description},\n      sharedSpecifications[]{_key, label, value, unit, note}\n    },\n    "productCategorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),\n    "productCategoryRootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.productCategory->slug.current][0]._id) && !(productCategory->slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),\n    "productCategory": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->{\n      title, "slug": slug.current, productType,\n      "relatedCategories": relatedCategories[@->isActive == true && @->productType == "customDisplay" && coalesce(@->seo.noIndex, false) != true]->{\n        title, "slug": slug.current, productType,\n        "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),\n        "hasProducts": count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0\n      }\n    }, null),\n    "partsCategoryKey": partsCategory->key,\n    "seriesTitle": series->title,\n    "seriesSlug": series->slug.current,\n    "seriesDescription": series->description,\n    "serviceTitles": printingServices[]->title,\n    "serviceSlugs": printingServices[]->slug.current,\n    productionLeadTime,\n    priceDisplay,\n    price,\n    priceMin,\n    priceMax,\n    currency,\n    priceUnit,\n    moq,\n    warranty,\n    mainImage{ asset, alt },\n    "gallery": galleryImages[]{ _key, image, alt, label },\n    keyFeatures[]{ _key, title, description },\n    keySpecs[]{ _key, label, value, note },\n    specifications[]{ _key, label, value, unit, note },\n    oemTerms[]{ _key, label, value, note },\n    variants[]{\n      _key, variantName, sku, sizeLabel, attributes, isDefault,\n      width, length, height, measurementUnit, frameMaterial, legProfile, tubeDimensions,\n      netWeight, shippingWeight, weightUnit, packageDimensions, includedItems, availabilityStatus, sortOrder,\n      image{ asset, alt },\n      "images": images[]{_key, alt, image{asset, alt}},\n      specSheetTitle,\n      "specSheetUrl": specSheet.asset->url,\n      "specSheetFileName": specSheet.asset->originalFilename\n    },\n    materials,\n    customizationOptions,\n    applications,\n    includedItems,\n    printAreas[]{_key, name, description, dimensions},\n    artworkRequirements,\n    "technicalDocuments": technicalDocuments[]{\n      _key, title, documentType, description, variantSkus,\n      "url": file.asset->url,\n      "fileName": file.asset->originalFilename,\n      "mimeType": file.asset->mimeType\n    },\n    "printingServices": printingServices[]->{\n      _id,\n      title,\n      "slug": slug.current,\n      shortDescription,\n    },\n    description,\n    metaTitle,\n    metaDescription,\n    ogImage{ asset, alt },\n    seo{ metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{ asset, alt } },\n    "relatedHardware": relatedHardware[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },\n    "relatedCustomDisplays": relatedCustomDisplays[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },\n    "relatedAccessories": relatedAccessories[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },\n    "accessories": accessories[@->isActive == true]->{ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },\n    "relatedSolutions": relatedSolutions[@->isActive != false]->{ title, "slug": slug.current, summary },\n    "relatedDisplays": *[\n      _type == "product" &&\n      isActive == true &&\n      productType == "customDisplay" &&\n      ^._id in relatedHardware[]._ref\n    ] | order(sortOrder asc, title asc){ _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), sku, mainImage{ asset, alt } },\n    faq[]{ _key, question, answer },\n    brand,\n    mpn,\n    gtin13,\n    "related": relatedProducts[@->isActive == true]->{\n      _id, title, "slug": slug.current, sku,\n      productType,\n      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null),\n      "seriesTitle": series->title,\n      "seriesSlug": series->slug.current,\n      mainImage{ asset, alt },\n      priceDisplay, price, priceMin, priceMax, currency\n    }\n  }\n': ProductBySlugQueryResult;
     '\n  *[_type == "solution" && coalesce(language, "en") == $language && (slug.current == $slug || slug.current in $aliases || _id == $documentId)]\n  | order((slug.current == $slug) desc)[0]{\n    _id, title, scenarioIntro, needs, howProductsWorkTogether, customizationOptions,\n    "heroImage": select(\n      defined(heroImage.asset._ref) => heroImage{asset, alt, caption},\n      defined(coverImage.asset._ref) => coverImage{asset, alt, "caption": null},\n      pageBuilder[_type == "heroBlock"][0].backgroundImage{asset, alt, "caption": null}\n    ),\n    combinationImage{asset, alt, caption},\n    gallery[]{_key, asset, alt, caption},\n    seo{metaTitle, metaDescription, canonicalUrl, ogTitle, ogDescription, noIndex, ogImage{asset, alt}},\n    "recommendedProducts": recommendedProducts[@->isActive == true]->{\n      _id, title, "slug": slug.current, productType,\n      "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null)\n    },\n    "recommendedProductCategories": recommendedProductCategories[@->isActive == true]->{\n      title, "slug": slug.current, productType,\n      "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),\n      "hasProducts": count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0\n    },\n    "recommendedPrintingServices": recommendedPrintingServices[@->isActive == true]->{title, "slug": slug.current},\n    supportServices[]->{_id, title, "slug": slug.current, shortDescription, isActive},\n    relatedSolutions[]->{title, "slug": slug.current},\n    packages[scenarioConfiguration == true]{\n      _key, title, tier, summary, environment,\n      items[]{_key, role, quantityLabel, quantityNote, requirement, reason,\n        alternative->{title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), isActive},\n        product->{_id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), isActive, mainImage{asset, alt},\n          printingServices[]->{_id, title, "slug": slug.current, shortDescription, isActive}\n        }\n      }\n    }\n  }\n': ScenarioSolutionQueryResult;
     '{\n  "products": *[_type == "product" && _id in $ids && isActive == true]{\n    _id, title, "slug": slug.current, productType, "categorySlug": select(productCategory->isActive == true && productType == productCategory->productType => productCategory->slug.current, null), isActive, mainImage{asset, alt},\n    printingServices[]->{_id, title, "slug": slug.current, shortDescription, isActive}\n  },\n  "support": *[_type == "service" && _id == "service.artwork-design-setup" && isActive == true]{\n    _id, title, "slug": slug.current, shortDescription, isActive\n  }\n}': ScenarioCatalogQueryResult;
     '\n  *[_type == "siteSettings"][0]{\n    showPrices, salesEmail, phone, whatsapp, responseTime, companyAddress,\n    frameFinishes[]{ _key, name, hex },\n    upholsteryColors[]{ _key, name, hex },\n    socialLinks[]{ _key, platform, label, url }\n  }\n': SiteSettingsQueryResult;

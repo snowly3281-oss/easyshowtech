@@ -20,15 +20,23 @@ const productTitle = product.title ?? t('EasyShow equipment')
 
 const variants = (product.variants ?? []).filter((variant) => variant?.variantName)
 const variantLabel = (variant: NonNullable<typeof variants>[number]) => {
-  const details = [variant.attributes?.size, variant.attributes?.color, variant.attributes?.material, variant.attributes?.weight].filter(Boolean)
-  return [variant.variantName, variant.sku, ...details].filter(Boolean).join(' · ')
+  const details = [variant.sizeLabel || variant.attributes?.size, variant.attributes?.color, variant.frameMaterial || variant.attributes?.material]
+  return [...new Set([variant.variantName, ...details].filter(Boolean))].join(' · ')
 }
 const defaultVariant = variants.find((variant) => variant.isDefault) ?? variants[0]
 const defaultVariantLabel = defaultVariant ? variantLabel(defaultVariant) : null
+const defaultVariantSku = defaultVariant?.sku || product.sku || ''
+const variantImage = (variant: NonNullable<typeof variants[number]>) => {
+  const asset = variant.image?.asset ?? variant.images?.[0]?.image?.asset
+  return asset ? urlFor(asset).width(1280).fit('max').auto('format').url() : ''
+}
+const variantImageAlt = (variant: NonNullable<typeof variants[number]>) =>
+  variant.image?.alt || variant.images?.[0]?.alt || variant.images?.[0]?.image?.alt || productTitle
 const quoteHref =
   localizedPath('/contact', locale) +
   '?product=' +
   encodeURIComponent(product.sku ?? '') +
+  '&sku=' + encodeURIComponent(defaultVariantSku) +
   (defaultVariantLabel ? '&variant=' + encodeURIComponent(defaultVariantLabel) : '')
 
 const stats = [
@@ -174,7 +182,8 @@ const breadcrumbJsonLd = {
       </div>
 
       <aside class="ph__card">
-        {product.sku && <p class="ph__status nums">{product.sku}</p>}
+        {(defaultVariantSku || product.internalModel) && <p class="ph__status nums"><span data-product-sku>{defaultVariantSku}</span>{product.internalModel && <span class="ph__model">{product.internalModel}</span>}</p>}
+        {product.productFamily?.title && <p class="eyebrow">{product.productFamily.title}</p>}
         {product.seriesTitle && <p class="eyebrow">{product.seriesTitle} {t('series')}</p>}
         <h1 class="ph__title">{productTitle}</h1>
         {product.summary && <p class="body-s ph__summary">{product.summary}</p>}
@@ -204,6 +213,10 @@ const breadcrumbJsonLd = {
                     class:list={['ph__pill', { 'is-active': variant === defaultVariant }]}
                     data-swatch="variant"
                     data-name={variantLabel(variant)}
+                    data-variant-key={variant._key ?? variant.sku ?? variant.variantName}
+                    data-variant-sku={variant.sku ?? ''}
+                    data-variant-image={variantImage(variant)}
+                    data-variant-image-alt={variantImageAlt(variant)}
                     aria-pressed={variant === defaultVariant ? 'true' : 'false'}
                   >{variantLabel(variant)}</button>
                 </li>
@@ -232,12 +245,13 @@ const breadcrumbJsonLd = {
             data-rfq-product-id={product._id}
             data-rfq-slug={product.slug ?? ''}
             data-rfq-title={productTitle}
-            data-rfq-sku={product.sku ?? ''}
+            data-rfq-sku={defaultVariantSku}
+            data-rfq-base-sku={product.sku ?? ''}
             data-rfq-quantity="1"
           >
             {t('Add to RFQ')}
           </button>
-          <a class="btn btn-outline ph__cta" data-quote-cta href={quoteHref}>{t('Request one-product quote')}</a>
+          <a class="btn btn-outline ph__cta" data-quote-cta data-rfq-base-sku={product.sku ?? ''} href={quoteHref}>{t('Request one-product quote')}</a>
         </div>
       </aside>
     </div>
@@ -333,33 +347,72 @@ const breadcrumbJsonLd = {
   initGallery()
 
   // Product variant selector: preserve only variants maintained on this SKU.
+  let configuratorController: AbortController | undefined
   function initConfigurator() {
     const cta = document.querySelector('[data-quote-cta]') as HTMLAnchorElement | null
     if (!cta || cta.dataset.configuratorInitialized === 'true') return
+    const rfqButton = document.querySelector<HTMLElement>('[data-rfq-add]')
     cta.dataset.configuratorInitialized = 'true'
-    document.querySelectorAll('[data-swatch]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const group = btn.getAttribute('data-swatch') || ''
-        const name = btn.getAttribute('data-name') || ''
-        document
-          .querySelectorAll('[data-swatch="' + group + '"]')
-          .forEach((b) => {
-            b.classList.toggle('is-active', b === btn)
-            if (b.hasAttribute('aria-pressed')) b.setAttribute('aria-pressed', b === btn ? 'true' : 'false')
-          })
-        const valEl = document.querySelector('[data-config-value="' + group + '"]')
-        if (valEl) valEl.textContent = name
+    configuratorController?.abort()
+    const controller = new AbortController()
+    configuratorController = controller
+    const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-swatch]'))
+    const selectVariant = (btn: HTMLButtonElement, updateUrl: boolean) => {
+      const group = btn.getAttribute('data-swatch') || ''
+      const name = btn.getAttribute('data-name') || ''
+      document
+        .querySelectorAll('[data-swatch="' + group + '"]')
+        .forEach((b) => {
+          b.classList.toggle('is-active', b === btn)
+          if (b.hasAttribute('aria-pressed')) b.setAttribute('aria-pressed', b === btn ? 'true' : 'false')
+        })
+      const valEl = document.querySelector('[data-config-value="' + group + '"]')
+      if (valEl) valEl.textContent = name
+      if (group === 'variant') {
+        const sku = btn.dataset.variantSku || cta.dataset.rfqBaseSku || ''
+        if (rfqButton) rfqButton.dataset.rfqSku = sku
+        const skuNode = document.querySelector<HTMLElement>('[data-product-sku]')
+        if (skuNode) skuNode.textContent = sku
+        document.querySelectorAll<HTMLElement>('[data-variant-detail]').forEach((panel) => {
+          panel.hidden = panel.dataset.variantDetail !== (btn.dataset.variantKey || '')
+        })
+        const mainImage = document.querySelector<HTMLImageElement>('[data-ph-main]')
+        if (mainImage && btn.dataset.variantImage) {
+          mainImage.src = btn.dataset.variantImage
+          mainImage.alt = btn.dataset.variantImageAlt || ''
+        }
         if (cta) {
           try {
             const url = new URL(cta.getAttribute('href') || '/contact', location.origin)
-            url.searchParams.set(group, name)
+            url.searchParams.set('variant', name)
+            if (sku) url.searchParams.set('sku', sku)
+            else url.searchParams.delete('sku')
             cta.setAttribute('href', url.pathname + url.search)
-          } catch (e) {
-            /* noop */
-          }
+          } catch (e) { /* noop */ }
         }
-      })
+        if (updateUrl) {
+          const url = new URL(location.href)
+          const value = btn.dataset.variantSku || btn.dataset.variantKey
+          if (value) url.searchParams.set('variant', value)
+          history.replaceState(history.state, '', url.pathname + url.search + url.hash)
+        }
+        window.dispatchEvent(new CustomEvent('product:variant-change', {
+          detail: {sku, key: btn.dataset.variantKey || '', label: name},
+        }))
+      }
+    }
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => selectVariant(btn, true), {signal: controller.signal})
     })
+    const selectFromUrl = () => {
+      const requested = new URLSearchParams(location.search).get('variant')
+      if (!requested) return
+      const match = buttons.find((button) => button.dataset.variantSku === requested || button.dataset.variantKey === requested)
+      if (match) selectVariant(match, false)
+    }
+    selectFromUrl()
+    window.addEventListener('popstate', selectFromUrl, {signal: controller.signal})
+    document.addEventListener('astro:before-swap', () => controller.abort(), {once: true, signal: controller.signal})
   }
   initConfigurator()
   document.addEventListener('astro:page-load', () => {
@@ -527,6 +580,7 @@ const breadcrumbJsonLd = {
     color: var(--color-coral);
     margin: 0 0 var(--space-3);
   }
+  .ph__model { margin-left:var(--space-2); padding-left:var(--space-2); border-left:1px solid var(--color-ink-300); color:var(--color-ink-500); }
   .ph__title {
     margin: var(--space-1) 0 0;
   }

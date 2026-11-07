@@ -6,6 +6,10 @@ import { productDetailPath } from '../../lib/productRoutes'
 interface Props { product: any; locale?: Locale }
 const { product, locale = 'en' } = Astro.props as Props
 const relationUrl = (entry: any) => entry?.slug ? localizedPath(productDetailPath(entry), locale) : '#'
+const accessories = [...(product.relatedAccessories ?? []), ...(product.accessories ?? [])]
+  .filter((entry: any) => entry?.slug)
+  .filter((entry: any, index: number, all: any[]) => all.findIndex((candidate) => candidate._id === entry._id || candidate.slug === entry.slug) === index)
+const hardwareHeading = product.productType === 'customDisplay' ? 'Available frame options' : 'Compatible hardware & frames'
 const faq = (product.faq ?? []).filter((entry: any) => entry?.question && entry?.answer)
 const faqJsonLd = faq.length ? {
   '@context': 'https://schema.org',
@@ -18,12 +22,12 @@ const faqJsonLd = faq.length ? {
 } : null
 ---
 
-{product.printingServices?.length || product.relatedHardware?.length || product.accessories?.length || product.relatedSolutions?.length || product.related?.length || faq.length ? (
+{product.printingServices?.length || product.relatedHardware?.length || accessories.length || product.relatedSolutions?.length || product.related?.length || faq.length ? (
   <section class="section product-relations">
     <div class="container">
       {product.printingServices?.length ? <div class="relation-group"><h2>{ui(locale, 'byService')}</h2><ul>{product.printingServices.filter((entry: any) => entry?.slug).map((entry: any) => <li><a href={localizedPath(`/printing-services/${entry.slug}`, locale)}>{entry.title}</a></li>)}</ul></div> : null}
-      {product.relatedHardware?.length ? <div class="relation-group"><h2>Compatible hardware &amp; frames</h2><ul>{product.relatedHardware.filter((entry: any) => entry?.slug).map((entry: any) => <li><a href={relationUrl(entry)}>{entry.title}</a></li>)}</ul></div> : null}
-      {product.accessories?.length ? <div class="relation-group"><h2>{ui(locale, 'partsAccessories')}</h2><ul>{product.accessories.filter((entry: any) => entry?.slug).map((entry: any) => <li><a href={relationUrl(entry)}>{entry.title}</a></li>)}</ul></div> : null}
+      {product.relatedHardware?.length ? <div class="relation-group"><h2>{hardwareHeading}</h2><ul>{product.relatedHardware.filter((entry: any) => entry?.slug).map((entry: any) => <li><a href={relationUrl(entry)}>{entry.title}</a></li>)}</ul></div> : null}
+      {accessories.length ? <div class="relation-group"><h2>{ui(locale, 'partsAccessories')}</h2><ul>{accessories.map((entry: any) => <li><a href={relationUrl(entry)}>{entry.title}</a></li>)}</ul></div> : null}
       {product.related?.length ? <div class="relation-group"><h2>{ui(locale, 'allProducts')}</h2><ul>{product.related.filter((entry: any) => entry?.slug).map((entry: any) => <li><a href={relationUrl(entry)}>{entry.title}</a></li>)}</ul></div> : null}
       {product.relatedSolutions?.length ? <div class="relation-group"><h2>{ui(locale, 'solutions')}</h2><ul>{product.relatedSolutions.filter((entry: any) => entry?.slug).map((entry: any) => <li><a href={localizedPath(`/solutions/${entry.slug}`, locale)}>{entry.title}</a></li>)}</ul></div> : null}
       {faq.length ? <div class="relation-faq"><h2>Frequently asked questions</h2>{faq.map((entry: any) => <details><summary>{entry.question}</summary><p>{entry.answer}</p></details>)}</div> : null}

@@ -23,6 +23,7 @@ interface CategoryData {
   slug?: string | null
   productType?: string | null
   description?: string | null
+  shortDescription?: string | null
   intro?: unknown[] | null
   contentBlocks?: unknown[] | null
   heroImage?: { asset?: unknown; alt?: string | null } | null
@@ -36,6 +37,7 @@ interface CategoryData {
     ogImage?: { asset?: unknown; alt?: string | null } | null
   } | null
   products?: ProductCardData[] | null
+  faq?: Array<{_key?: string | null; question?: string | null; answer?: string | null} | null> | null
   relatedCategories?: CategoryLink[] | null
   relatedPrintingServices?: CategoryLink[] | null
   relatedSolutions?: CategoryLink[] | null
@@ -52,7 +54,8 @@ const typeLabel = category.productType === 'hardware'
     ? ui(locale, 'partsAccessories')
     : ui(locale, 'customDisplays')
 const title = category.seo?.metaTitle || `${category.title || 'Products'} — EasyShow`
-const description = category.seo?.metaDescription || category.description || undefined
+const description = category.seo?.metaDescription || category.description || category.shortDescription || undefined
+const visibleDescription = category.shortDescription || category.description
 const socialAsset = category.seo?.ogImage?.asset || category.heroImage?.asset
 const socialImage = socialAsset ? urlFor(socialAsset as never).width(1200).height(630).fit('crop').auto('format').url() : undefined
 const hero = category.heroImage?.asset ? urlFor(category.heroImage.asset as never).width(1800).auto('format').url() : null
@@ -102,7 +105,7 @@ const breadcrumbJsonLd = {
       {hero && <img class="category-hero" src={hero} alt={category.heroImage?.alt || category.title || ''} width="1800" height="800" fetchpriority="high" />}
       <p class="category-eyebrow">{typeLabel}</p>
       <h1>{category.title}</h1>
-      {category.description && <p class="category-description">{category.description}</p>}
+      {visibleDescription && <p class="category-description">{visibleDescription}</p>}
       {category.intro?.length && <div class="category-intro"><PortableText value={category.intro as never} /></div>}
       {category.contentBlocks?.length && <div class="category-intro"><PortableText value={category.contentBlocks as never} /></div>}
 
@@ -150,6 +153,18 @@ const breadcrumbJsonLd = {
         </nav>
       ) : null}
 
+      {category.faq?.some((entry) => entry?.question && entry?.answer) ? (
+        <section class="category-related" aria-labelledby="category-faq-heading">
+          <h2 id="category-faq-heading">Frequently asked questions</h2>
+          {category.faq.filter((entry) => entry?.question && entry?.answer).map((entry) => (
+            <details class="category-faq">
+              <summary>{entry!.question}</summary>
+              <p>{entry!.answer}</p>
+            </details>
+          ))}
+        </section>
+      ) : null}
+
       <div class="category-cta">
         <a class="btn btn-coral" href={localizedPath('/contact', locale)}>{ui(locale, 'requestCustomQuote')}</a>
       </div>
@@ -174,6 +189,9 @@ const breadcrumbJsonLd = {
   .category-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--space-5); padding:0; list-style:none; }
   .category-related ul { display:flex; flex-wrap:wrap; gap:12px 22px; padding:0; list-style:none; }
   .category-related a { color:var(--color-coral); }
+  .category-faq { border-top:1px solid var(--color-ink-200); padding:var(--space-3) 0; }
+  .category-faq summary { cursor:pointer; font-weight:600; }
+  .category-faq p { max-width:76ch; color:var(--color-ink-600); }
   .category-cta { margin-top:var(--space-8); }
   @media(max-width:760px) { .category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-3); } .category-conversion { grid-template-columns:1fr; gap:var(--space-3); } .category-conversion-arrow { transform:rotate(90deg); justify-self:start; } }
   @media(max-width:420px) { .category-grid { grid-template-columns:1fr; } }

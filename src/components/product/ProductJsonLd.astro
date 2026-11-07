@@ -1,49 +1,96 @@
 ---
-import type { ProductData } from '../../sanity/content'
-import { urlFor } from '../../sanity/image'
-import type { PricePresentation } from '../../lib/price'
+import type {ProductData} from '../../sanity/content'
+import {urlFor} from '../../sanity/image'
+import type {PricePresentation} from '../../lib/price'
 
-/**
- * Product schema JSON-LD uses the same normalized price presentation as the
- * visible page. Exact prices emit Offer; complete ranges emit AggregateOffer.
- * Quote-only or globally hidden prices emit no offer.
- */
 interface Props {
   product: ProductData
   price: PricePresentation | null
+  canonicalUrl?: string | null
 }
 
-const { product, price } = Astro.props
+const {product, price, canonicalUrl} = Astro.props
+const pageUrl = new URL(canonicalUrl || Astro.url.pathname, Astro.site ?? Astro.url)
+pageUrl.search = ''
+pageUrl.hash = ''
+const variants = (product.variants ?? []).filter((variant) => variant?.sku)
+const variantSkus = variants.map((variant) => variant.sku!.trim())
+const uniqueVariantSkus = new Set(variantSkus)
+const variationDimensions = [
+  {property: 'https://schema.org/size', values: variants.map((variant) => variant.sizeLabel || variant.attributes?.size)},
+  {property: 'https://schema.org/color', values: variants.map((variant) => variant.attributes?.color)},
+  {property: 'https://schema.org/material', values: variants.map((variant) => variant.frameMaterial || variant.attributes?.material)},
+]
+const variesBy = variationDimensions
+  .filter(({values}) => values.length > 1 && values.every(Boolean) && new Set(values).size > 1)
+  .map(({property}) => property)
+const hasCompleteProductGroup = variants.length > 1 && uniqueVariantSkus.size === variants.length && variesBy.length > 0
 
-const jsonLd: Record<string, unknown> = {
-  '@context': 'https://schema.org',
-  '@type': 'Product',
+const imageUrl = (variant: NonNullable<typeof variants[number]>) => {
+  const asset = variant.image?.asset ?? variant.images?.[0]?.image?.asset
+  return asset ? urlFor(asset).width(1200).url() : undefined
 }
-if (product.title) jsonLd.name = product.title
-if (product.sku) jsonLd.sku = product.sku
-if (product.mpn) jsonLd.mpn = product.mpn
-if (product.gtin13) jsonLd.gtin13 = product.gtin13
-if (product.brand) jsonLd.brand = { '@type': 'Brand', name: product.brand }
-if (product.materials?.length) jsonLd.material = product.materials.join(', ')
-if (product.summary) jsonLd.description = product.summary
+const variantUrl = (variant: NonNullable<typeof variants[number]>) => {
+  const url = new URL(pageUrl)
+  url.searchParams.set('variant', variant.sku!)
+  return url.toString()
+}
+const variantName = (variant: NonNullable<typeof variants[number]>) => {
+  const label = variant.sizeLabel || variant.attributes?.size || variant.variantName
+  return [product.title, label].filter(Boolean).join(' — ')
+}
 
-const imgAsset = product.mainImage?.asset
-if (imgAsset) jsonLd.image = urlFor(imgAsset).width(1200).url()
+const jsonLd: Record<string, unknown> = hasCompleteProductGroup
+  ? {
+      '@context': 'https://schema.org',
+      '@type': 'ProductGroup',
+      '@id': `${pageUrl.toString()}#product-group`,
+      name: product.title,
+      ...(product.summary ? {description: product.summary} : {}),
+      ...(product.brand ? {brand: {'@type': 'Brand', name: product.brand}} : {}),
+      productGroupID: product.sku || product.internalModel || product._id,
+      url: pageUrl.toString(),
+      variesBy,
+      hasVariant: variants.map((variant) => ({
+        '@type': 'Product',
+        sku: variant.sku,
+        name: variantName(variant),
+        url: variantUrl(variant),
+        ...(variant.sizeLabel || variant.attributes?.size ? {size: variant.sizeLabel || variant.attributes?.size} : {}),
+        ...(variant.attributes?.color ? {color: variant.attributes.color} : {}),
+        ...(variant.frameMaterial || variant.attributes?.material ? {material: variant.frameMaterial || variant.attributes?.material} : {}),
+        ...(imageUrl(variant) ? {image: imageUrl(variant)} : {}),
+      })),
+    }
+  : {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+    }
 
-if (price?.kind === 'range') {
-  jsonLd.offers = {
-    '@type': 'AggregateOffer',
-    priceCurrency: price.currency,
-    lowPrice: price.min,
-    highPrice: price.max,
-    availability: 'https://schema.org/InStock',
-  }
-} else if (price?.kind === 'exact') {
-  jsonLd.offers = {
-    '@type': 'Offer',
-    priceCurrency: price.currency,
-    price: price.amount,
-    availability: 'https://schema.org/InStock',
+if (!hasCompleteProductGroup) {
+  if (product.title) jsonLd.name = product.title
+  if (product.sku) jsonLd.sku = product.sku
+  if (product.mpn) jsonLd.mpn = product.mpn
+  if (product.gtin13) jsonLd.gtin13 = product.gtin13
+  if (product.brand) jsonLd.brand = {'@type': 'Brand', name: product.brand}
+  if (product.materials?.length) jsonLd.material = product.materials.join(', ')
+  if (product.summary) jsonLd.description = product.summary
+  const asset = product.mainImage?.asset
+  if (asset) jsonLd.image = urlFor(asset).width(1200).url()
+
+  if (price?.kind === 'range') {
+    jsonLd.offers = {
+      '@type': 'AggregateOffer',
+      priceCurrency: price.currency,
+      lowPrice: price.min,
+      highPrice: price.max,
+    }
+  } else if (price?.kind === 'exact') {
+    jsonLd.offers = {
+      '@type': 'Offer',
+      priceCurrency: price.currency,
+      price: price.amount,
+    }
   }
 }
 
