@@ -6,9 +6,10 @@ import {staticUi} from '../../i18n/static'
 interface Props {
   product: ProductData
   locale?: Locale
+  showMaterials?: boolean
 }
 
-const {product, locale = 'en'} = Astro.props
+const {product, locale = 'en', showMaterials = true} = Astro.props
 const t = (english: string) => staticUi(locale, english)
 const keySpecs = product.keySpecs ?? []
 const familySpecs = product.productFamily?.sharedSpecifications ?? []
@@ -21,7 +22,7 @@ const features = [...new Map(
     .filter((feature) => feature?.title)
     .map((feature) => [feature.title!.trim().toLocaleLowerCase(), feature]),
 ).values()]
-const materials = product.materials ?? []
+const materials = showMaterials ? product.materials ?? [] : []
 const customizationOptions = product.customizationOptions ?? []
 const applications = product.applications ?? []
 const includedItems = product.includedItems ?? []

@@ -112,6 +112,10 @@ const product: ProductData | null = rawProduct ? {
       seriesTitles.get(related.seriesSlug ?? '') ?? related.seriesTitle,
   })),
 } as ProductData : null
+const materialsInTechnicalSpecs = Boolean(product && [
+  ...(product.productFamily?.sharedSpecifications ?? []),
+  ...(product.specifications ?? []),
+].some((spec) => /material|alloy|材质|材料/i.test(spec.label ?? '')))
 const isPartsProduct =
   rawProduct?.productType === 'partAccessory' ||
   rawProduct?.catalogType === 'accessory' || rawProduct?.catalogType === 'spare_part'
@@ -145,8 +149,8 @@ const categoryCanonical = product?.productCategorySlug
         <>
           <ProductHeader product={product} settings={settings} locale={locale} />
           <AtAGlance product={product} locale={locale} />
-          <MaterialsSection materials={product.materials} locale={locale} />
-          <Datasheet product={product} locale={locale} />
+          {!materialsInTechnicalSpecs && <MaterialsSection materials={product.materials} locale={locale} />}
+          <Datasheet product={product} locale={locale} showMaterials={!materialsInTechnicalSpecs} />
           <WholesaleOem terms={product.oemTerms} locale={locale} />
           {product.productType === 'hardware' && <HardwareProductRelations product={product} locale={locale} />}
           <ProductRelationships product={product} locale={locale} />
