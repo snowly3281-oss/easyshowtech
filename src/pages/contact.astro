@@ -8,6 +8,7 @@
  */
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Icon from "../components/Icon.astro";
+import ContactBrandIcon from "../components/ContactBrandIcon.astro";
 import PageBuilder from "../components/blocks/PageBuilder.astro";
 import { getSiteSettings } from "../sanity/settings";
 import {getSitePage} from "../sanity/pages";
@@ -40,6 +41,7 @@ const metaTitle = page?.seo?.metaTitle || t("Contact — {brand}").replace("{bra
 const metaDescription = page?.seo?.metaDescription || pageIntro;
 const salesEmail = settings?.salesEmail ?? siteSettings.salesEmail;
 const phone = settings?.phone ?? siteSettings.phone;
+const whatsappHref = `https://wa.me/${phone.replace(/\D/g, '')}`;
 ---
 
 <BaseLayout
@@ -292,12 +294,12 @@ const phone = settings?.phone ?? siteSettings.phone;
             <p class="caption">{t("Your contact at {brand}").replace("{brand}", siteSettings.brand)}</p>
             <hr class="rule" />
             <a class="line line-coral" href={`mailto:${salesEmail}`}>
-              <Icon name="mail" size={18} /><span>{salesEmail}</span>
+              <ContactBrandIcon kind="gmail" size={20} /><span>{salesEmail}</span>
             </a>
-            <div class="line">
-              <Icon name="chat" size={18} />
+            <a class="line" href={whatsappHref} target="_blank" rel="noopener noreferrer">
+              <ContactBrandIcon kind="whatsapp" size={20} />
               <span><span class="nums">{phone}</span><span class="sub">WhatsApp</span></span>
-            </div>
+            </a>
           </div>
 
           <div class="card">

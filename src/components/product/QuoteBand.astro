@@ -2,6 +2,7 @@
 import type { SiteSettingsData } from '../../sanity/content'
 import {localizedPath, type Locale} from '../../i18n/config'
 import {localizeCountDuration, staticUi} from '../../i18n/static'
+import ContactBrandIcon from '../ContactBrandIcon.astro'
 
 interface Props {
   settings?: SiteSettingsData | null
@@ -15,8 +16,8 @@ const email = settings?.salesEmail ?? 'chris@easyshowtech.com'
 const phone = settings?.phone ?? '+86 139 2197 4459'
 
 const contacts = [
-  { label: t('Sales'), value: email, href: `mailto:${email}` },
-  { label: t('Phone'), value: phone, href: `tel:${phone.replace(/\s+/g, '')}` },
+  { label: t('Sales'), value: email, href: `mailto:${email}`, kind: 'gmail' },
+  { label: 'WhatsApp', value: phone, href: `https://wa.me/${phone.replace(/\D/g, '')}`, kind: 'whatsapp' },
   { label: t('Min. order'), value: moq ? localizeCountDuration(locale, moq)! : t('Confirmed in your quotation'), href: null },
 ]
 ---
@@ -36,7 +37,7 @@ const contacts = [
         contacts.map((c) => (
           <div class="quote__contact">
             <dt>{c.label}</dt>
-            <dd class="nums">{c.href ? <a href={c.href}>{c.value}</a> : c.value}</dd>
+            <dd class="nums">{c.href ? <a href={c.href} target={c.kind === 'whatsapp' ? '_blank' : undefined} rel={c.kind === 'whatsapp' ? 'noopener noreferrer' : undefined}><ContactBrandIcon kind={c.kind as 'gmail' | 'whatsapp'} size={22} /><span>{c.value}</span></a> : c.value}</dd>
           </div>
         ))
       }
@@ -89,6 +90,8 @@ const contacts = [
     font-size: var(--text-h4);
     font-weight: 600;
   }
+  .quote__contact a { display: inline-flex; align-items: center; gap: var(--space-2); }
+  .quote__contact a :global(svg) { flex: none; }
   .quote__contact a:hover {
     text-decoration: underline;
   }

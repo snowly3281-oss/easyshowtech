@@ -9,6 +9,7 @@
  */
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Icon from "../components/Icon.astro";
+import ContactBrandIcon from "../components/ContactBrandIcon.astro";
 import PageBuilder from "../components/blocks/PageBuilder.astro";
 import {
   TURNSTILE_ACTION,
@@ -492,8 +493,8 @@ const faqs = [
             <span class="eyebrow">{t("Prefer to talk?")}</span>
             <p class="lead-name">Chris Qian</p>
             <p class="caption">{t("OEM lead")}</p>
-            <a class="line line-coral" href={`mailto:${siteSettings.salesEmail}`}><Icon name="mail" size={18} /><span>{siteSettings.salesEmail}</span></a>
-            <div class="line"><Icon name="chat" size={18} /><span class="nums">{siteSettings.phone}</span></div>
+            <a class="line line-coral" href={`mailto:${siteSettings.salesEmail}`}><ContactBrandIcon kind="gmail" size={20} /><span>{siteSettings.salesEmail}</span></a>
+            <a class="line" href={`https://wa.me/${siteSettings.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"><ContactBrandIcon kind="whatsapp" size={20} /><span class="nums">{siteSettings.phone}</span></a>
           </div>
         </aside>
       </div>

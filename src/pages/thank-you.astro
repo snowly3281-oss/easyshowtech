@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Icon from "../components/Icon.astro";
+import ContactBrandIcon from "../components/ContactBrandIcon.astro";
 import { getSiteSettings } from "../sanity/settings";
 import {localizedPath, resolveLocale} from "../i18n/config";
 import {staticUi} from "../i18n/static";
@@ -25,7 +26,7 @@ const cards = [
 ];
 
 const waNumber = siteSettings.whatsapp.replace(/[^0-9]/g, "");
-const telNumber = siteSettings.phone.replace(/\s+/g, "");
+const phoneWhatsAppNumber = siteSettings.phone.replace(/\D/g, "");
 ---
 <BaseLayout locale={locale} title={t("Thank you — EasyShow")} noIndex={true}>
   <!-- Hero -->
@@ -91,10 +92,10 @@ const telNumber = siteSettings.phone.replace(/\s+/g, "");
         </div>
         <div class="talk-right">
           <a href={`https://wa.me/${waNumber}`} class="talk-contact">
-            <Icon name="chat" size={18} /> WhatsApp
+            <ContactBrandIcon kind="whatsapp" size={18} /> WhatsApp
           </a>
-          <a href={`tel:${telNumber}`} class="talk-contact nums">
-            <Icon name="phone" size={18} /> {siteSettings.phone}
+          <a href={`https://wa.me/${phoneWhatsAppNumber}`} class="talk-contact nums">
+            <ContactBrandIcon kind="whatsapp" size={18} /> {siteSettings.phone}
           </a>
         </div>
       </div>
