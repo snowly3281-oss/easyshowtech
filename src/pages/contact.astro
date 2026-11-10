@@ -298,7 +298,7 @@ const whatsappHref = `https://wa.me/${phone.replace(/\D/g, '')}`;
             </a>
             <a class="line" href={whatsappHref} target="_blank" rel="noopener noreferrer">
               <ContactBrandIcon kind="whatsapp" size={20} />
-              <span><span class="nums">{phone}</span><span class="sub">WhatsApp</span></span>
+              <span class="nums">{phone}</span>
             </a>
           </div>
 
@@ -497,7 +497,6 @@ const whatsappHref = `https://wa.me/${phone.replace(/\D/g, '')}`;
   .line :global(svg) { color: var(--color-ink-500); flex: none; margin-top: 2px; }
   .line-coral { color: var(--color-coral); font-weight: 500; }
   .line-coral :global(svg) { color: var(--color-coral); }
-  .sub { display: block; font-size: var(--text-caption); color: var(--color-ink-500); }
 
   .card-head { display: flex; align-items: center; gap: var(--space-2); }
   .card-head :global(svg) { color: var(--color-ink-500); }
