@@ -9,6 +9,10 @@ export const legacyRedirects: Record<string, string> = {
   '/product/40mm-aluminum-tube-frame-3x6m-hexagon-folding-tent-pop-up-canopy-marquee-for-trade-shows-events-parties-or-awning-use': '/products?series=aluminum-tent',
   '/products/40mm-aluminum-canopy-frame': '/products/hardware/aluminum-tent-frames/10x10ft-commercial-grade-aluminum-canopy-frame/',
   '/products/hardware/aluminum-tent-frames/40mm-aluminum-canopy-frame': '/products/hardware/aluminum-tent-frames/10x10ft-commercial-grade-aluminum-canopy-frame/',
+  '/products/hardware/aluminum-tent-frames/3ft3in-x-3ft3in-commercial-grade-aluminum-canopy-frame': '/products/hardware/aluminum-tent-frames/1x1m-mini-aluminum-pop-up-canopy-frame/',
+  '/products/hardware/aluminum-tent-frames/6ft7in-x-6ft7in-commercial-grade-aluminum-canopy-frame': '/products/hardware/aluminum-tent-frames/6-5x6-5ft-small-aluminum-pop-up-canopy-frame/',
+  '/products/3ft3in-x-3ft3in-commercial-grade-aluminum-canopy-frame': '/products/hardware/aluminum-tent-frames/1x1m-mini-aluminum-pop-up-canopy-frame/',
+  '/products/6ft7in-x-6ft7in-commercial-grade-aluminum-canopy-frame': '/products/hardware/aluminum-tent-frames/6-5x6-5ft-small-aluminum-pop-up-canopy-frame/',
 }
 
 export function legacyRedirect(pathname: string): string | undefined {
