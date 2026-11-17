@@ -51,7 +51,14 @@ const addedLabel = uiFormat(locale, 'addedProductToRfq', {
       productCategorySlug: product.productCategorySlug,
     }), locale)}
   >
-    <MediaBox source={product.mainImage} alt={product.title} ratio="1 / 1" width={560} />
+    <div class:list={[
+      'card__media',
+      product.sku === 'ES-ATF-002' && 'card__media--atf-002',
+      product.sku === 'ES-ATF-003' && 'card__media--atf-003',
+      product.sku === 'ES-ATF-006' && 'card__media--atf-006',
+    ]}>
+      <MediaBox source={product.mainImage} alt={product.title} ratio="1 / 1" width={560} />
+    </div>
     <div class="card__body">
       {product.sku && <p class="card__sku nums">{product.sku}</p>}
       <p class="card__name">{product.title}</p>
@@ -117,6 +124,23 @@ const addedLabel = uiFormat(locale, 'addedProductToRfq', {
   .card:hover .card__link,
   .card__link:focus-visible {
     border-color: var(--color-coral);
+  }
+  .card__media {
+    aspect-ratio: 1;
+    overflow: hidden;
+  }
+  .card__media :global(img) {
+    width: 100%;
+    height: 100%;
+  }
+  .card__media--atf-002 :global(img) {
+    transform: scale(1.06);
+  }
+  .card__media--atf-003 :global(img) {
+    transform: scale(1.22);
+  }
+  .card__media--atf-006 :global(img) {
+    transform: scale(1.03);
   }
   .card__body {
     padding: var(--space-3) var(--space-4) var(--space-4);
