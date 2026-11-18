@@ -1,6 +1,6 @@
 import { defineQuery } from 'groq'
 
-/** Active categories with at least one active product are the only routable SEO pages. */
+/** Active categories need products unless an editor explicitly enables an informational landing page. */
 export const productCategoryPathsQuery = defineQuery(`
   *[
     _type == "productCategory" &&
@@ -9,7 +9,7 @@ export const productCategoryPathsQuery = defineQuery(`
     productType == $productType &&
     defined(slug.current) &&
     coalesce(seo.noIndex, false) != true &&
-    count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0
+    (coalesce(publishWithoutProducts, false) == true || count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0)
   ] | order(sortOrder asc, title asc){
     "slug": slug.current,
     "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(^.slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"])
@@ -28,7 +28,7 @@ export const headerNavigationQuery = defineQuery(`{
     isActive == true &&
     defined(slug.current) &&
     coalesce(seo.noIndex, false) != true &&
-    count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0
+    (coalesce(publishWithoutProducts, false) == true || count(*[_type == "product" && coalesce(language, "en") == $language && isActive == true && productType == ^.productType && productCategory._ref == ^._id]) > 0)
   ] | order(sortOrder asc, title asc){
     _id, title, "slug": slug.current, productType, sortOrder,
     "rootSlugAvailable": !defined(*[_type == "product" && isActive == true && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"])
@@ -45,6 +45,7 @@ export const productCategoryBySlugQuery = defineQuery(`
   ][0]{
     _id,
     title,
+    pageHeading,
     "slug": slug.current,
       "rootSlugAvailable": !defined(*[_type == "product" && slug.current == ^.slug.current][0]._id) && !(slug.current in ["hardware", "parts-accessories", "parts", "custom-displays"]),
     productType,

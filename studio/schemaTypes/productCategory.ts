@@ -15,6 +15,7 @@ export const productCategory = defineType({
   orderings: [{ title: '显示顺序', name: 'sortOrder', by: [{ field: 'sortOrder', direction: 'asc' }] }],
   fields: [
     defineField({ name: 'title', title: '分类名称', type: 'string', group: 'content', description: '页面 H1 与客户可见分类名。铝制帐篷框架页面按规格填写 “Aluminum Canopy Tent Frames”。', validation: rule => rule.required() }),
+    defineField({ name: 'pageHeading', title: '页面 H1（可选）', type: 'string', group: 'content', description: '与导航分类名称不同时填写；留空则使用分类名称。' }),
     defineField({ name: 'slug', title: 'Slug', type: 'slug', group: 'content', options: { source: 'title', maxLength: 96 }, validation: rule => rule.required() }),
     defineField({ name: 'productType', title: '产品类型', type: 'string', group: 'classification', options: { list: [
       { title: 'Custom Displays', value: 'customDisplay' },
@@ -36,6 +37,7 @@ export const productCategory = defineType({
     ], preview: {select: {title: 'question'}}}]}),
     defineField({ name: 'sortOrder', title: '显示顺序', type: 'number', group: 'content' }),
     defineField({ name: 'isActive', title: '启用分类页', type: 'boolean', initialValue: false, group: 'content' }),
+    defineField({ name: 'publishWithoutProducts', title: '无产品时仍发布分类页', type: 'boolean', initialValue: false, group: 'content', description: '仅用于有真实业务范围、完整说明和询价入口的分类页；产品列表仍只显示真实已上架产品。' }),
     defineField({ name: 'seo', title: 'SEO 设置', type: 'seo', group: 'seo' }),
   ],
   preview: { select: { title: 'title', subtitle: 'slug.current', media: 'heroImage' } },
