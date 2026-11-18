@@ -1,16 +1,15 @@
 ﻿---
 import type { SiteSettingsData } from '../../sanity/content'
 import {localizedPath, type Locale} from '../../i18n/config'
-import {localizeCountDuration, staticUi} from '../../i18n/static'
+import {staticUi} from '../../i18n/static'
 import ContactBrandIcon from '../ContactBrandIcon.astro'
 
 interface Props {
   settings?: SiteSettingsData | null
-  moq?: string | null
   locale?: Locale
 }
 
-const { settings, moq, locale = 'en' } = Astro.props
+const { settings, locale = 'en' } = Astro.props
 const t = (english: string) => staticUi(locale, english)
 const email = settings?.salesEmail ?? 'chris@easyshowtech.com'
 const phone = settings?.phone ?? '+86 139 2197 4459'
@@ -18,7 +17,6 @@ const phone = settings?.phone ?? '+86 139 2197 4459'
 const contacts = [
   { label: t('Sales'), value: email, href: `mailto:${email}`, kind: 'gmail' },
   { label: 'WhatsApp', value: phone, href: `https://wa.me/${phone.replace(/\D/g, '')}`, kind: 'whatsapp' },
-  { label: t('Min. order'), value: moq ? localizeCountDuration(locale, moq)! : t('Confirmed in your quotation'), href: null },
 ]
 ---
 

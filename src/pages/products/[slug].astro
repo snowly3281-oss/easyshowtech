@@ -155,7 +155,7 @@ const categoryCanonical = product?.productCategorySlug
           {product.productType === 'hardware' && <HardwareProductRelations product={product} locale={locale} />}
           <ProductRelationships product={product} locale={locale} />
           <RelatedProducts items={product.related} locale={locale} />
-          <QuoteBand settings={settings} moq={product.moq == null ? undefined : String(product.moq)} locale={locale} />
+          <QuoteBand settings={settings} locale={locale} />
         </>
       )
     }
