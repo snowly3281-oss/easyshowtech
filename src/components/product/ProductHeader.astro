@@ -63,11 +63,27 @@ const sources = [
   alt: string
 }[]
 
-const slides: Slide[] = sources.map((s) => ({
+const baseSlides: Slide[] = sources.map((s) => ({
   full: urlFor(s.asset).width(1280).fit('max').auto('format').url(),
   thumb: urlFor(s.asset).width(200).height(200).fit('crop').auto('format').url(),
   alt: s.alt,
 }))
+const variantSlides = (variant: NonNullable<typeof variants[number]>): Slide[] => {
+  const entries = variant.images?.filter((entry) => entry.image?.asset) ?? []
+  if (entries.length) return entries.map((entry) => ({
+    full: urlFor(entry.image!.asset!).width(1280).fit('max').auto('format').url(),
+    thumb: urlFor(entry.image!.asset!).width(200).height(200).fit('crop').auto('format').url(),
+    alt: entry.alt || entry.image?.alt || productTitle,
+  }))
+  if (variant.image?.asset) return [{
+    full: variantImage(variant),
+    thumb: urlFor(variant.image.asset).width(200).height(200).fit('crop').auto('format').url(),
+    alt: variantImageAlt(variant),
+  }, ...baseSlides.filter((slide) => slide.full !== variantImage(variant))]
+  return baseSlides
+}
+const slides = defaultVariant ? variantSlides(defaultVariant) : baseSlides
+const hasGalleryNavigation = slides.length > 1 || variants.some((variant) => variantSlides(variant).length > 1)
 const hasMedia = slides.length > 0
 const productGroup = product.productType === 'hardware'
   ? {label: ui(locale, 'hardwareFrames'), path: '/products/hardware'}
@@ -117,7 +133,7 @@ const breadcrumbJsonLd = {
       <div class="ph__media" data-ph-gallery>
         {hasMedia ? (
           <>
-            {slides.length > 1 && (
+            {hasGalleryNavigation && (
               <div class="ph__rail">
                 <button type="button" class="ph__railbtn" data-ph-up aria-label={t('Previous thumbnails')}>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 10l4-4 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -164,7 +180,7 @@ const breadcrumbJsonLd = {
                 loading="eager"
                 fetchpriority="high"
               />
-              {slides.length > 1 && (
+              {hasGalleryNavigation && (
                 <>
                   <span class="ph__nav ph__nav--prev" data-ph-prev role="button" tabindex="0" aria-label={t('Previous image')}>
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12 4l-6 6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -215,6 +231,7 @@ const breadcrumbJsonLd = {
                     data-name={variantLabel(variant)}
                     data-variant-key={variant._key ?? variant.sku ?? variant.variantName}
                     data-variant-sku={variant.sku ?? ''}
+                    data-variant-slides={JSON.stringify(variantSlides(variant))}
                     data-variant-image={variantImage(variant)}
                     data-variant-image-alt={variantImageAlt(variant)}
                     aria-pressed={variant === defaultVariant ? 'true' : 'false'}
@@ -269,12 +286,14 @@ const breadcrumbJsonLd = {
   // image to open a lightbox.
   function initGallery() {
     const main = document.querySelector('[data-ph-main]') as HTMLImageElement | null
-    const thumbs = Array.from(
+    let thumbs = Array.from(
       document.querySelectorAll('[data-ph-thumb]')
     ) as HTMLButtonElement[]
     if (!main) return
     if (main.dataset.galleryInitialized === 'true') return
     main.dataset.galleryInitialized = 'true'
+    const galleryController = new AbortController()
+    document.addEventListener('astro:before-swap', () => galleryController.abort(), {once: true, signal: galleryController.signal})
 
     // Warm every slide's full-res image on load so clicking swaps instantly.
     // Without this, each first view of an image waits on a CDN fetch — which is
@@ -309,6 +328,41 @@ const breadcrumbJsonLd = {
       e.stopPropagation()
       select(index + 1)
     })
+
+    window.addEventListener('product:variant-change', (event) => {
+      const slides = (event as CustomEvent).detail.slides as Array<{full: string; thumb: string; alt: string}> | undefined
+      const list = document.querySelector<HTMLUListElement>('.ph__thumbs')
+      if (!slides?.length) return
+      if (list) {
+        list.replaceChildren(...slides.map((slide, i) => {
+          const li = document.createElement('li')
+          const button = document.createElement('button')
+          button.type = 'button'
+          button.className = 'ph__thumb'
+          button.dataset.phThumb = ''
+          button.dataset.full = slide.full
+          button.dataset.alt = slide.alt
+          button.setAttribute('aria-label', `${i + 1} / ${slides.length}: ${slide.alt}`)
+          const image = document.createElement('img')
+          image.src = slide.thumb
+          image.alt = ''
+          image.width = 200
+          image.height = 200
+          image.loading = 'lazy'
+          button.append(image)
+          button.addEventListener('click', () => select(i))
+          li.append(button)
+          return li
+        }))
+        thumbs = Array.from(list.querySelectorAll<HTMLButtonElement>('[data-ph-thumb]'))
+        select(0)
+        const view = document.querySelector('[data-ph-railview]')
+        if (view) view.scrollTop = 0
+      } else {
+        main.src = slides[0].full
+        main.alt = slides[0].alt
+      }
+    }, {signal: galleryController.signal})
 
     // Rail: chevron buttons + hover auto-scroll (upper half scrolls up,
     // lower half scrolls down; speed grows toward the edges).
@@ -397,7 +451,7 @@ const breadcrumbJsonLd = {
           history.replaceState(history.state, '', url.pathname + url.search + url.hash)
         }
         window.dispatchEvent(new CustomEvent('product:variant-change', {
-          detail: {sku, key: btn.dataset.variantKey || '', label: name},
+          detail: {sku, key: btn.dataset.variantKey || '', label: name, slides: JSON.parse(btn.dataset.variantSlides || '[]')},
         }))
       }
     }

@@ -52,7 +52,7 @@ function variantRows(variant: NonNullable<typeof variants[number]>) {
     {label: t('Frame material'), value: variant.frameMaterial || variant.attributes?.material},
     {label: t('Leg profile'), value: variant.legProfile},
     {label: t('Tube dimensions'), value: variant.tubeDimensions},
-    {label: t('Net weight'), value: weight(variant.netWeight) || variant.attributes?.weight},
+    {label: t(variant.netWeight != null ? 'Net weight' : 'Weight'), value: weight(variant.netWeight) || variant.attributes?.weight},
     {label: t('Shipping weight'), value: weight(variant.shippingWeight)},
     {label: t('Package dimensions'), value: variant.packageDimensions},
   ].filter((row) => row.value)
