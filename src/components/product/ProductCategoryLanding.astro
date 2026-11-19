@@ -107,8 +107,6 @@ const breadcrumbJsonLd = {
       <p class="category-eyebrow">{typeLabel}</p>
       <h1>{category.pageHeading || category.title}</h1>
       {visibleDescription && <p class="category-description">{visibleDescription}</p>}
-      {category.intro?.length && <div class="category-intro"><PortableText value={category.intro as never} /></div>}
-      {category.contentBlocks?.length && <div class="category-intro"><PortableText value={category.contentBlocks as never} /></div>}
 
       {category.products?.length ? (
         <section class="category-products" aria-labelledby="category-products-heading">
@@ -117,6 +115,14 @@ const breadcrumbJsonLd = {
             {category.products.map((product) => <ProductCard product={product} settings={settings} locale={locale} />)}
           </ul>
         </section>
+      ) : null}
+
+      {(category.intro?.length || category.contentBlocks?.length) ? (
+        <details class="category-guidance">
+          <summary>{locale === 'en' ? 'Product details & ordering guide' : ui(locale, 'products')}</summary>
+          {category.intro?.length && <div class="category-intro"><PortableText value={category.intro as never} /></div>}
+          {category.contentBlocks?.length && <div class="category-intro"><PortableText value={category.contentBlocks as never} /></div>}
+        </details>
       ) : null}
 
       {category.relatedCategories?.some((entry) => entry.slug && entry.hasProducts !== false && entry.slug !== completeDisplayCategory?.slug) ? (
@@ -193,7 +199,11 @@ const breadcrumbJsonLd = {
   .category-faq { border-top:1px solid var(--color-ink-200); padding:var(--space-3) 0; }
   .category-faq summary { cursor:pointer; font-weight:600; }
   .category-faq p { max-width:76ch; color:var(--color-ink-600); }
+  .category-guidance { margin-top:var(--space-6); border-top:1px solid var(--color-line); padding-top:var(--space-4); }
+  .category-guidance summary { cursor:pointer; font-size:var(--text-body-s); font-weight:600; color:var(--color-ink-600); }
+  .category-guidance :global(h2) { font-size:var(--text-h3); }
   .category-cta { margin-top:var(--space-8); }
   @media(max-width:760px) { .category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-3); } .category-conversion { grid-template-columns:1fr; gap:var(--space-3); } .category-conversion-arrow { transform:rotate(90deg); justify-self:start; } }
   @media(max-width:420px) { .category-grid { grid-template-columns:1fr; } }
 </style>
+
