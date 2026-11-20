@@ -1,6 +1,7 @@
 ﻿---
 import type { ProductData, SiteSettingsData } from '../../sanity/content'
 import { urlFor } from '../../sanity/image'
+import {stegaClean} from '@sanity/client/stega'
 import { formatPrice, getPricePresentation } from '../../lib/price'
 import QuoteModal from './QuoteModal.astro'
 import {localizedPath, type Locale} from '../../i18n/config'
@@ -18,7 +19,8 @@ const { product, settings, locale = 'en' } = Astro.props
 const t = (english: string) => staticUi(locale, english)
 const productTitle = product.title ?? t('EasyShow equipment')
 
-const variants = (product.variants ?? []).filter((variant) => variant?.variantName)
+const variants = stegaClean(product.variants ?? []).filter((variant) => variant?.variantName)
+const gridCustomizationNote = stegaClean(product.customizationOptions ?? []).find((option) => option === 'Custom grid counts available.')
 const variantLabel = (variant: NonNullable<typeof variants>[number]) => {
   const details = [variant.sizeLabel || variant.attributes?.size, variant.attributes?.color, variant.frameMaterial || variant.attributes?.material]
   return [...new Set([variant.variantName, ...details].filter(Boolean))].join(' · ')
@@ -219,7 +221,7 @@ const breadcrumbJsonLd = {
           <div class="ph__config" data-config-kind="variant">
             <div class="ph__confighead">
               <p class="ph__configlabel">{t('Available variants')}</p>
-              <span class="ph__configval" data-config-value="variant">{defaultVariantLabel}</span>
+              {!gridCustomizationNote && <span class="ph__configval" data-config-value="variant">{defaultVariantLabel}</span>}
             </div>
             <ul class="ph__pills">
               {variants.map((variant) => (
@@ -239,6 +241,7 @@ const breadcrumbJsonLd = {
                 </li>
               ))}
             </ul>
+            {gridCustomizationNote && <p class="ph__confignote">{t(gridCustomizationNote)}</p>}
           </div>
         )}
 
@@ -459,10 +462,11 @@ const breadcrumbJsonLd = {
       btn.addEventListener('click', () => selectVariant(btn, true), {signal: controller.signal})
     })
     const selectFromUrl = () => {
-      const requested = new URLSearchParams(location.search).get('variant')
-      if (!requested) return
+      const rawRequested = new URLSearchParams(location.search).get('variant')
+      if (!rawRequested) return
+      const requested = rawRequested.replace(/[\u200B-\u200D\uFEFF]/g, '')
       const match = buttons.find((button) => button.dataset.variantSku === requested || button.dataset.variantKey === requested)
-      if (match) selectVariant(match, false)
+      if (match) selectVariant(match, rawRequested !== requested)
     }
     selectFromUrl()
     window.addEventListener('popstate', selectFromUrl, {signal: controller.signal})
@@ -701,6 +705,7 @@ const breadcrumbJsonLd = {
     letter-spacing: var(--tracking-wider);
     color: var(--color-ink-400, #9a948a);
   }
+  .ph__confignote { margin:var(--space-2) 0 0; font-size:var(--text-body-s); color:var(--color-ink-600); }
   .ph__configval {
     font-size: var(--text-body-s);
     color: var(--color-ink-600, #555);
