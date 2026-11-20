@@ -57,6 +57,7 @@ const typeLabel = category.productType === 'hardware'
 const title = category.seo?.metaTitle || `${category.title || 'Products'} — EasyShow`
 const description = category.seo?.metaDescription || category.description || category.shortDescription || undefined
 const visibleDescription = category.shortDescription || category.description
+const guidanceBlocks = [...(category.intro ?? []), ...(category.contentBlocks ?? [])]
 const socialAsset = category.seo?.ogImage?.asset || category.heroImage?.asset
 const socialImage = socialAsset ? urlFor(socialAsset as never).width(1200).height(630).fit('crop').auto('format').url() : undefined
 const hero = category.heroImage?.asset ? urlFor(category.heroImage.asset as never).width(1800).auto('format').url() : null
@@ -117,11 +118,10 @@ const breadcrumbJsonLd = {
         </section>
       ) : null}
 
-      {(category.intro?.length || category.contentBlocks?.length) ? (
+      {guidanceBlocks.length > 0 ? (
         <details class="category-guidance">
           <summary>{locale === 'en' ? 'Product details & ordering guide' : ui(locale, 'products')}</summary>
-          {category.intro?.length && <div class="category-intro"><PortableText value={category.intro as never} /></div>}
-          {category.contentBlocks?.length && <div class="category-intro"><PortableText value={category.contentBlocks as never} /></div>}
+          <div class="category-intro"><PortableText value={guidanceBlocks as never} /></div>
         </details>
       ) : null}
 
@@ -201,7 +201,8 @@ const breadcrumbJsonLd = {
   .category-faq p { max-width:76ch; color:var(--color-ink-600); }
   .category-guidance { margin-top:var(--space-6); border-top:1px solid var(--color-line); padding-top:var(--space-4); }
   .category-guidance summary { cursor:pointer; font-size:var(--text-body-s); font-weight:600; color:var(--color-ink-600); }
-  .category-guidance :global(h2) { font-size:var(--text-h3); }
+  .category-guidance :global(h2) { display:flex; align-items:baseline; gap:0.5em; font-size:var(--text-h3); }
+  .category-guidance :global(.pt-section-number) { flex-shrink:0; font-variant-numeric:tabular-nums; }
   .category-cta { margin-top:var(--space-8); }
   @media(max-width:760px) { .category-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-3); } .category-conversion { grid-template-columns:1fr; gap:var(--space-3); } .category-conversion-arrow { transform:rotate(90deg); justify-self:start; } }
   @media(max-width:420px) { .category-grid { grid-template-columns:1fr; } }
