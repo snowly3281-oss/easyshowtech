@@ -46,7 +46,11 @@ function variantRows(variant: NonNullable<typeof variants[number]>) {
       ? [variant.width, variant.length, variant.height].filter((value) => value != null).join(' × ') + (variant.measurementUnit ? ` ${variant.measurementUnit}` : '')
       : null
   )
-  const weight = (value: number | null | undefined) => value == null ? null : `${value}${variant.weightUnit ? ` ${variant.weightUnit}` : ''}`
+  const weight = (value: number | null | undefined) => {
+    if (value == null) return null
+    if (variant.weightUnit === 'kg') return `${value} kg (${(value * 2.2046226218).toFixed(1)} lb)`
+    return `${value}${variant.weightUnit ? ` ${variant.weightUnit}` : ''}`
+  }
   return [
     {label: t('Size'), value: size},
     {label: t('Frame material'), value: variant.frameMaterial || variant.attributes?.material},
