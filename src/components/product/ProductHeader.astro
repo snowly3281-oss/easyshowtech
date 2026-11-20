@@ -20,7 +20,7 @@ const t = (english: string) => staticUi(locale, english)
 const productTitle = product.title ?? t('EasyShow equipment')
 
 const variants = stegaClean(product.variants ?? []).filter((variant) => variant?.variantName)
-const gridCustomizationNote = stegaClean(product.customizationOptions ?? []).find((option) => option === 'Custom grid counts available.')
+const gridCustomizationNote = stegaClean(product.customizationOptions ?? []).find((option) => option === 'Custom grid counts available.' || option === 'All sizes can be customized.')
 const variantLabel = (variant: NonNullable<typeof variants>[number]) => {
   const details = [variant.sizeLabel || variant.attributes?.size, variant.attributes?.color, variant.frameMaterial || variant.attributes?.material]
   return [...new Set([variant.variantName, ...details].filter(Boolean))].join(' · ')
