@@ -1,2 +1,5 @@
 # Public indexing is controlled by PUBLIC_SITE_INDEXING_ENABLED in middleware
 # and BaseLayout. Do not add a global noindex header here.
+
+/logo-header-v1.webp
+  Cache-Control: public, max-age=31536000, immutable
