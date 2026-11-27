@@ -1,6 +1,5 @@
 ---
 import type { HomeData } from '../../sanity/content'
-import MediaBox from '../product/MediaBox.astro'
 import { resolveHref } from '../../sanity/links'
 import {localizedPath, resolveLocale} from '../../i18n/config'
 import {staticUi} from '../../i18n/static'
@@ -23,12 +22,16 @@ const localizedCtaHref = ctaHref.startsWith('/') ? localizedPath(ctaHref, locale
     <section class="section">
       <div class="container fac">
         <div class="fac__media">
-          <MediaBox
-
-            alt={t('Display production, printing, assembly, warehousing, packing and dispatch overview')}
-            ratio="16 / 9"
-            width={900}
-            fallback="/factory/oem-workflow-four-corner-frame.webp"
+          <img
+            class="fac__process-image"
+            src="/factory/custom-product-process-v3.webp"
+            srcset="/factory/custom-product-process-v3-700.webp 700w, /factory/custom-product-process-v3.webp 1400w"
+            sizes="(max-width: 767px) 100vw, 50vw"
+            width="1400"
+            height="933"
+            loading="lazy"
+            decoding="async"
+            alt={t('Custom product process: order confirmation, design confirmation, material preparation, processing, quality inspection and delivery')}
           />
         </div>
         <div class="fac__body">
@@ -59,7 +62,10 @@ const localizedCtaHref = ctaHref.startsWith('/') ? localizedPath(ctaHref, locale
     gap: var(--space-7);
     align-items: center;
   }
-  .fac__media :global(.media) {
+  .fac__process-image {
+    display: block;
+    width: 100%;
+    height: auto;
     border-radius: var(--radius-md, 6px);
   }
   .fac__title {
